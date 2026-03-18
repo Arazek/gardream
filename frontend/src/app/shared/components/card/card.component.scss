@@ -1,0 +1,49 @@
+.card {
+  background: var(--ion-card-background, var(--ion-item-background, #fff));
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+
+  &--flat {
+    box-shadow: none;
+    border: 1px solid var(--ion-color-light-shade);
+  }
+
+  &--info {
+    border-left: 3px solid var(--ion-color-primary);
+    background:
+      rgba(var(--ion-color-primary-rgb), 0.06),
+      var(--ion-card-background, var(--ion-item-background, #fff));
+  }
+
+  &--success {
+    border-left: 3px solid var(--ion-color-success);
+    background:
+      rgba(var(--ion-color-success-rgb), 0.06),
+      var(--ion-card-background, var(--ion-item-background, #fff));
+  }
+
+  &--warning {
+    border-left: 3px solid var(--ion-color-warning);
+    background:
+      rgba(var(--ion-color-warning-rgb), 0.08),
+      var(--ion-card-background, var(--ion-item-background, #fff));
+  }
+
+  &--danger {
+    border-left: 3px solid var(--ion-color-danger);
+    background:
+      rgba(var(--ion-color-danger-rgb), 0.06),
+      var(--ion-card-background, var(--ion-item-background, #fff));
+  }
+
+  &--clickable {
+    cursor: pointer;
+    transition: box-shadow 0.15s, transform 0.15s;
+
+    &:active {
+      transform: scale(0.985);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+  }
+}

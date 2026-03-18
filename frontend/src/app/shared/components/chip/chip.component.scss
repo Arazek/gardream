@@ -1,0 +1,51 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--ion-color-light);
+  color: var(--ion-color-dark);
+  border: 1px solid var(--ion-color-light-shade);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+
+  &--selected {
+    background: var(--ion-color-primary);
+    color: #fff;
+    border-color: var(--ion-color-primary);
+  }
+
+  &--info {
+    background: rgba(var(--ion-color-primary-rgb), 0.1);
+    color: var(--ion-color-primary);
+    border-color: rgba(var(--ion-color-primary-rgb), 0.25);
+  }
+
+  &--success {
+    background: rgba(var(--ion-color-success-rgb), 0.1);
+    color: var(--ion-color-success);
+    border-color: rgba(var(--ion-color-success-rgb), 0.25);
+  }
+
+  &--warning {
+    background: rgba(var(--ion-color-warning-rgb), 0.15);
+    color: var(--ion-color-warning-shade);
+    border-color: rgba(var(--ion-color-warning-rgb), 0.3);
+  }
+
+  &--danger {
+    background: rgba(var(--ion-color-danger-rgb), 0.1);
+    color: var(--ion-color-danger);
+    border-color: rgba(var(--ion-color-danger-rgb), 0.25);
+  }
+
+  &__remove {
+    font-size: 14px;
+    cursor: pointer;
+    margin-left: 2px;
+  }
+}

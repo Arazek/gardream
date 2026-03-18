@@ -1,0 +1,317 @@
+// ─── Typography ──────────────────────────────────────────────────────────────
+:root {
+  --ion-font-family: 'Source Sans 3', sans-serif;
+}
+
+// ─── Semantic colors (constant across all accents) ───────────────────────────
+:root {
+  --ion-color-success: #2dd36f;
+  --ion-color-success-rgb: 45, 211, 111;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-contrast-rgb: 255, 255, 255;
+  --ion-color-success-shade: #28bb62;
+  --ion-color-success-tint: #42d77d;
+
+  --ion-color-warning: #ffc409;
+  --ion-color-warning-rgb: 255, 196, 9;
+  --ion-color-warning-contrast: #000000;
+  --ion-color-warning-contrast-rgb: 0, 0, 0;
+  --ion-color-warning-shade: #e0ac08;
+  --ion-color-warning-tint: #ffca22;
+
+  --ion-color-danger: #eb445a;
+  --ion-color-danger-rgb: 235, 68, 90;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #cf3c4f;
+  --ion-color-danger-tint: #ed576b;
+
+  --ion-color-medium: #92949c;
+  --ion-color-medium-rgb: 146, 148, 156;
+  --ion-color-medium-contrast: #ffffff;
+  --ion-color-medium-contrast-rgb: 255, 255, 255;
+  --ion-color-medium-shade: #808289;
+  --ion-color-medium-tint: #9d9fa6;
+
+  --ion-color-light: #f4f5f8;
+  --ion-color-light-rgb: 244, 245, 248;
+  --ion-color-light-contrast: #000000;
+  --ion-color-light-contrast-rgb: 0, 0, 0;
+  --ion-color-light-shade: #d7d8da;
+  --ion-color-light-tint: #f5f6f9;
+
+  --ion-color-dark: #222428;
+  --ion-color-dark-rgb: 34, 36, 40;
+  --ion-color-dark-contrast: #ffffff;
+  --ion-color-dark-contrast-rgb: 255, 255, 255;
+  --ion-color-dark-shade: #1e2023;
+  --ion-color-dark-tint: #383a3e;
+}
+
+// ─── Default palette — Blue (no accent set) ──────────────────────────────────
+:root {
+  --ion-color-primary: #3880ff;
+  --ion-color-primary-rgb: 56, 128, 255;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #3171e0;
+  --ion-color-primary-tint: #4c8dff;
+
+  --ion-color-secondary: #3dc2ff;
+  --ion-color-secondary-rgb: 61, 194, 255;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #36abe0;
+  --ion-color-secondary-tint: #50c8ff;
+}
+
+// ─── Dark base — overrides shared surface/text tokens ────────────────────────
+@mixin dark-base {
+  --ion-color-primary: #428cff;
+  --ion-color-primary-rgb: 66, 140, 255;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #3a7be0;
+  --ion-color-primary-tint: #5598ff;
+
+  --ion-background-color: #121212;
+  --ion-background-color-rgb: 18, 18, 18;
+  --ion-text-color: #ffffff;
+  --ion-text-color-rgb: 255, 255, 255;
+
+  --ion-color-light: #222428;
+  --ion-color-light-rgb: 34, 36, 40;
+  --ion-color-light-shade: #3a3c40;
+  --ion-color-light-tint: #383a3e;
+
+  --ion-item-background: #1e1e1e;
+  --ion-card-background: #1e1e1e;
+}
+
+// ─── Accent mixins — Light ────────────────────────────────────────────────────
+
+@mixin accent-clay-light {
+  --ion-color-primary: #b5603a;
+  --ion-color-primary-rgb: 181, 96, 58;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #9e5433;
+  --ion-color-primary-tint: #bc714e;
+
+  --ion-color-secondary: #d4956a;
+  --ion-color-secondary-rgb: 212, 149, 106;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #ba835d;
+  --ion-color-secondary-tint: #d89f78;
+
+  --ion-background-color: #faf7f4;
+  --ion-background-color-rgb: 250, 247, 244;
+  --ion-item-background: #ffffff;
+  --ion-card-background: #ffffff;
+}
+
+@mixin accent-moss-light {
+  --ion-color-primary: #4a7c59;
+  --ion-color-primary-rgb: 74, 124, 89;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #416d4e;
+  --ion-color-primary-tint: #5c8968;
+
+  --ion-color-secondary: #8faa7e;
+  --ion-color-secondary-rgb: 143, 170, 126;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #7d9670;
+  --ion-color-secondary-tint: #9bb38a;
+
+  --ion-background-color: #f5f7f5;
+  --ion-background-color-rgb: 245, 247, 245;
+  --ion-item-background: #ffffff;
+  --ion-card-background: #ffffff;
+}
+
+@mixin accent-dune-light {
+  --ion-color-primary: #9b7b4e;
+  --ion-color-primary-rgb: 155, 123, 78;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #886b45;
+  --ion-color-primary-tint: #a58860;
+
+  --ion-color-secondary: #c4a882;
+  --ion-color-secondary-rgb: 196, 168, 130;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #ac9472;
+  --ion-color-secondary-tint: #cab18f;
+
+  --ion-background-color: #faf8f3;
+  --ion-background-color-rgb: 250, 248, 243;
+  --ion-item-background: #ffffff;
+  --ion-card-background: #ffffff;
+}
+
+@mixin accent-slate-light {
+  --ion-color-primary: #5b7fa6;
+  --ion-color-primary-rgb: 91, 127, 166;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #4f6f91;
+  --ion-color-primary-tint: #6b8cb0;
+
+  --ion-color-secondary: #8aa5be;
+  --ion-color-secondary-rgb: 138, 165, 190;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #7a92a9;
+  --ion-color-secondary-tint: #96aec5;
+
+  --ion-background-color: #f5f6f8;
+  --ion-background-color-rgb: 245, 246, 248;
+  --ion-item-background: #ffffff;
+  --ion-card-background: #ffffff;
+}
+
+// ─── Accent mixins — Dark ─────────────────────────────────────────────────────
+
+@mixin accent-clay-dark {
+  --ion-color-primary: #d4784f;
+  --ion-color-primary-rgb: 212, 120, 79;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #ba6a45;
+  --ion-color-primary-tint: #dc8a62;
+
+  --ion-color-secondary: #e8aa80;
+  --ion-color-secondary-rgb: 232, 170, 128;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #cc9670;
+  --ion-color-secondary-tint: #eab48e;
+
+  --ion-background-color: #1a1210;
+  --ion-background-color-rgb: 26, 18, 16;
+  --ion-item-background: #231816;
+  --ion-card-background: #231816;
+}
+
+@mixin accent-moss-dark {
+  --ion-color-primary: #62a077;
+  --ion-color-primary-rgb: 98, 160, 119;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #569068;
+  --ion-color-primary-tint: #72aa84;
+
+  --ion-color-secondary: #a3bf93;
+  --ion-color-secondary-rgb: 163, 191, 147;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #8fa882;
+  --ion-color-secondary-tint: #acc59c;
+
+  --ion-background-color: #111a13;
+  --ion-background-color-rgb: 17, 26, 19;
+  --ion-item-background: #172019;
+  --ion-card-background: #172019;
+}
+
+@mixin accent-dune-dark {
+  --ion-color-primary: #c09a66;
+  --ion-color-primary-rgb: 192, 154, 102;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #a8875a;
+  --ion-color-primary-tint: #caa675;
+
+  --ion-color-secondary: #d4bc99;
+  --ion-color-secondary-rgb: 212, 188, 153;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #baa687;
+  --ion-color-secondary-tint: #d8c3a4;
+
+  --ion-background-color: #181410;
+  --ion-background-color-rgb: 24, 20, 16;
+  --ion-item-background: #221c14;
+  --ion-card-background: #221c14;
+}
+
+@mixin accent-slate-dark {
+  --ion-color-primary: #7a9ec4;
+  --ion-color-primary-rgb: 122, 158, 196;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #6a8cad;
+  --ion-color-primary-tint: #88aacb;
+
+  --ion-color-secondary: #a3bcce;
+  --ion-color-secondary-rgb: 163, 188, 206;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #8fa6b6;
+  --ion-color-secondary-tint: #acc3d3;
+
+  --ion-background-color: #111418;
+  --ion-background-color-rgb: 17, 20, 24;
+  --ion-item-background: #181c22;
+  --ion-card-background: #181c22;
+}
+
+// ─── Helper: apply all dark accent overrides ─────────────────────────────────
+@mixin dark-accent-overrides {
+  &[data-accent='clay']  { @include accent-clay-dark; }
+  &[data-accent='moss']  { @include accent-moss-dark; }
+  &[data-accent='dune']  { @include accent-dune-dark; }
+  &[data-accent='slate'] { @include accent-slate-dark; }
+}
+
+// ─── Apply light accents ──────────────────────────────────────────────────────
+body[data-accent='clay']  { @include accent-clay-light; }
+body[data-accent='moss']  { @include accent-moss-light; }
+body[data-accent='dune']  { @include accent-dune-light; }
+body[data-accent='slate'] { @include accent-slate-light; }
+
+// ─── Apply dark mode — manual ─────────────────────────────────────────────────
+body.dark {
+  @include dark-base;
+  @include dark-accent-overrides;
+}
+
+// ─── Apply dark mode — system (only when no explicit scheme class) ────────────
+body:not(.light):not(.dark) {
+  @media (prefers-color-scheme: dark) {
+    @include dark-base;
+    @include dark-accent-overrides;
+  }
+}
+
+// ─── Dark-mode helper mixin ───────────────────────────────────────────────────
+// Usage inside a selector: @include v.dark { ... }
+// Matches both the explicit .dark class and the OS system preference.
+@mixin dark {
+  :host-context(body.dark) & { @content; }
+
+  @media (prefers-color-scheme: dark) {
+    :host-context(body:not(.light):not(.dark)) & { @content; }
+  }
+}
+
+// ─── Responsive breakpoints ───────────────────────────────────────────────────
+$bp-mobile-max:  767px;
+$bp-tablet-min:  768px;
+$bp-desktop-min: 1024px;
+
+@mixin mobile {
+  @media (max-width: #{$bp-mobile-max}) { @content; }
+}
+
+@mixin tablet-up {
+  @media (min-width: #{$bp-tablet-min}) { @content; }
+}
+
+@mixin desktop-up {
+  @media (min-width: #{$bp-desktop-min}) { @content; }
+}

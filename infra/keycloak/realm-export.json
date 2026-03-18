@@ -1,0 +1,122 @@
+{
+  "realm": "pwa",
+  "enabled": true,
+  "displayName": "PWA Template",
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+
+  "clients": [
+    {
+      "clientId": "pwa-frontend",
+      "name": "PWA Frontend",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "redirectUris": [
+        "https://localhost:4443/*",
+        "https://localhost/*",
+        "http://localhost:4200/*",
+        "capacitor://localhost/*",
+        "http://localhost/*"
+      ],
+      "webOrigins": [
+        "https://localhost:4443",
+        "https://localhost",
+        "http://localhost:4200",
+        "http://localhost"
+      ],
+      "protocol": "openid-connect",
+      "fullScopeAllowed": true
+    }
+  ],
+
+  "roles": {
+    "realm": [
+      {
+        "name": "user",
+        "description": "Standard application user"
+      },
+      {
+        "name": "admin",
+        "description": "Application administrator"
+      }
+    ]
+  },
+
+  "defaultRoles": ["user"],
+
+  "identityProviders": [
+    {
+      "alias": "google",
+      "displayName": "Google",
+      "providerId": "google",
+      "enabled": false,
+      "updateProfileFirstLoginMode": "on",
+      "trustEmail": true,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "config": {
+        "clientId": "${env.GOOGLE_CLIENT_ID}",
+        "clientSecret": "${env.GOOGLE_CLIENT_SECRET}",
+        "syncMode": "IMPORT",
+        "useJwksUrl": "true"
+      }
+    },
+    {
+      "alias": "facebook",
+      "displayName": "Facebook",
+      "providerId": "facebook",
+      "enabled": false,
+      "updateProfileFirstLoginMode": "on",
+      "trustEmail": false,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "config": {
+        "clientId": "${env.FACEBOOK_CLIENT_ID}",
+        "clientSecret": "${env.FACEBOOK_CLIENT_SECRET}",
+        "syncMode": "IMPORT"
+      }
+    }
+  ],
+
+  "identityProviderMappers": [
+    {
+      "name": "google-role-mapper",
+      "identityProviderAlias": "google",
+      "identityProviderMapper": "hardcoded-role-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "role": "user"
+      }
+    },
+    {
+      "name": "facebook-role-mapper",
+      "identityProviderAlias": "facebook",
+      "identityProviderMapper": "hardcoded-role-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "role": "user"
+      }
+    }
+  ],
+
+  "smtpServer": {},
+
+  "loginTheme": "pwa",
+  "accountTheme": "keycloak.v3",
+  "adminTheme": "keycloak.v3",
+  "emailTheme": "keycloak"
+}

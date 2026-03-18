@@ -1,0 +1,47 @@
+@import "@ionic/angular/css/core.css";
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+// Ionic sets pointer-events:none inline on .ion-page during animated transitions
+// and does not always clean it up when a guard cancels/redirects mid-animation.
+// Override to ensure the active page is always interactive.
+.ion-page {
+  pointer-events: auto !important;
+}
+
+// ion-router-outlet is a positioning container only, never a click target.
+// The ghost outlet Ionic creates inside ion-tabs (no [tabs] attr) sits on top
+// of real content — push it behind so it never intercepts clicks.
+ion-router-outlet {
+  pointer-events: none !important;
+}
+
+ion-router-outlet:not([tabs]) {
+  z-index: -1 !important;
+}
+
+// Ensure ion-select caret is pinned to the right edge
+.select-field__select::part(container) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+// ─── Responsive form grid utility ────────────────────────────────────────────
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+
+  @media (max-width: 767px) {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,58 @@
+
+# =============================================================================
+# Production overrides
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# (run.sh handles this automatically with ./run.sh prod)
+# Requirements:
+#   - TLS_MODE=letsencrypt in .env
+#   - DOMAIN=yourdomain.com in .env
+#   - ACME_EMAIL=your@email.com in .env
+#   - DNS A record pointing to this server
+# =============================================================================
+
+services:
+
+  traefik:
+    ports:
+      - "80:80"
+      - "443:443"
+    # No dashboard exposed in prod
+
+  backend:
+    build:
+      target: production
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    restart: always
+
+  frontend:
+    build:
+      target: production
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+    restart: always
+
+  postgres:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  keycloak:
+    restart: always
+    environment:
+      KC_LOG_LEVEL: warn
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  pgadmin:
+    restart: always

@@ -1,0 +1,37 @@
+.img-fallback {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--ion-color-light);
+  overflow: hidden;
+
+  &--cover  .img-fallback__img { object-fit: cover; }
+  &--contain .img-fallback__img { object-fit: contain; }
+
+  &__skeleton {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  &__img {
+    width: 100%;
+    height: 100%;
+    display: block;
+
+    &--hidden {
+      opacity: 0;
+    }
+  }
+
+  &__error {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ion-color-medium);
+    font-size: 32px;
+  }
+}

@@ -1,0 +1,225 @@
+@use 'theme/variables' as v;
+
+// ─── Garden semantic tokens ───────────────────────────────────────────────────
+// Resolved from moss-accent palette; fallback to green equivalents
+$garden-green:       #4a7c59;
+$garden-green-light: #f0fdf4;
+$garden-green-muted: #e8f4ec;
+$garden-border:      #c8e6d0;
+$garden-amber:       #d97706;
+
+// ─── Page background ──────────────────────────────────────────────────────────
+.dashboard-content {
+  --background: var(--ion-background-color);
+}
+
+// ─── Hero ─────────────────────────────────────────────────────────────────────
+.dashboard-hero {
+  padding: 24px 20px 20px;
+  background: linear-gradient(160deg, $garden-green-light 0%, #ffffff 100%);
+  border-bottom: 1px solid $garden-border;
+
+  @include v.dark {
+    // Replace the light gradient — dark translucent green tint on page bg
+    background: linear-gradient(160deg, rgba(74, 124, 89, 0.12) 0%, transparent 100%);
+    border-bottom-color: rgba(98, 160, 119, 0.2);
+  }
+
+  &__season {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    // #4a7c59 → ~3.2:1 on dark card — fails AA for small text
+    color: $garden-green;
+    margin: 0 0 6px;
+
+    @include v.dark {
+      // #86c49e → ~7.9:1 on dark card ✓
+      color: #86c49e;
+    }
+  }
+
+  &__headline {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--ion-text-color);
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+
+  &__sub {
+    font-size: 14px;
+    color: var(--ion-color-medium);
+    margin: 0;
+  }
+}
+
+// ─── Stats grid ───────────────────────────────────────────────────────────────
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 0 16px;
+
+  @include v.mobile {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+}
+
+// ─── Harvest list ─────────────────────────────────────────────────────────────
+.harvest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 16px;
+}
+
+.harvest-card {
+  cursor: pointer;
+
+  &__content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  &__dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  &__name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ion-text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--ion-color-medium);
+    margin-bottom: 10px;
+
+    ion-icon {
+      font-size: 13px;
+    }
+  }
+
+  &__progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__progress-bar {
+    flex: 1;
+    height: 6px;
+    background: $garden-green-muted;
+    border-radius: 100px;
+    overflow: hidden;
+
+    @include v.dark {
+      // Light muted green (#e8f4ec) is invisible on dark — use translucent white
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  &__progress-fill {
+    height: 100%;
+    border-radius: 100px;
+    transition: width 300ms ease-out;
+  }
+
+  &__progress-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ion-color-medium);
+    white-space: nowrap;
+    min-width: 48px;
+    text-align: right;
+  }
+}
+
+// ─── Planter grid ─────────────────────────────────────────────────────────────
+.planter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 0 16px;
+
+  @include v.mobile {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.planter-card {
+  cursor: pointer;
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px;
+  }
+
+  &__icon {
+    font-size: 24px;
+    color: $garden-green;
+    margin-bottom: 4px;
+
+    @include v.dark {
+      // Icons need 3:1; #62a077 → ~5.4:1 on dark card ✓
+      color: #62a077;
+    }
+  }
+
+  &__name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ion-text-color);
+  }
+
+  &__count {
+    font-size: 12px;
+    color: var(--ion-color-medium);
+  }
+
+  &__crops {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  &__dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255 255 255 / 0.6);
+  }
+}

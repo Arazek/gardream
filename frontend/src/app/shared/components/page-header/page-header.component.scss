@@ -1,0 +1,35 @@
+.page-header {
+  ion-toolbar {
+    --background: var(--ion-background-color, #fff);
+    --border-color: rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.08);
+    --border-width: 0 0 0.55px 0;
+    --padding-start: 4px;
+    --padding-end: 4px;
+    --min-height: 56px;
+  }
+
+  ion-title {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  ion-back-button {
+    --color: var(--ion-color-primary);
+  }
+
+  &__avatar-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0 8px 0 4px;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    transition: opacity 0.15s;
+
+    &:hover { opacity: 0.8; }
+    &:active { opacity: 0.6; }
+  }
+}

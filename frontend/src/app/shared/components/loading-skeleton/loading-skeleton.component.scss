@@ -1,0 +1,25 @@
+.loading-skeleton {
+  &__item {
+    --padding-start: 16px;
+    --inner-padding-end: 16px;
+    margin-bottom: 4px;
+  }
+
+  &__avatar {
+    width: 44px;
+    height: 44px;
+  }
+
+  &__line {
+    &--title {
+      width: 60%;
+      height: 14px;
+      margin-bottom: 8px;
+    }
+
+    &--subtitle {
+      width: 40%;
+      height: 12px;
+    }
+  }
+}

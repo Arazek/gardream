@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/storybook",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", ".storybook/**/*.ts"],
+  "exclude": ["src/test.ts", "src/**/*.spec.ts", "src/**/*.routes.ts", "src/main.ts", "src/app/app.config.ts"]
+}

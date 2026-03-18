@@ -1,0 +1,32 @@
+.section {
+  margin-bottom: 24px;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    margin-bottom: 8px;
+  }
+
+  &__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ion-color-dark);
+    margin: 0;
+  }
+
+  &__see-all {
+    font-size: 13px;
+    color: var(--ion-color-primary);
+    background: none;
+    border: none;
+    padding: 4px 0;
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  &__content {
+    // intentionally unstyled — content controls its own layout
+  }
+}

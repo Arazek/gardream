@@ -1,0 +1,53 @@
+.login-content {
+  --background: var(--ion-background-color);
+}
+
+.login-layout {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100%;
+  padding: 0 24px;
+  max-width: 400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+// ─── Brand area ───────────────────────────────────────────────────────────────
+
+.login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: max(72px, 12vh);
+  gap: 12px;
+
+  &__name {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--ion-text-color);
+    margin: 4px 0 0;
+    letter-spacing: -0.02em;
+  }
+
+  &__tagline {
+    font-size: 15px;
+    color: var(--ion-color-medium);
+    margin: 0;
+  }
+}
+
+// ─── Actions area ─────────────────────────────────────────────────────────────
+
+.login-actions {
+  padding-bottom: max(40px, 6vh);
+  padding-top: 32px;
+
+  ion-button {
+    --border-radius: 10px;
+    --padding-top: 14px;
+    --padding-bottom: 14px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+}

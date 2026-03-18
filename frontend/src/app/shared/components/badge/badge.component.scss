@@ -1,0 +1,17 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+
+  &--primary  { background: rgba(var(--ion-color-primary-rgb), 0.12); color: var(--ion-color-primary-shade); }
+  &--success  { background: rgba(var(--ion-color-success-rgb), 0.12); color: var(--ion-color-success-shade); }
+  &--warning  { background: rgba(var(--ion-color-warning-rgb), 0.16); color: var(--ion-color-warning-shade); }
+  &--danger   { background: rgba(var(--ion-color-danger-rgb), 0.12);  color: var(--ion-color-danger-shade); }
+  &--medium   { background: rgba(var(--ion-color-medium-rgb), 0.16);  color: var(--ion-color-medium-shade); }
+}

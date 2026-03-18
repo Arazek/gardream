@@ -1,0 +1,24 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "PWA Template — App DB",
+      "Group": "PWA Template",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "app_db",
+      "Username": "appuser",
+      "SSLMode": "prefer",
+      "PassFile": "/pgpassfile"
+    },
+    "2": {
+      "Name": "PWA Template — Keycloak DB",
+      "Group": "PWA Template",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "keycloak_db",
+      "Username": "keycloak",
+      "SSLMode": "prefer",
+      "PassFile": "/pgpassfile"
+    }
+  }
+}

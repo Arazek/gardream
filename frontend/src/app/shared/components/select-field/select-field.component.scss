@@ -1,0 +1,40 @@
+.select-field {
+  margin-bottom: 16px;
+
+  &__label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ion-color-dark-shade);
+    margin-bottom: 6px;
+  }
+
+  &__wrap {
+    border: 1.5px solid var(--ion-color-light-shade);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+
+    .select-field--error & {
+      border-color: var(--ion-color-danger);
+    }
+
+    &:focus-within {
+      border-color: var(--ion-color-primary);
+    }
+  }
+
+  &__select {
+    --padding-start: 12px;
+    --padding-end: 12px;
+    --padding-top: 10px;
+    --padding-bottom: 10px;
+    width: 100%;
+  }
+
+  &__error {
+    font-size: 12px;
+    color: var(--ion-color-danger);
+    margin: 4px 0 0;
+  }
+}
