@@ -1,56 +1,62 @@
-
 # =============================================================================
-# Local development overrides
-# Usage: docker compose -f docker-compose.yml -f docker-compose.local.yml up
-# (run.sh handles this automatically with ./run.sh dev)
+# Local dev override — backend + frontend only
+# Assumes the infra stack (traefik, postgres, keycloak) is already running
+# via infra/docker-compose.yml and has created the proxy-network network.
 # =============================================================================
 
 services:
 
-  traefik:
-    ports:
-      - "8090:80"     # HTTP redirect (avoids conflict with host port 80)
-      - "4443:443"    # HTTPS — access the app via https://localhost:4443
-      - "8080:8080"   # Traefik dashboard
-
   backend:
     build:
+      context: ./backend
+      dockerfile: Dockerfile
       target: development
+    env_file:
+      - .env
     volumes:
       - ./backend:/app
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
-    environment:
-      LOG_LEVEL: debug
+    networks:
+      - proxy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls=true"
+      - "traefik.http.services.backend.loadbalancer.server.port=8000"
 
   frontend:
     build:
+      context: ./frontend
+      dockerfile: Dockerfile
       target: development
     volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/angular.json:/app/angular.json
-      - ./frontend/ionic.config.json:/app/ionic.config.json
-    ports:
-      - "4200:4200"   # Direct access for ng serve (optional)
-    command: ["npx", "ng", "serve", "--host", "0.0.0.0", "--port", "4200", "--disable-host-check"]
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - proxy-network
     labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`${DOMAIN:-localhost}`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls=true"
       - "traefik.http.services.frontend.loadbalancer.server.port=4200"
 
   storybook:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
       target: development
+    command: ["npm", "run", "storybook"]
     volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/.storybook:/app/.storybook
-      - ./frontend/angular.json:/app/angular.json
-      - ./frontend/tsconfig.storybook.json:/app/tsconfig.storybook.json
+      - ./frontend:/app
+      - /app/node_modules
     ports:
       - "6006:6006"
-    command: ["npm", "run", "storybook"]
     networks:
-      - internal
+      - proxy-network
+    profiles:
+      - storybook
 
-  keycloak:
-    environment:
-      KC_LOG_LEVEL: info
-      KC_HOSTNAME_STRICT: "false"
+networks:
+  proxy-network:
+    external: true
