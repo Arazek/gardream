@@ -1,0 +1,45 @@
+@use 'theme/mixins' as *;
+
+.top-app-bar {
+  @include glassmorphism;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  padding-top: calc(var(--space-3) + env(safe-area-inset-top));
+  min-height: var(--top-app-bar-height);
+  box-shadow: var(--shadow-top-bar);
+
+  &__leading {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  &__title {
+    @include type-nav-title;
+    color: var(--color-primary-container);
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    pointer-events: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 5rem;
+  }
+
+  &__trailing {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+}

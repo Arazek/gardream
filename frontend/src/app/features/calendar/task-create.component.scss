@@ -1,0 +1,125 @@
+@use 'theme/mixins' as *;
+
+.task-create-content {
+  --background: var(--color-surface);
+}
+
+.task-create-form {
+  padding: var(--space-4) var(--space-4) calc(var(--space-6) + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.tc-section {
+  &__title {
+    @include type-label-lg;
+    color: var(--color-on-surface);
+    margin: 0 0 var(--space-3);
+  }
+
+  &__optional {
+    @include type-label-sm;
+    color: var(--color-on-surface-variant);
+  }
+}
+
+// ─── Type grid ────────────────────────────────────────────────────────────────
+.tc-type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+
+.tc-type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-2);
+  background: var(--color-surface-container-low);
+  border: 0.125rem solid transparent;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition:
+    background var(--duration-quick) var(--ease-standard),
+    border-color var(--duration-quick) var(--ease-standard);
+
+  &--active {
+    background: var(--color-primary-container);
+    border-color: var(--color-primary);
+  }
+
+  &__icon {
+    font-size: var(--icon-size-lg);
+    color: var(--color-on-surface-variant);
+
+    .tc-type-btn--active & {
+      color: var(--color-on-primary-container);
+    }
+  }
+
+  &__label {
+    @include type-label-sm;
+    color: var(--color-on-surface-variant);
+
+    .tc-type-btn--active & {
+      color: var(--color-on-primary-container);
+    }
+  }
+}
+
+// ─── Inputs ───────────────────────────────────────────────────────────────────
+.tc-date-input,
+.tc-text-input {
+  @include type-body;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-container-low);
+  border: none;
+  border-radius: var(--radius-lg);
+  color: var(--color-on-surface);
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    box-shadow: inset 0 0 0 0.09375rem var(--color-primary);
+    background: var(--color-surface-container-lowest);
+  }
+}
+
+.tc-textarea {
+  @include type-body;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-container-low);
+  border: none;
+  border-radius: var(--radius-lg);
+  color: var(--color-on-surface);
+  resize: none;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    box-shadow: inset 0 0 0 0.09375rem var(--color-primary);
+    background: var(--color-surface-container-lowest);
+  }
+}
+
+// ─── Submit ───────────────────────────────────────────────────────────────────
+.tc-submit {
+  @include type-label-lg;
+  width: 100%;
+  padding: var(--space-4);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: opacity var(--duration-quick) var(--ease-standard);
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

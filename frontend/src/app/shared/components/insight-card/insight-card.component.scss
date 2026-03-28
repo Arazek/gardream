@@ -1,0 +1,55 @@
+@use 'theme/mixins' as *;
+
+.insight-card {
+  background: var(--color-primary-container);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+
+  &__text {
+    @include type-body-lg;
+    color: var(--color-on-primary-container);
+    font-style: italic;
+    margin: 0;
+    flex: 1;
+  }
+
+  &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  &__identity {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  &__identity-label {
+    @include type-label-sm;
+    color: var(--color-on-primary-container);
+    opacity: 0.8;
+  }
+
+  &__cta {
+    @include type-label;
+    background: var(--color-on-primary-container);
+    color: var(--color-primary-container);
+    border: none;
+    border-radius: var(--radius-full);
+    padding: var(--space-2) var(--space-4);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity var(--duration-quick) var(--ease-standard);
+
+    &:hover { opacity: 0.85; }
+    &:focus-visible {
+      outline: 0.125rem solid var(--color-on-primary-container);
+      outline-offset: 0.125rem;
+    }
+  }
+}

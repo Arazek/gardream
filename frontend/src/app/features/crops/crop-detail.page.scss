@@ -1,0 +1,120 @@
+@use 'theme/mixins' as *;
+
+.crop-detail-content {
+  --background: var(--color-surface);
+}
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-container-md);
+  height: var(--icon-container-md);
+  border-radius: var(--radius-full);
+  background: transparent;
+  border: none;
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  padding: 0;
+  transition: background var(--duration-quick) var(--ease-standard);
+
+  &:hover { background: var(--color-surface-container); }
+
+  .material-symbols-outlined { font-size: var(--icon-size-md); }
+}
+
+.crop-detail-body {
+  padding: 0 var(--space-4) calc(var(--bottom-nav-height) + var(--space-6));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.crop-detail-wrapper {
+  padding-top: calc(var(--top-app-bar-height) + var(--space-4));
+}
+
+.crop-detail-section {
+  &__title {
+    @include type-heading-4;
+    color: var(--color-on-surface);
+    margin: 0 0 var(--space-3);
+  }
+
+  &__text {
+    @include type-body-sm;
+    color: var(--color-on-surface-variant);
+    margin: 0;
+    line-height: 1.6;
+  }
+}
+
+.crop-detail-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.crop-detail-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.crop-detail-chip {
+  @include type-label-sm;
+  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-3);
+
+  &--companion {
+    background: var(--color-secondary-container);
+    color: var(--color-on-secondary-container);
+  }
+
+  &--avoid {
+    background: var(--color-tertiary-container);
+    color: var(--color-on-tertiary-container);
+  }
+}
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+.crop-detail-skeleton {
+  &__image {
+    height: 16rem;
+    background: linear-gradient(
+      90deg,
+      var(--color-surface-container) 25%,
+      var(--color-surface-container-low) 50%,
+      var(--color-surface-container) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+
+  &__body {
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  &__line {
+    height: 1.25rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(
+      90deg,
+      var(--color-surface-container) 25%,
+      var(--color-surface-container-low) 50%,
+      var(--color-surface-container) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+
+    &--short { width: 60%; }
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

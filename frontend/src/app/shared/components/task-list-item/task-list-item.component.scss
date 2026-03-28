@@ -1,0 +1,67 @@
+@use 'theme/mixins' as *;
+
+.task-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+
+  &--completed {
+    opacity: 0.6;
+
+    .task-list-item__title {
+      text-decoration: line-through;
+    }
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title {
+    @include type-label-lg;
+    color: var(--color-on-surface);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__subtitle {
+    @include type-body-sm;
+    color: var(--color-on-surface-variant);
+    margin: var(--space-1) 0 0;
+  }
+
+  &__checkbox {
+    width: var(--icon-container-sm);
+    height: var(--icon-container-sm);
+    border-radius: var(--radius-full);
+    border: 0.125rem solid var(--color-outline-variant);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition:
+      background var(--duration-quick) var(--ease-standard),
+      border-color var(--duration-quick) var(--ease-standard);
+
+    .material-symbols-outlined {
+      font-size: 0.875rem;
+      color: var(--color-on-primary);
+    }
+
+    &--checked {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+    }
+
+    &:focus-visible {
+      outline: 0.125rem solid var(--color-primary);
+      outline-offset: 0.125rem;
+    }
+  }
+}

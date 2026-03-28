@@ -1,0 +1,27 @@
+@use 'theme/mixins' as *;
+
+.filter-chip {
+  @include type-label;
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  background: var(--color-surface-container);
+  color: var(--color-on-surface);
+  transition:
+    background var(--duration-quick) var(--ease-standard),
+    color var(--duration-quick) var(--ease-standard);
+
+  &--active {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+
+  &:focus-visible {
+    outline: 0.125rem solid var(--color-primary);
+    outline-offset: 0.125rem;
+  }
+}
