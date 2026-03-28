@@ -46,6 +46,23 @@ export { ImageWithFallbackComponent } from './components/image-with-fallback/ima
 export { SocialLoginButtonComponent, SocialProvider } from './components/social-login-button/social-login-button.component';
 export { LogoComponent, LogoSize } from './components/logo/logo.component';
 
+// ─── Arboretum Components ─────────────────────────────────────────────────────
+export { IconContainerComponent, IconContainerSize, IconContainerVariant } from './components/icon-container/icon-container.component';
+export { ProgressBarComponent } from './components/progress-bar/progress-bar.component';
+export { FilterChipComponent } from './components/filter-chip/filter-chip.component';
+export { TaskCardComponent } from './components/task-card/task-card.component';
+export { TaskListItemComponent } from './components/task-list-item/task-list-item.component';
+export { StatChipComponent } from './components/stat-chip/stat-chip.component';
+export { DayPickerComponent } from './components/day-picker/day-picker.component';
+export { PlotTypeSelectorComponent, PlotTypeOption } from './components/plot-type-selector/plot-type-selector.component';
+export { GardenGridSlotComponent, GridCropInfo } from './components/garden-grid-slot/garden-grid-slot.component';
+export { SpecimenCardComponent, SpecimenCardSize } from './components/specimen-card/specimen-card.component';
+export { WeatherWidgetComponent, CurrentWeather, DayForecast } from './components/weather-widget/weather-widget.component';
+export { InsightCardComponent } from './components/insight-card/insight-card.component';
+export { HeroSectionComponent } from './components/hero-section/hero-section.component';
+export { TopAppBarComponent } from './components/top-app-bar/top-app-bar.component';
+export { BottomNavBarComponent, NavItem } from './components/bottom-nav-bar/bottom-nav-bar.component';
+
 // ─── Pipes ────────────────────────────────────────────────────────────────────
 export { TimeAgoPipe } from './pipes/time-ago.pipe';
 export { TruncatePipe } from './pipes/truncate.pipe';

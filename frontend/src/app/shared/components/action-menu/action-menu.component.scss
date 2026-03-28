@@ -1,3 +1,5 @@
+@use 'theme/mixins' as *;
+
 .action-menu {
   position: relative;
   display: inline-flex;
@@ -9,21 +11,21 @@
   }
 
   &__list {
-    min-width: 180px;
-    padding: 4px 0;
+    min-width: 11.25rem;
+    padding: var(--space-1) 0;
   }
 
   &__item {
-    --padding-start: 14px;
-    --padding-end: 16px;
-    --min-height: 40px;
-    font-size: 14px;
+    --padding-start: 0.875rem;
+    --padding-end: var(--space-4);
+    --min-height: 2.5rem;
+    @include type-body;
 
     &--danger {
-      --color: var(--ion-color-danger);
-      color: var(--ion-color-danger);
+      --color: var(--color-error);
+      color: var(--color-error);
 
-      ion-icon { color: var(--ion-color-danger); }
+      ion-icon { color: var(--color-error); }
     }
 
     &--warning {
@@ -34,15 +36,15 @@
     }
 
     &--primary {
-      --color: var(--ion-color-primary);
-      color: var(--ion-color-primary);
+      --color: var(--color-primary);
+      color: var(--color-primary);
 
-      ion-icon { color: var(--ion-color-primary); }
+      ion-icon { color: var(--color-primary); }
     }
   }
 
   &__item-icon {
-    font-size: 16px;
-    margin-inline-end: 10px;
+    font-size: var(--icon-size-sm);
+    margin-inline-end: var(--space-3);
   }
 }

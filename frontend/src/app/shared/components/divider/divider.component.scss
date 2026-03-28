@@ -1,16 +1,18 @@
+@use 'theme/mixins' as *;
+
 .divider {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 16px 0;
-  color: var(--ion-color-medium);
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+  color: var(--color-on-surface-variant);
 
   &::before,
   &::after {
     content: '';
     flex: 1;
-    height: 1px;
-    background: var(--ion-color-light-shade);
+    height: 0.0625rem;
+    background: var(--color-outline-variant);
   }
 
   &:not(:has(.divider__label))::after {
@@ -18,10 +20,7 @@
   }
 
   &__label {
-    font-size: 12px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    @include type-label;
     white-space: nowrap;
   }
 }

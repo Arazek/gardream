@@ -1,4 +1,4 @@
-# PWA Template — Conventions
+# Garden Task Planner — Conventions
 
 Standards and rules for working in this codebase.
 Most rules reference established industry specs — links provided where relevant.

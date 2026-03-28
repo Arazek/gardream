@@ -26,14 +26,19 @@ export const routes: Routes = [
           import('./features/home/home.routes').then((m) => m.homeRoutes),
       },
       {
-        path: 'example',
+        path: 'calendar',
         loadChildren: () =>
-          import('./features/example/example.routes').then((m) => m.exampleRoutes),
+          import('./features/calendar/calendar.routes').then((m) => m.calendarRoutes),
       },
       {
-        path: 'settings',
+        path: 'library',
         loadChildren: () =>
-          import('./features/settings/settings.routes').then((m) => m.settingsRoutes),
+          import('./features/crops/crops.routes').then((m) => m.cropsRoutes),
+      },
+      {
+        path: 'plots',
+        loadChildren: () =>
+          import('./features/plots/plots.routes').then((m) => m.plotsRoutes),
       },
       {
         path: 'profile',
@@ -41,9 +46,14 @@ export const routes: Routes = [
           import('./features/profile/profile.routes').then((m) => m.profileRoutes),
       },
       {
-        path: 'garden',
+        path: 'settings',
         loadChildren: () =>
-          import('./features/garden/garden.routes').then((m) => m.gardenRoutes),
+          import('./features/settings/settings.routes').then((m) => m.settingsRoutes),
+      },
+      {
+        path: 'example',
+        loadChildren: () =>
+          import('./features/example/example.routes').then((m) => m.exampleRoutes),
       },
       {
         path: '',

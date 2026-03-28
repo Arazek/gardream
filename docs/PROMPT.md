@@ -1,14 +1,18 @@
-# PWA Template — Project Context Primer
+# Garden Task Planner — Project Context Primer
 
 Read this file at the start of every session before making any changes.
-For full details, refer to `docs/ARCHITECTURE.md` and `docs/CONVENTIONS.md`.
+For full details, refer to `docs/ARCHITECTURE.md`, `docs/CONVENTIONS.md`, and `docs/DESIGN_SYSTEM.md`.
 
 ---
 
 ## What this is
 
-A personal, reusable **monorepo PWA template** — mobile-first, production-ready,
-fully containerized. Designed as a starting base for future projects.
+A **mobile-first Progressive Web App** for hobbyist and urban gardeners to organize plots and manage gardening tasks.
+Production-ready out of the box: authentication, database, API, reverse proxy, TLS, and a comprehensive design system — all running in Docker.
+
+**Vision**: Help hobbyist and urban gardeners organize their plots and automatically manage gardening tasks through intelligent scheduling and simple visual planning.
+
+**Core Value Proposition**: Plan your garden visually, and always know what to do next.
 
 ---
 
@@ -34,7 +38,7 @@ fully containerized. Designed as a starting base for future projects.
 ## Monorepo structure
 
 ```
-pwa-template/
+gardream/
 ├── frontend/          Angular/Ionic PWA + Capacitor
 ├── backend/           FastAPI Python API
 ├── infra/
@@ -103,11 +107,16 @@ src/app/
 │   ├── interceptors/    auth (token injection), error (401 → re-login)
 │   └── theme/           ThemeService — scheme (light/dark/system) + accent (clay/moss/dune/slate)
 ├── features/
-│   ├── tabs/            TabsPage — bottom tab navigation (Home, Items, Settings)
-│   ├── home/            HomePage — greeting, avatar in header, quick-action cards
-│   ├── settings/        SettingsPage — profile info, scheme/accent picker, sign out
-│   └── example/         Full CRUD feature (list + detail pages, NgRx store, API service)
-├── shared/              22 standalone components, all BEM-styled + Storybook stories
+│   ├── tabs/            TabsPage — bottom tab navigation (My Garden, Plots, Calendar, Library, Profile)
+│   ├── home/            HomePage — garden dashboard with tasks and plots overview
+│   ├── plots/           # Plot management (create, view, edit)
+│   ├── crops/           # Crop library/encyclopedia
+│   ├── calendar/        # Task calendar and scheduling
+│   ├── tasks/           # Task management
+│   ├── profile/         # User profile
+│   ├── settings/        SettingsPage — app settings, scheme/accent picker, sign out
+│   └── example/         Example CRUD feature (list + detail pages, NgRx store, API service)
+├── shared/              40+ standalone components, all BEM-styled + Storybook stories
 │   └── index.ts         Barrel — import all shared components from here
 └── store/               Root NgRx registration (rootReducers, rootEffects)
 ```
@@ -124,7 +133,7 @@ Entry point: `src/main.ts` → `app.config.ts` (providers: router, store, Keyclo
 
 ## Shared components
 
-All 27 components are in `shared/components/` and exported from `shared/index.ts`. Import from there:
+All 40+ components are in `shared/components/` and exported from `shared/index.ts`. Import from there:
 
 ```ts
 import { AvatarComponent, CardComponent, StatCardComponent } from '../../shared';
@@ -152,7 +161,12 @@ app/
 │   ├── router.py        Aggregates all endpoint routers
 │   └── endpoints/
 │       ├── health.py    GET /api/v1/health (public)
-│       ├── example.py   Full CRUD (protected, owner-scoped)
+│       ├── example.py   Example CRUD (protected, owner-scoped)
+│       ├── crops.py     # Crop management endpoints
+│       ├── plots.py     # Plot management endpoints
+│       ├── tasks.py     # Task management endpoints
+│       ├── weather.py   # Weather integration endpoints
+│       ├── notification_settings.py # User notification settings
 │       └── ws.py        WebSocket /api/v1/ws/{channel} (token via query param)
 ├── core/
 │   ├── config.py        pydantic-settings — all config from .env
@@ -161,8 +175,22 @@ app/
 ├── db/
 │   ├── base.py          SQLAlchemy DeclarativeBase
 │   └── session.py       Async engine + session factory
-├── models/example.py    ExampleItem ORM model
-└── schemas/example.py   Pydantic schemas (Base, Create, Update, Response)
+├── models/              # SQLAlchemy ORM models
+│   ├── example.py       # Example model
+│   ├── crop.py          # Crop model
+│   ├── plot.py          # Plot model
+│   ├── plot_slot.py     # Plot slot model
+│   ├── task.py          # Task model
+│   ├── user_profile.py  # User profile model
+│   └── notification_settings.py # Notification settings model
+└── schemas/             # Pydantic request/response schemas
+    ├── example.py       # Example schemas
+    ├── crop.py          # Crop schemas
+    ├── plot.py          # Plot schemas
+    ├── plot_slot.py     # Plot slot schemas
+    ├── task.py          # Task schemas
+    ├── weather.py       # Weather schemas
+    └── notification_settings.py # Notification settings schemas
 ```
 
 Migrations: `backend/alembic/` — `env.py` reads `settings.DATABASE_URL` and auto-imports all models.

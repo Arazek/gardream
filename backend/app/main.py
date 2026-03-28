@@ -7,15 +7,16 @@ from app.api.v1.router import api_router
 from app.core.config import settings
 from app.db.session import engine
 from app.db.base import Base
+from app.services.scheduler import create_scheduler
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: create tables (Alembic handles migrations in prod)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Schema is managed exclusively by Alembic migrations (run ./run.sh db:migrate)
+    scheduler = create_scheduler()
+    scheduler.start()
     yield
-    # Shutdown
+    scheduler.shutdown(wait=False)
     await engine.dispose()
 
 
@@ -29,7 +30,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

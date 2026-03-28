@@ -9,18 +9,18 @@ import {
 import { KeycloakProfile } from 'keycloak-js';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { PageHeaderComponent, SectionComponent, AvatarComponent, DividerComponent } from '../../shared';
+import { TopAppBarComponent, SectionComponent, AvatarComponent, DividerComponent } from '../../shared';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
   imports: [
     IonContent, IonList, IonItem, IonLabel, IonIcon,
-    PageHeaderComponent, SectionComponent, AvatarComponent, DividerComponent,
+    TopAppBarComponent, SectionComponent, AvatarComponent, DividerComponent,
   ],
   styleUrl: './profile.page.scss',
   template: `
-    <app-page-header title="Profile" />
+    <app-top-app-bar title="Profile" />
 
     <ion-content class="profile-content">
 

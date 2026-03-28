@@ -1,0 +1,15 @@
+Good morning, {{ name }}!
+
+Here are your garden tasks for today:
+
+{% if tasks %}{% for task in tasks %}
+• {{ task.title }}{% if task.note %}
+  {{ task.note }}{% endif %}
+
+{% endfor %}{% else %}No tasks scheduled for today. Enjoy the day!
+{% endif %}
+
+Open your calendar: {{ app_url }}/tabs/calendar
+
+---
+Digital Arboretum — manage notification preferences in Settings.

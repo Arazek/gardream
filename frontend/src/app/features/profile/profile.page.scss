@@ -1,71 +1,68 @@
+@use 'theme/mixins' as *;
+
 .profile-content {
-  --background: var(--ion-background-color);
+  --background: var(--color-surface);
 }
 
 .profile-hero {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 32px 20px 24px;
-  gap: 8px;
+  padding: calc(var(--top-app-bar-height) + var(--space-8)) var(--space-5) var(--space-6);
+  gap: var(--space-2);
 
   &__avatar {
-    margin-bottom: 4px;
+    margin-bottom: var(--space-1);
   }
 
   &__name {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--ion-text-color);
+    @include type-heading-4;
+    color: var(--color-on-surface);
     margin: 0;
     letter-spacing: -0.02em;
   }
 
   &__email {
-    font-size: 14px;
-    color: var(--ion-color-medium);
+    @include type-body;
+    color: var(--color-on-surface-variant);
     margin: 0;
   }
 }
 
 .profile-list {
   --background: transparent;
-  padding: 0 8px;
+  padding: 0 var(--space-2);
 }
 
 .profile-item {
   --background: transparent;
-  --padding-start: 12px;
-  --inner-padding-end: 12px;
-  --min-height: 60px;
-  border-radius: 10px;
+  --padding-start: var(--space-3);
+  --inner-padding-end: var(--space-3);
+  --min-height: 3.75rem;
+  border-radius: var(--radius-sm);
 
   &__icon {
-    font-size: 18px;
-    color: var(--ion-color-medium);
-    margin-right: 4px;
+    font-size: var(--icon-size-md);
+    color: var(--color-on-surface-variant);
+    margin-right: var(--space-1);
   }
 
   &__label {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: var(--ion-color-medium);
-    margin: 0 0 2px !important;
+    @include type-label;
+    color: var(--color-on-surface-variant);
+    margin: 0 0 var(--space-1) !important;
   }
 
   &__value {
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--ion-text-color);
+    @include type-body-lg;
+    color: var(--color-on-surface);
     margin: 0 !important;
   }
 
   &--danger {
-    --color: var(--ion-color-danger);
+    --color: var(--color-error);
 
-    ion-icon { color: var(--ion-color-danger); }
-    ion-label { color: var(--ion-color-danger); }
+    ion-icon { color: var(--color-error); }
+    ion-label { color: var(--color-error); }
   }
 }

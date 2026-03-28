@@ -1,29 +1,29 @@
+@use 'theme/mixins' as *;
+
 .section {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
 
   &__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 16px;
-    margin-bottom: 8px;
+    padding: 0 var(--space-4);
+    margin-bottom: var(--space-2);
   }
 
   &__title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--ion-color-dark);
+    @include type-heading-4;
+    color: var(--color-on-surface);
     margin: 0;
   }
 
   &__see-all {
-    font-size: 13px;
-    color: var(--ion-color-primary);
+    @include type-body-sm;
+    color: var(--color-primary);
     background: none;
     border: none;
-    padding: 4px 0;
+    padding: var(--space-1) 0;
     cursor: pointer;
-    font-weight: 500;
   }
 
   &__content {

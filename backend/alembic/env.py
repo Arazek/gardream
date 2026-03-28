@@ -9,7 +9,12 @@ from alembic import context
 
 from app.core.config import settings
 from app.db.base import Base
-import app.models.example  # noqa: F401 — import all models so Alembic detects them
+import app.models.example  # noqa: F401
+import app.models.crop  # noqa: F401
+import app.models.plot  # noqa: F401
+import app.models.plot_slot  # noqa: F401
+import app.models.task  # noqa: F401
+import app.models.notification_settings  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)

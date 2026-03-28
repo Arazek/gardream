@@ -1,25 +1,32 @@
 import { Injectable, effect, signal } from '@angular/core';
 
-export type Accent = 'clay' | 'moss' | 'dune' | 'slate' | null;
 export type ColorScheme = 'light' | 'dark' | 'system';
 
-const STORAGE_ACCENT = 'app-accent';
 const STORAGE_SCHEME = 'app-scheme';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
-  readonly accent = signal<Accent>(this.readAccent());
   readonly scheme = signal<ColorScheme>(this.readScheme());
 
   constructor() {
-    effect(() => this.applyAccent(this.accent()));
-    effect(() => this.applyScheme(this.scheme()));
-  }
-
-  setAccent(accent: Accent): void {
-    this.accent.set(accent);
-    if (accent) localStorage.setItem(STORAGE_ACCENT, accent);
-    else localStorage.removeItem(STORAGE_ACCENT);
+    // Apply initial scheme
+    this.applyScheme(this.scheme());
+    
+    // Watch for system preference changes when scheme is 'system'
+    effect(() => {
+      const scheme = this.scheme();
+      this.applyScheme(scheme);
+      
+      if (scheme === 'system') {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const listener = (e: MediaQueryListEvent) => {
+          this.applyScheme('system');
+        };
+        mediaQuery.addEventListener('change', listener);
+        return () => mediaQuery.removeEventListener('change', listener);
+      }
+      return undefined;
+    });
   }
 
   setScheme(scheme: ColorScheme): void {
@@ -27,21 +34,33 @@ export class ThemeService {
     localStorage.setItem(STORAGE_SCHEME, scheme);
   }
 
-  private readAccent(): Accent {
-    return (localStorage.getItem(STORAGE_ACCENT) as Accent) ?? null;
+  toggleScheme(): void {
+    const current = this.scheme();
+    if (current === 'light') {
+      this.setScheme('dark');
+    } else if (current === 'dark') {
+      this.setScheme('light');
+    } else {
+      // If system, toggle to explicit dark/light based on current appearance
+      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      this.setScheme(isDark ? 'light' : 'dark');
+    }
   }
 
   private readScheme(): ColorScheme {
     return (localStorage.getItem(STORAGE_SCHEME) as ColorScheme) ?? 'system';
   }
 
-  private applyAccent(accent: Accent): void {
-    if (accent) document.body.setAttribute('data-accent', accent);
-    else document.body.removeAttribute('data-accent');
-  }
-
   private applyScheme(scheme: ColorScheme): void {
     document.body.classList.remove('light', 'dark');
-    if (scheme !== 'system') document.body.classList.add(scheme);
+    
+    if (scheme === 'system') {
+      // Apply system preference
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+      }
+    } else {
+      document.body.classList.add(scheme);
+    }
   }
 }

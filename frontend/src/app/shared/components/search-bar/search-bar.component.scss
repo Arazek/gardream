@@ -1,6 +1,6 @@
 .search-bar {
-  --border-radius: 10px;
+  --border-radius: var(--radius-sm);
   --box-shadow: none;
-  --background: var(--ion-color-light);
-  padding: 0 8px;
+  --background: var(--color-surface-container-low);
+  padding: 0 var(--space-2);
 }

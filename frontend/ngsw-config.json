@@ -6,7 +6,7 @@
       "name": "app-shell",
       "installMode": "prefetch",
       "resources": {
-        "files": ["/favicon.ico", "/index.html", "/manifest.webmanifest", "/*.css", "/*.js"]
+        "files": ["/index.html", "/manifest.webmanifest", "/*.css", "/*.js"]
       }
     },
     {
@@ -20,12 +20,22 @@
   ],
   "dataGroups": [
     {
+      "name": "api-crops",
+      "urls": ["/api/v1/crops/**"],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 50,
+        "maxAge": "7d",
+        "timeout": "5s"
+      }
+    },
+    {
       "name": "api-freshness",
-      "urls": ["/api/**"],
+      "urls": ["/api/v1/**"],
       "cacheConfig": {
         "strategy": "freshness",
-        "maxSize": 100,
-        "maxAge": "3d",
+        "maxSize": 200,
+        "maxAge": "1d",
         "timeout": "10s"
       }
     }

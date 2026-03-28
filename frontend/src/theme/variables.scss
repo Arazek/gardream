@@ -1,6 +1,286 @@
+// ─── Design System: Color Tokens ─────────────────────────────────────────────
+:root {
+  // --- Primary (Green Forest Palette) ---
+  --color-primary:                    #163526;
+  --color-on-primary:                 #ffffff;
+  --color-primary-container:          #2d4c3b;
+  --color-on-primary-container:       #99bca6;
+  --color-primary-fixed:              #c7ebd4;
+  --color-primary-fixed-dim:          #accfb8;
+  --color-on-primary-fixed:           #012113;
+  --color-on-primary-fixed-variant:   #2e4d3c;
+  --color-inverse-primary:            #accfb8;
+
+  // --- Secondary ---
+  --color-secondary:                  #556159;
+  --color-on-secondary:               #ffffff;
+  --color-secondary-container:        #d5e3d8;
+  --color-on-secondary-container:     #59665d;
+  --color-secondary-fixed:            #d8e6db;
+  --color-secondary-fixed-dim:        #bccabf;
+  --color-on-secondary-fixed:         #121e17;
+  --color-on-secondary-fixed-variant: #3d4a41;
+
+  // --- Tertiary (removed - no accent colors) ---
+
+  // --- Surface hierarchy (Light Mode) ---
+  --color-surface:                    #faf9f5;
+  --color-surface-bright:             #faf9f5;
+  --color-surface-dim:                #dbdad6;
+  --color-surface-container-lowest:   #ffffff;
+  --color-surface-container-low:      #f4f4f0;
+  --color-surface-container:          #efeeea;
+  --color-surface-container-high:     #e9e8e4;
+  --color-surface-container-highest:  #e3e2df;
+  --color-surface-tint:               #466553;
+  --color-surface-variant:            #e3e2df;
+  --color-inverse-surface:            #2f312e;
+  --color-inverse-on-surface:         #f2f1ed;
+
+  // --- On-surface ---
+  --color-on-surface:                 #1b1c1a;
+  --color-on-surface-variant:         #424843;
+  --color-on-background:              #1b1c1a;
+  --color-background:                 #faf9f5;
+
+  // --- Outline ---
+  --color-outline:                    #727973;
+  --color-outline-variant:            #c2c8c1;
+
+  // --- Error ---
+  --color-error:                      #ba1a1a;
+  --color-on-error:                   #ffffff;
+  --color-error-container:            #ffdad6;
+  --color-on-error-container:         #93000a;
+
+  // --- Glassmorphism (Light Mode) ---
+  --glassmorphism-bg: rgba(250, 249, 245, 0.85);
+}
+
+// ─── Design System: Typography Tokens ────────────────────────────────────────
+:root {
+  --font-headline: 'Noto Serif', Georgia, serif;
+  --font-body:     'Manrope', system-ui, sans-serif;
+  --font-label:    'Manrope', system-ui, sans-serif;
+}
+
+// ─── Design System: Typography Mixins ────────────────────────────────────────
+@mixin type-display {
+  font-family: var(--font-headline);
+  font-size: 2.5rem;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+@mixin type-heading-1 {
+  font-family: var(--font-headline);
+  font-size: 2rem;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+@mixin type-heading-2 {
+  font-family: var(--font-headline);
+  font-size: 1.75rem;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+@mixin type-heading-3 {
+  font-family: var(--font-headline);
+  font-size: 1.5rem;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+@mixin type-heading-4 {
+  font-family: var(--font-headline);
+  font-size: 1.25rem;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+@mixin type-nav-title {
+  font-family: var(--font-headline);
+  font-size: 1.125rem;
+  line-height: 1;
+  font-weight: 600;
+}
+
+@mixin type-body-lg {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+@mixin type-body {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+@mixin type-body-sm {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+@mixin type-label-lg {
+  font-family: var(--font-label);
+  font-size: 0.875rem;
+  line-height: 1;
+  font-weight: 600;
+}
+
+@mixin type-label {
+  font-family: var(--font-label);
+  font-size: 0.75rem;
+  line-height: 1;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+@mixin type-label-sm {
+  font-family: var(--font-label);
+  font-size: 0.625rem;
+  line-height: 1;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+@mixin type-latin-name {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  line-height: 1;
+  font-weight: 400;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+// ─── Design System: Spacing Scale ────────────────────────────────────────────
+:root {
+  // Top app bar fixed height — used to pad scrollable content so it isn't
+  // hidden behind the top bar. Includes safe-area-inset-top.
+  --top-app-bar-height: calc(var(--icon-container-md) + 2 * var(--space-3) + env(safe-area-inset-top));
+  
+  // Bottom nav bar fixed height — used to pad scrollable content so it isn't
+  // hidden behind the nav bar. Includes safe-area-inset-bottom.
+  --bottom-nav-height: calc(5rem + env(safe-area-inset-bottom));
+
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.25rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+}
+
+// ─── Design System: Border Radius Scale ──────────────────────────────────────
+:root {
+  --radius-sm:   0.5rem;
+  --radius-md:   1rem;
+  --radius-lg:   1.5rem;
+  --radius-xl:   2rem;
+  --radius-2xl:  3rem;
+  --radius-full: 624.9375rem; /* 9999px in rem */
+}
+
+// ─── Design System: Shadow Tokens ────────────────────────────────────────────
+:root {
+  --shadow-card:  0 0.125rem 0.5rem rgba(27, 28, 26, 0.06);
+  --shadow-float: 0 0.25rem 1.5rem rgba(27, 28, 26, 0.06);
+  --shadow-nav:   0 -0.25rem 1.5rem rgba(27, 28, 26, 0.06);
+  --shadow-fab:   0 0.25rem 1rem rgba(22, 53, 38, 0.25);
+  --shadow-top-bar: 0 0.0625rem 0.75rem rgba(27, 28, 26, 0.04);
+}
+
+// ─── Design System: Icon Sizes ───────────────────────────────────────────────
+:root {
+  --icon-size-sm:   1rem;
+  --icon-size-md:   1.25rem;
+  --icon-size-base: 1.5rem;
+  --icon-size-lg:   2rem;
+  --icon-size-xl:   2.5rem;
+  --icon-size-2xl:  6.25rem;
+}
+
+// ─── Design System: Icon Container Sizes ─────────────────────────────────────
+:root {
+  --icon-container-sm:  2rem;
+  --icon-container-md:  2.5rem;
+  --icon-container-lg:  3rem;
+  --icon-container-xl:  4rem;
+}
+
+// ─── Design System: Motion Tokens ────────────────────────────────────────────
+:root {
+  --ease-standard:    cubic-bezier(0.2, 0, 0, 1);
+  --ease-decelerate:  cubic-bezier(0, 0, 0, 1);
+  --ease-accelerate:  cubic-bezier(0.3, 0, 1, 1);
+  --ease-emphasized:  cubic-bezier(0.2, 0, 0, 1);
+
+  --duration-micro:    100ms;
+  --duration-quick:    200ms;
+  --duration-standard: 300ms;
+  --duration-complex:  500ms;
+}
+
+// ─── Design System: Glassmorphism Mixin ──────────────────────────────────────
+@mixin glassmorphism {
+  background: var(--glassmorphism-bg, rgba(250, 249, 245, 0.85));
+  backdrop-filter: blur(0.75rem);
+  -webkit-backdrop-filter: blur(0.75rem);
+}
+
+// ─── Design System: Reduced Motion ───────────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// ─── Icon Rendering ───────────────────────────────────────────────────────────
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-size: var(--icon-size-base);
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.material-symbols-outlined--filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
 // ─── Typography ──────────────────────────────────────────────────────────────
 :root {
-  --ion-font-family: 'Source Sans 3', sans-serif;
+  --ion-font-family: var(--font-body);
+}
+
+// ─── Ionic Variable Bridge ────────────────────────────────────────────────────
+:root {
+  --ion-background-color:     var(--color-surface);
+  --ion-text-color:           var(--color-on-surface);
+  --ion-item-background:      var(--color-surface-container-lowest);
+  --ion-card-background:      var(--color-surface-container-lowest);
+  --ion-border-color:         var(--color-outline-variant);
+  --ion-color-step-50:        var(--color-surface-container-low);
+  --ion-color-step-100:       var(--color-surface-container);
+  --ion-toolbar-background:   transparent;
+  --ion-tab-bar-background:   transparent;
 }
 
 // ─── Semantic colors (constant across all accents) ───────────────────────────
@@ -48,261 +328,148 @@
   --ion-color-dark-tint: #383a3e;
 }
 
-// ─── Default palette — Blue (no accent set) ──────────────────────────────────
+// ─── Default palette — Design System primary (Green Forest) ─────────────────
 :root {
-  --ion-color-primary: #3880ff;
-  --ion-color-primary-rgb: 56, 128, 255;
+  --ion-color-primary: #163526;
+  --ion-color-primary-rgb: 22, 53, 38;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #3171e0;
-  --ion-color-primary-tint: #4c8dff;
+  --ion-color-primary-shade: #132f21;
+  --ion-color-primary-tint: #2d4c3b;
 
-  --ion-color-secondary: #3dc2ff;
-  --ion-color-secondary-rgb: 61, 194, 255;
+  --ion-color-secondary: #556159;
+  --ion-color-secondary-rgb: 85, 97, 89;
   --ion-color-secondary-contrast: #ffffff;
   --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #36abe0;
-  --ion-color-secondary-tint: #50c8ff;
+  --ion-color-secondary-shade: #4b554e;
+  --ion-color-secondary-tint: #66716a;
 }
 
-// ─── Dark base — overrides shared surface/text tokens ────────────────────────
-@mixin dark-base {
-  --ion-color-primary: #428cff;
-  --ion-color-primary-rgb: 66, 140, 255;
-  --ion-color-primary-contrast: #ffffff;
-  --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #3a7be0;
-  --ion-color-primary-tint: #5598ff;
+// ─── Dark Mode — Green Forest Palette ────────────────────────────────────────
+@mixin dark-mode {
+  // --- Primary (Green Forest - Dark Mode) ---
+  --color-primary: #accfb8;
+  --color-on-primary: #000000;
+  --color-primary-container: #2d4c3b;
+  --color-on-primary-container: #99bca6;
+  --color-primary-fixed: #c7ebd4;
+  --color-primary-fixed-dim: #accfb8;
+  --color-on-primary-fixed: #012113;
+  --color-on-primary-fixed-variant: #2e4d3c;
+  --color-inverse-primary: #accfb8;
+
+  // --- Secondary (Dark Mode) ---
+  --color-secondary: #bccabf;
+  --color-on-secondary: #000000;
+  --color-secondary-container: #3d4a41;
+  --color-on-secondary-container: #d5e3d8;
+  --color-secondary-fixed: #d8e6db;
+  --color-secondary-fixed-dim: #bccabf;
+  --color-on-secondary-fixed: #121e17;
+  --color-on-secondary-fixed-variant: #3d4a41;
+
+  // --- Surface hierarchy (Dark Mode) ---
+  --color-surface: #121212;
+  --color-surface-bright: #1e1e1e;
+  --color-surface-dim: #0a0a0a;
+  --color-surface-container-lowest: #1e1e1e;
+  --color-surface-container-low: #252525;
+  --color-surface-container: #2d2d2d;
+  --color-surface-container-high: #363636;
+  --color-surface-container-highest: #404040;
+  --color-surface-tint: #466553;
+  --color-surface-variant: #2d2d2d;
+  --color-inverse-surface: #e0e0e0;
+  --color-inverse-on-surface: #121212;
+
+  // --- On-surface (Dark Mode) ---
+  --color-on-surface: #e0e0e0;
+  --color-on-surface-variant: #b0b0b0;
+  --color-on-background: #e0e0e0;
+  --color-background: #121212;
+
+  // --- Outline (Dark Mode) ---
+  --color-outline: #8a8a8a;
+  --color-outline-variant: #404040;
+
+  // --- Error (Dark Mode) ---
+  --color-error: #ff8a80;
+  --color-on-error: #000000;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+
+  // --- Shadow Tokens (Dark Mode) ---
+  --shadow-card:  0 0.125rem 0.5rem rgba(0, 0, 0, 0.2);
+  --shadow-float: 0 0.25rem 1.5rem rgba(0, 0, 0, 0.25);
+  --shadow-nav:   0 -0.25rem 1.5rem rgba(0, 0, 0, 0.25);
+  --shadow-fab:   0 0.25rem 1rem rgba(153, 188, 166, 0.25);
+  --shadow-top-bar: 0 0.0625rem 0.75rem rgba(0, 0, 0, 0.2);
+
+  // --- Ionic component bridges (Dark Mode) ---
+  --ion-color-primary: #accfb8;
+  --ion-color-primary-rgb: 172, 207, 184;
+  --ion-color-primary-contrast: #000000;
+  --ion-color-primary-contrast-rgb: 0, 0, 0;
+  --ion-color-primary-shade: #97b6a2;
+  --ion-color-primary-tint: #b4d4bf;
+
+  --ion-color-secondary: #bccabf;
+  --ion-color-secondary-rgb: 188, 202, 191;
+  --ion-color-secondary-contrast: #000000;
+  --ion-color-secondary-contrast-rgb: 0, 0, 0;
+  --ion-color-secondary-shade: #a5b2a8;
+  --ion-color-secondary-tint: #c3cfc5;
 
   --ion-background-color: #121212;
   --ion-background-color-rgb: 18, 18, 18;
-  --ion-text-color: #ffffff;
-  --ion-text-color-rgb: 255, 255, 255;
-
-  --ion-color-light: #222428;
-  --ion-color-light-rgb: 34, 36, 40;
-  --ion-color-light-shade: #3a3c40;
-  --ion-color-light-tint: #383a3e;
+  --ion-text-color: #e0e0e0;
+  --ion-text-color-rgb: 224, 224, 224;
 
   --ion-item-background: #1e1e1e;
   --ion-card-background: #1e1e1e;
+  --ion-color-light: #2d2d2d;
+  --ion-color-light-rgb: 45, 45, 45;
+  --ion-color-light-shade: #282828;
+  --ion-color-light-tint: #424242;
+  --ion-color-dark: #f4f5f8;
+  --ion-color-dark-rgb: 244, 245, 248;
+  --ion-color-dark-shade: #d7d8da;
+  --ion-color-dark-tint: #f5f6f9;
+
+  // --- Glassmorphism (Dark Mode) ---
+  --glassmorphism-bg: rgba(18, 18, 18, 0.85);
 }
 
-// ─── Accent mixins — Light ────────────────────────────────────────────────────
-
-@mixin accent-clay-light {
-  --ion-color-primary: #b5603a;
-  --ion-color-primary-rgb: 181, 96, 58;
-  --ion-color-primary-contrast: #ffffff;
-  --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #9e5433;
-  --ion-color-primary-tint: #bc714e;
-
-  --ion-color-secondary: #d4956a;
-  --ion-color-secondary-rgb: 212, 149, 106;
-  --ion-color-secondary-contrast: #ffffff;
-  --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #ba835d;
-  --ion-color-secondary-tint: #d89f78;
-
-  --ion-background-color: #faf7f4;
-  --ion-background-color-rgb: 250, 247, 244;
-  --ion-item-background: #ffffff;
-  --ion-card-background: #ffffff;
-}
-
-@mixin accent-moss-light {
-  --ion-color-primary: #4a7c59;
-  --ion-color-primary-rgb: 74, 124, 89;
-  --ion-color-primary-contrast: #ffffff;
-  --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #416d4e;
-  --ion-color-primary-tint: #5c8968;
-
-  --ion-color-secondary: #8faa7e;
-  --ion-color-secondary-rgb: 143, 170, 126;
-  --ion-color-secondary-contrast: #ffffff;
-  --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #7d9670;
-  --ion-color-secondary-tint: #9bb38a;
-
-  --ion-background-color: #f5f7f5;
-  --ion-background-color-rgb: 245, 247, 245;
-  --ion-item-background: #ffffff;
-  --ion-card-background: #ffffff;
-}
-
-@mixin accent-dune-light {
-  --ion-color-primary: #9b7b4e;
-  --ion-color-primary-rgb: 155, 123, 78;
-  --ion-color-primary-contrast: #ffffff;
-  --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #886b45;
-  --ion-color-primary-tint: #a58860;
-
-  --ion-color-secondary: #c4a882;
-  --ion-color-secondary-rgb: 196, 168, 130;
-  --ion-color-secondary-contrast: #ffffff;
-  --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #ac9472;
-  --ion-color-secondary-tint: #cab18f;
-
-  --ion-background-color: #faf8f3;
-  --ion-background-color-rgb: 250, 248, 243;
-  --ion-item-background: #ffffff;
-  --ion-card-background: #ffffff;
-}
-
-@mixin accent-slate-light {
-  --ion-color-primary: #5b7fa6;
-  --ion-color-primary-rgb: 91, 127, 166;
-  --ion-color-primary-contrast: #ffffff;
-  --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #4f6f91;
-  --ion-color-primary-tint: #6b8cb0;
-
-  --ion-color-secondary: #8aa5be;
-  --ion-color-secondary-rgb: 138, 165, 190;
-  --ion-color-secondary-contrast: #ffffff;
-  --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #7a92a9;
-  --ion-color-secondary-tint: #96aec5;
-
-  --ion-background-color: #f5f6f8;
-  --ion-background-color-rgb: 245, 246, 248;
-  --ion-item-background: #ffffff;
-  --ion-card-background: #ffffff;
-}
-
-// ─── Accent mixins — Dark ─────────────────────────────────────────────────────
-
-@mixin accent-clay-dark {
-  --ion-color-primary: #d4784f;
-  --ion-color-primary-rgb: 212, 120, 79;
-  --ion-color-primary-contrast: #ffffff;
-  --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #ba6a45;
-  --ion-color-primary-tint: #dc8a62;
-
-  --ion-color-secondary: #e8aa80;
-  --ion-color-secondary-rgb: 232, 170, 128;
-  --ion-color-secondary-contrast: #ffffff;
-  --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #cc9670;
-  --ion-color-secondary-tint: #eab48e;
-
-  --ion-background-color: #1a1210;
-  --ion-background-color-rgb: 26, 18, 16;
-  --ion-item-background: #231816;
-  --ion-card-background: #231816;
-}
-
-@mixin accent-moss-dark {
-  --ion-color-primary: #62a077;
-  --ion-color-primary-rgb: 98, 160, 119;
-  --ion-color-primary-contrast: #ffffff;
-  --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #569068;
-  --ion-color-primary-tint: #72aa84;
-
-  --ion-color-secondary: #a3bf93;
-  --ion-color-secondary-rgb: 163, 191, 147;
-  --ion-color-secondary-contrast: #ffffff;
-  --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #8fa882;
-  --ion-color-secondary-tint: #acc59c;
-
-  --ion-background-color: #111a13;
-  --ion-background-color-rgb: 17, 26, 19;
-  --ion-item-background: #172019;
-  --ion-card-background: #172019;
-}
-
-@mixin accent-dune-dark {
-  --ion-color-primary: #c09a66;
-  --ion-color-primary-rgb: 192, 154, 102;
-  --ion-color-primary-contrast: #ffffff;
-  --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #a8875a;
-  --ion-color-primary-tint: #caa675;
-
-  --ion-color-secondary: #d4bc99;
-  --ion-color-secondary-rgb: 212, 188, 153;
-  --ion-color-secondary-contrast: #ffffff;
-  --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #baa687;
-  --ion-color-secondary-tint: #d8c3a4;
-
-  --ion-background-color: #181410;
-  --ion-background-color-rgb: 24, 20, 16;
-  --ion-item-background: #221c14;
-  --ion-card-background: #221c14;
-}
-
-@mixin accent-slate-dark {
-  --ion-color-primary: #7a9ec4;
-  --ion-color-primary-rgb: 122, 158, 196;
-  --ion-color-primary-contrast: #ffffff;
-  --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #6a8cad;
-  --ion-color-primary-tint: #88aacb;
-
-  --ion-color-secondary: #a3bcce;
-  --ion-color-secondary-rgb: 163, 188, 206;
-  --ion-color-secondary-contrast: #ffffff;
-  --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #8fa6b6;
-  --ion-color-secondary-tint: #acc3d3;
-
-  --ion-background-color: #111418;
-  --ion-background-color-rgb: 17, 20, 24;
-  --ion-item-background: #181c22;
-  --ion-card-background: #181c22;
-}
-
-// ─── Helper: apply all dark accent overrides ─────────────────────────────────
-@mixin dark-accent-overrides {
-  &[data-accent='clay']  { @include accent-clay-dark; }
-  &[data-accent='moss']  { @include accent-moss-dark; }
-  &[data-accent='dune']  { @include accent-dune-dark; }
-  &[data-accent='slate'] { @include accent-slate-dark; }
-}
-
-// ─── Apply light accents ──────────────────────────────────────────────────────
-body[data-accent='clay']  { @include accent-clay-light; }
-body[data-accent='moss']  { @include accent-moss-light; }
-body[data-accent='dune']  { @include accent-dune-light; }
-body[data-accent='slate'] { @include accent-slate-light; }
-
-// ─── Apply dark mode — manual ─────────────────────────────────────────────────
+// ─── Apply Dark Mode ─────────────────────────────────────────────────────────
 body.dark {
-  @include dark-base;
-  @include dark-accent-overrides;
-}
-
-// ─── Apply dark mode — system (only when no explicit scheme class) ────────────
-body:not(.light):not(.dark) {
-  @media (prefers-color-scheme: dark) {
-    @include dark-base;
-    @include dark-accent-overrides;
+  @include dark-mode;
+  
+  // Explicitly update glassmorphism for components
+  .top-app-bar,
+  .bottom-nav-bar {
+    --glassmorphism-bg: rgba(18, 18, 18, 0.85);
+    box-shadow: 0 0.0625rem 0.75rem rgba(0, 0, 0, 0.2);
   }
 }
 
-// ─── Dark-mode helper mixin ───────────────────────────────────────────────────
-// Usage inside a selector: @include v.dark { ... }
-// Matches both the explicit .dark class and the OS system preference.
-@mixin dark {
-  :host-context(body.dark) & { @content; }
-
+// ─── Apply System Dark Mode ──────────────────────────────────────────────────
+body:not(.light):not(.dark) {
   @media (prefers-color-scheme: dark) {
-    :host-context(body:not(.light):not(.dark)) & { @content; }
+    @include dark-mode;
+    
+    // Explicitly update glassmorphism for components
+    .top-app-bar,
+    .bottom-nav-bar {
+      --glassmorphism-bg: rgba(18, 18, 18, 0.85);
+      box-shadow: 0 0.0625rem 0.75rem rgba(0, 0, 0, 0.2);
+    }
   }
 }
 
 // ─── Responsive breakpoints ───────────────────────────────────────────────────
-$bp-mobile-max:  767px;
-$bp-tablet-min:  768px;
-$bp-desktop-min: 1024px;
+$bp-mobile-max:  47.9375rem;
+$bp-tablet-min:  48rem;
+$bp-desktop-min: 64rem;
 
 @mixin mobile {
   @media (max-width: #{$bp-mobile-max}) { @content; }

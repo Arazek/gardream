@@ -2,10 +2,10 @@
   position: relative;
   width: 100%;
   height: 100%;
-  background: var(--ion-color-light);
+  background: var(--color-surface-container-low);
   overflow: hidden;
 
-  &--cover  .img-fallback__img { object-fit: cover; }
+  &--cover   .img-fallback__img { object-fit: cover; }
   &--contain .img-fallback__img { object-fit: contain; }
 
   &__skeleton {
@@ -31,7 +31,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--ion-color-medium);
-    font-size: 32px;
+    color: var(--color-on-surface-variant);
+    font-size: var(--icon-size-lg);
   }
 }

@@ -1,50 +1,46 @@
-import { Component, inject } from '@angular/core';
-import {
-  IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonRouterOutlet,
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import { home, list, settingsOutline, leaf } from 'ionicons/icons';
+import { Component, inject, OnInit } from '@angular/core';
+import { Router, NavigationEnd, RouterModule } from '@angular/router';
+import { IonTabs, IonRouterOutlet } from '@ionic/angular/standalone';
+import { filter, map } from 'rxjs/operators';
+
 import { BreakpointService } from '../../core/breakpoint.service';
 import { ShellComponent } from '../../shared/components/shell/shell.component';
+import { BottomNavBarComponent, NavItem } from '../../shared';
+
+const NAV_ITEMS: NavItem[] = [
+  { label: 'My Garden', icon: 'psychology_alt', iconFilled: 'psychology_alt', route: '/tabs/home' },
+  { label: 'Plots',     icon: 'grid_view',      iconFilled: 'grid_view',      route: '/tabs/plots' },
+  { label: 'Calendar',  icon: 'calendar_today', iconFilled: 'calendar_today', route: '/tabs/calendar' },
+  { label: 'Library',   icon: 'local_library',  iconFilled: 'local_library',  route: '/tabs/library' },
+];
 
 @Component({
   selector: 'app-tabs',
   standalone: true,
-  imports: [IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonRouterOutlet, ShellComponent],
+  imports: [RouterModule, IonTabs, IonRouterOutlet, ShellComponent, BottomNavBarComponent],
   template: `
     <app-shell>
       <ion-tabs>
         <ion-router-outlet />
-        <ion-tab-bar slot="bottom" [class.ion-hide]="!breakpoint.isMobile()">
-          <ion-tab-button tab="home" href="/tabs/home">
-            <ion-icon name="home" />
-            <ion-label>Home</ion-label>
-          </ion-tab-button>
-
-          <ion-tab-button tab="example" href="/tabs/example">
-            <ion-icon name="list" />
-            <ion-label>Items</ion-label>
-          </ion-tab-button>
-
-          <ion-tab-button tab="garden" href="/tabs/garden">
-            <ion-icon name="leaf" />
-            <ion-label>Garden</ion-label>
-          </ion-tab-button>
-
-          <ion-tab-button tab="settings" href="/tabs/settings">
-            <ion-icon name="settings-outline" />
-            <ion-label>Settings</ion-label>
-          </ion-tab-button>
-
-        </ion-tab-bar>
       </ion-tabs>
     </app-shell>
+    @if (breakpoint.isMobile()) {
+      <app-bottom-nav-bar [items]="navItems" [activeRoute]="activeRoute" />
+    }
   `,
 })
-export class TabsPage {
+export class TabsPage implements OnInit {
   readonly breakpoint = inject(BreakpointService);
+  private readonly router = inject(Router);
 
-  constructor() {
-    addIcons({ home, list, settingsOutline, leaf });
+  readonly navItems = NAV_ITEMS;
+  activeRoute = '/tabs/home';
+
+  ngOnInit(): void {
+    this.activeRoute = this.router.url.split('?')[0];
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      map(e => (e as NavigationEnd).urlAfterRedirects.split('?')[0]),
+    ).subscribe(url => (this.activeRoute = url));
   }
 }

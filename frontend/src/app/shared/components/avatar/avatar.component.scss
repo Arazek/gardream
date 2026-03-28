@@ -1,7 +1,9 @@
+@use 'theme/mixins' as *;
+
 .avatar {
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   overflow: hidden;
-  background: var(--ion-color-primary);
+  background: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,15 +16,13 @@
   }
 
   &__initials {
-    color: #fff;
-    font-weight: 600;
-    font-size: 0.4em;
+    @include type-label;
+    color: var(--color-on-primary);
     line-height: 1;
-    text-transform: uppercase;
 
-    .avatar--sm & { font-size: 11px; }
-    .avatar--md & { font-size: 14px; }
-    .avatar--lg & { font-size: 18px; }
-    .avatar--xl & { font-size: 24px; }
+    .avatar--sm & { font-size: var(--icon-size-sm); }
+    .avatar--md & { font-size: var(--icon-size-sm); }
+    .avatar--lg & { font-size: var(--icon-size-md); }
+    .avatar--xl & { font-size: var(--icon-size-base); }
   }
 }

@@ -1,27 +1,28 @@
+@use 'theme/mixins' as *;
+
 .list-item {
-  --padding-start: 16px;
-  --inner-padding-end: 16px;
+  --padding-start: var(--space-4);
+  --inner-padding-end: var(--space-4);
 
   &__label {
-    margin: 10px 0;
+    margin: var(--space-3) 0;
   }
 
   &__title {
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--ion-color-dark);
-    margin: 0 0 2px;
+    @include type-body-lg;
+    color: var(--color-on-surface);
+    margin: 0 0 var(--space-1);
   }
 
   &__subtitle {
-    font-size: 13px;
-    color: var(--ion-color-medium);
+    @include type-body-sm;
+    color: var(--color-on-surface-variant);
     margin: 0;
   }
 
   &__meta {
-    font-size: 12px;
-    color: var(--ion-color-medium);
+    @include type-label;
+    color: var(--color-on-surface-variant);
     align-self: center;
   }
 }

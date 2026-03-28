@@ -35,13 +35,45 @@ ion-router-outlet:not([tabs]) {
   width: 100%;
 }
 
+// ─── Focus ring ───────────────────────────────────────────────────────────────
+:focus-visible {
+  outline: 0.125rem solid var(--color-primary);
+  outline-offset: 0.125rem;
+  border-radius: var(--radius-sm);
+}
+
+// ─── Ionic shadow DOM overrides (::part() must live in global.scss) ───────────
+ion-toolbar::part(background) {
+  background: transparent;
+}
+
+ion-tab-bar::part(background) {
+  background: transparent;
+  box-shadow: none;
+}
+
+ion-content::part(background) {
+  background: var(--color-surface);
+}
+
+ion-item::part(native) {
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
+}
+
+ion-card::part(native) {
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
+}
+
 // ─── Responsive form grid utility ────────────────────────────────────────────
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0 16px;
+  gap: 0 1rem;
 
-  @media (max-width: 767px) {
+  @media (max-width: 47.9375rem) {
     grid-template-columns: 1fr;
   }
 }

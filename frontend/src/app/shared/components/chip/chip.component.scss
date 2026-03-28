@@ -1,51 +1,53 @@
+@use 'theme/mixins' as *;
+
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  border-radius: 16px;
-  font-size: 13px;
-  font-weight: 500;
-  background: var(--ion-color-light);
-  color: var(--ion-color-dark);
-  border: 1px solid var(--ion-color-light-shade);
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  @include type-body-sm;
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface);
+  border: 0.0625rem solid var(--color-outline-variant);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--duration-quick) var(--ease-standard),
+              color var(--duration-quick) var(--ease-standard);
   white-space: nowrap;
 
   &--selected {
-    background: var(--ion-color-primary);
-    color: #fff;
-    border-color: var(--ion-color-primary);
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border-color: var(--color-primary);
   }
 
   &--info {
-    background: rgba(var(--ion-color-primary-rgb), 0.1);
-    color: var(--ion-color-primary);
-    border-color: rgba(var(--ion-color-primary-rgb), 0.25);
+    background: rgba(var(--ion-color-primary-rgb, 22 53 38), 0.1);
+    color: var(--color-primary);
+    border-color: rgba(var(--ion-color-primary-rgb, 22 53 38), 0.25);
   }
 
   &--success {
-    background: rgba(var(--ion-color-success-rgb), 0.1);
+    background: rgba(var(--ion-color-success-rgb, 45 211 111), 0.1);
     color: var(--ion-color-success);
-    border-color: rgba(var(--ion-color-success-rgb), 0.25);
+    border-color: rgba(var(--ion-color-success-rgb, 45 211 111), 0.25);
   }
 
   &--warning {
-    background: rgba(var(--ion-color-warning-rgb), 0.15);
+    background: rgba(var(--ion-color-warning-rgb, 255 196 9), 0.15);
     color: var(--ion-color-warning-shade);
-    border-color: rgba(var(--ion-color-warning-rgb), 0.3);
+    border-color: rgba(var(--ion-color-warning-rgb, 255 196 9), 0.3);
   }
 
   &--danger {
-    background: rgba(var(--ion-color-danger-rgb), 0.1);
-    color: var(--ion-color-danger);
-    border-color: rgba(var(--ion-color-danger-rgb), 0.25);
+    background: rgba(var(--ion-color-danger-rgb, 235 68 90), 0.1);
+    color: var(--color-error);
+    border-color: rgba(var(--ion-color-danger-rgb, 235 68 90), 0.25);
   }
 
   &__remove {
-    font-size: 14px;
+    font-size: var(--icon-size-sm);
     cursor: pointer;
-    margin-left: 2px;
+    margin-left: var(--space-1);
   }
 }

@@ -1,18 +1,19 @@
+@use 'theme/mixins' as *;
+
 .toggle-field {
   --padding-start: 0;
   --inner-padding-end: 0;
   --background: transparent;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 
   &__label {
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--ion-color-dark);
+    @include type-body-lg;
+    color: var(--color-on-surface);
   }
 
   &__description {
-    font-size: 13px;
-    color: var(--ion-color-medium);
-    margin: 2px 0 0;
+    @include type-body-sm;
+    color: var(--color-on-surface-variant);
+    margin: var(--space-1) 0 0;
   }
 }

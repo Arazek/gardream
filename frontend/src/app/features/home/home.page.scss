@@ -1,79 +1,262 @@
-@use 'theme/variables' as v;
+@use 'theme/mixins' as *;
 
 .home-content {
-  --background: var(--ion-background-color);
+  --background: var(--color-surface);
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --padding-start: 0;
+  --padding-end: 0;
 }
 
-.home-greeting {
-  padding: 24px 20px 8px;
+// ─── Icon button in top bar ───────────────────────────────────────────────────
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-container-md);
+  height: var(--icon-container-md);
+  border-radius: var(--radius-full);
+  background: transparent;
+  border: none;
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  padding: 0;
+  transition: background var(--duration-quick) var(--ease-standard);
 
-  &__label {
-    font-size: 14px;
-    color: var(--ion-color-medium);
-    margin: 0 0 4px;
+  &:hover {
+    background: var(--color-surface-container);
   }
 
-  &__name {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--ion-text-color);
-    margin: 0;
-    letter-spacing: -0.02em;
+  .material-symbols-outlined {
+    font-size: var(--icon-size-md);
   }
 }
 
-.home-cards {
+// ─── Hero stats row ───────────────────────────────────────────────────────────
+.home-stats {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+// ─── Body ─────────────────────────────────────────────────────────────────────
+.home-body {
+  padding: var(--space-4) var(--space-4) calc(var(--bottom-nav-height) + var(--space-4));
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 0 16px;
+  gap: var(--space-6);
 }
 
-.home-card {
-  cursor: pointer;
-
-  &__body {
+// ─── Section ──────────────────────────────────────────────────────────────────
+.home-section {
+  &__header {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
+    justify-content: space-between;
+    margin-bottom: var(--space-3);
   }
 
-  &__icon-wrap {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
+  &__title {
+    font-family: var(--font-headline);
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-primary-container);
+    margin: 0;
+  }
+
+  &__action {
+    @include type-label-sm;
+    color: var(--color-primary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: var(--space-1) 0;
+  }
+}
+
+// ─── Plot list ────────────────────────────────────────────────────────────────
+.home-plot-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.home-plot-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--color-surface-container-lowest);
+  border-radius: var(--radius-lg);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  overflow: hidden;
+  transition: box-shadow var(--duration-quick) var(--ease-standard);
+  box-shadow: var(--shadow-card);
+
+  &:active {
+    box-shadow: var(--shadow-float);
+  }
+
+  // Gradient thumbnail — colour shifts by plot type via data attribute
+  &__thumb {
+    flex-shrink: 0;
+    width: 5rem;
+    align-self: stretch;
+    background: linear-gradient(160deg, var(--color-primary-container), var(--color-primary));
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
   }
 
-  &__icon {
-    font-size: 20px;
+  &[data-plot-type="raised_bed"] &__thumb {
+    background: linear-gradient(160deg, #5c4033, #3e2a20);
+  }
+  &[data-plot-type="container"] &__thumb {
+    background: linear-gradient(160deg, #7a4030, #4a2310);
+  }
+  &[data-plot-type="vertical"] &__thumb {
+    background: linear-gradient(160deg, #1f5c42, #0d2b1c);
   }
 
-  &__text {
+  &__thumb-icon {
+    font-size: 1.625rem;
+    color: rgba(255 255 255 / 0.85);
+  }
+
+  &__body {
     flex: 1;
     min-width: 0;
+    padding: var(--space-3) var(--space-4);
   }
 
-  &__label {
-    font-size: 15px;
+  &__name {
+    font-family: var(--font-headline);
+    font-size: 1rem;
     font-weight: 600;
-    color: var(--ion-text-color);
-    margin: 0 0 2px;
+    color: var(--color-on-surface);
+    margin: 0 0 var(--space-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  &__sub {
-    font-size: 12px;
-    color: var(--ion-color-medium);
+  &__meta {
+    @include type-label-sm;
+    color: var(--color-on-surface-variant);
     margin: 0;
   }
 
   &__chevron {
-    font-size: 16px;
-    color: var(--ion-color-medium);
+    font-size: var(--icon-size-sm);
+    color: var(--color-on-surface-variant);
+    flex-shrink: 0;
+    padding-right: var(--space-3);
+  }
+
+  &--skeleton {
+    height: 5rem;
+    background: linear-gradient(
+      90deg,
+      var(--color-surface-container) 25%,
+      var(--color-surface-container-low) 50%,
+      var(--color-surface-container) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    cursor: default;
+  }
+}
+
+// ─── Skeleton row ─────────────────────────────────────────────────────────────
+.home-skeleton-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+// ─── Task list ────────────────────────────────────────────────────────────────
+.home-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.home-task-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  &__row {
+    height: 3.5rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(
+      90deg,
+      var(--color-surface-container) 25%,
+      var(--color-surface-container-low) 50%,
+      var(--color-surface-container) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+}
+
+// ─── Empty states ─────────────────────────────────────────────────────────────
+.home-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+
+  &--inline {
+    flex-direction: row;
+    padding: var(--space-4);
+    background: var(--color-surface-container-low);
+    border-radius: var(--radius-lg);
+    text-align: left;
+    gap: var(--space-3);
+  }
+
+  &__icon {
+    font-size: 2.5rem;
+    color: var(--color-primary);
+    opacity: 0.4;
+  }
+
+  &__text {
+    @include type-body-sm;
+    color: var(--color-on-surface-variant);
+    margin: 0;
+  }
+
+  &__check-icon {
+    font-size: var(--icon-size-lg);
+    color: var(--color-primary);
     flex-shrink: 0;
   }
+
+  &__cta {
+    @include type-label;
+    color: var(--color-on-primary);
+    background: var(--color-primary);
+    border: none;
+    border-radius: var(--radius-full);
+    padding: var(--space-2) var(--space-5);
+    cursor: pointer;
+    transition: opacity var(--duration-quick) var(--ease-standard);
+
+    &:hover {
+      opacity: 0.88;
+    }
+  }
+}
+
+// ─── Shimmer animation ────────────────────────────────────────────────────────
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

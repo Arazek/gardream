@@ -1,13 +1,13 @@
-@use 'theme/variables' as v;
+@use 'theme/mixins' as *;
 
 .data-table {
   width: 100%;
-  background: var(--ion-card-background, var(--ion-item-background, #fff));
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.04);
+  background: var(--color-surface-container-lowest);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 
-  @include v.mobile {
+  @media (max-width: 47.9375rem) {
     border-radius: 0;
     box-shadow: none;
     background: transparent;
@@ -16,7 +16,7 @@
   &__scroll {
     overflow-x: auto;
 
-    @include v.mobile {
+    @media (max-width: 47.9375rem) {
       overflow-x: unset;
     }
   }
@@ -24,23 +24,20 @@
   &__table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 14px;
+    @include type-body;
 
-    @include v.mobile {
+    @media (max-width: 47.9375rem) {
       display: block;
     }
   }
 
   &__th {
-    padding: 12px 16px;
+    padding: var(--space-3) var(--space-4);
     text-align: left;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--ion-color-medium);
-    background: rgba(var(--ion-color-medium-rgb), 0.06);
-    border-bottom: 1px solid rgba(var(--ion-color-medium-rgb), 0.12);
+    @include type-label;
+    color: var(--color-on-surface-variant);
+    background: var(--color-surface-container-low);
+    border-bottom: 0.0625rem solid var(--color-outline-variant);
     white-space: nowrap;
     user-select: none;
 
@@ -51,17 +48,17 @@
       cursor: pointer;
 
       &:hover {
-        background: rgba(var(--ion-color-medium-rgb), 0.10);
-        color: var(--ion-text-color, #111);
+        background: var(--color-surface-container);
+        color: var(--color-on-surface);
       }
     }
 
     &--actions {
-      width: 1px;
-      padding: 12px 8px;
+      width: 0.0625rem;
+      padding: var(--space-3) var(--space-2);
     }
 
-    @include v.mobile {
+    @media (max-width: 47.9375rem) {
       display: none;
     }
   }
@@ -69,37 +66,37 @@
   &__th-inner {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
   }
 
   &__sort-icon {
-    font-size: 13px;
+    font-size: var(--icon-size-sm);
     opacity: 0.4;
 
     &--active {
       opacity: 1;
-      color: var(--ion-color-primary);
+      color: var(--color-primary);
     }
   }
 
   &__row {
-    border-bottom: 1px solid rgba(var(--ion-color-medium-rgb), 0.08);
-    transition: background 0.1s;
+    border-bottom: 0.0625rem solid var(--color-outline-variant);
+    transition: background var(--duration-micro) var(--ease-standard);
 
     &:last-child {
       border-bottom: none;
     }
 
     &:hover {
-      background: rgba(var(--ion-color-medium-rgb), 0.04);
+      background: var(--color-surface-container-low);
     }
 
-    @include v.mobile {
+    @media (max-width: 47.9375rem) {
       display: block;
-      margin-bottom: 12px;
-      border-radius: 12px;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-      background: var(--ion-card-background, #fff);
+      margin-bottom: var(--space-3);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+      background: var(--color-surface-container-lowest);
       border-bottom: none;
 
       &:last-child {
@@ -109,25 +106,25 @@
   }
 
   &__td {
-    padding: 14px 16px;
-    color: var(--ion-text-color, #111);
+    padding: 0.875rem var(--space-4);
+    color: var(--color-on-surface);
     vertical-align: middle;
 
     &--center { text-align: center; }
     &--right  { text-align: right; }
 
     &--actions {
-      padding: 8px;
+      padding: var(--space-2);
       text-align: right;
       white-space: nowrap;
     }
 
-    @include v.mobile {
+    @media (max-width: 47.9375rem) {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      padding: 10px 16px;
-      border-bottom: 1px solid rgba(var(--ion-color-medium-rgb), 0.08);
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 0.0625rem solid var(--color-outline-variant);
 
       &:last-child {
         border-bottom: none;
@@ -135,19 +132,16 @@
 
       &::before {
         content: attr(data-label);
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: var(--ion-color-medium);
+        @include type-label;
+        color: var(--color-on-surface-variant);
         flex-shrink: 0;
-        margin-right: 12px;
-        padding-top: 1px;
+        margin-right: var(--space-3);
+        padding-top: 0.0625rem;
       }
 
       &--actions {
         justify-content: flex-end;
-        padding: 8px 16px;
+        padding: var(--space-2) var(--space-4);
 
         &::before {
           display: none;

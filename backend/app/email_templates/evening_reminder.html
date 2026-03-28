@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tomorrow's garden tasks</title>
+  <style>
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #f4f4f0; margin: 0; padding: 0; }
+    .wrapper { max-width: 600px; margin: 2rem auto; background: #fff; border-radius: 1rem; overflow: hidden; box-shadow: 0 2px 8px rgba(27,28,26,.08); }
+    .header { background: #2d4c3b; padding: 2rem 2rem 1.5rem; }
+    .header h1 { color: #accfb8; font-size: 1.5rem; margin: 0 0 .25rem; font-weight: 700; }
+    .header p { color: rgba(172,207,184,.7); font-size: .875rem; margin: 0; }
+    .body { padding: 2rem; }
+    .greeting { font-size: 1rem; color: #1b1c1a; margin: 0 0 1.5rem; }
+    .task-list { list-style: none; padding: 0; margin: 0; }
+    .task-list li { display: flex; align-items: flex-start; gap: .75rem; padding: .875rem 1rem; margin-bottom: .5rem; background: #f4f4f0; border-radius: .75rem; }
+    .task-icon { font-size: 1.25rem; }
+    .task-title { font-size: .9375rem; font-weight: 600; color: #1b1c1a; margin: 0; }
+    .task-note { font-size: .8125rem; color: #727973; margin: .25rem 0 0; }
+    .empty { color: #727973; font-style: italic; font-size: .9375rem; }
+    .cta { display: block; margin: 2rem auto 0; padding: .875rem 2rem; background: #163526; color: #fff; text-decoration: none; border-radius: .75rem; font-weight: 600; text-align: center; font-size: .9375rem; }
+    .footer { padding: 1rem 2rem; text-align: center; color: #c2c8c1; font-size: .75rem; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>🌙 Digital Arboretum</h1>
+      <p>A heads-up for tomorrow's garden work</p>
+    </div>
+    <div class="body">
+      <p class="greeting">Hi {{ name }},</p>
+      {% if tasks %}
+        <p style="color:#424843;font-size:.875rem;margin:0 0 1rem;">Here's what's coming up tomorrow:</p>
+        <ul class="task-list">
+          {% for task in tasks %}
+          <li>
+            <span class="task-icon">{{ task.icon }}</span>
+            <div>
+              <p class="task-title">{{ task.title }}</p>
+              {% if task.note %}<p class="task-note">{{ task.note }}</p>{% endif %}
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty">Nothing scheduled for tomorrow. Rest up! 🌙</p>
+      {% endif %}
+      <a class="cta" href="{{ app_url }}/tabs/calendar">Open Calendar</a>
+    </div>
+    <div class="footer">Digital Arboretum &mdash; you can manage notification preferences in Settings.</div>
+  </div>
+</body>
+</html>

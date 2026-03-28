@@ -1,29 +1,30 @@
+@use 'theme/mixins' as *;
+
 .success-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 24px;
+  padding: var(--space-12) var(--space-6);
   text-align: center;
 
   &__icon {
-    font-size: 64px;
+    font-size: var(--icon-size-2xl);
     color: var(--ion-color-success);
-    margin-bottom: 16px;
+    margin-bottom: var(--space-4);
   }
 
   &__title {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--ion-color-dark);
-    margin: 0 0 8px;
+    @include type-heading-4;
+    color: var(--color-on-surface);
+    margin: 0 0 var(--space-2);
   }
 
   &__message {
-    font-size: 14px;
-    color: var(--ion-color-medium);
-    margin: 0 0 24px;
-    max-width: 280px;
+    @include type-body;
+    color: var(--color-on-surface-variant);
+    margin: 0 0 var(--space-6);
+    max-width: 17.5rem;
   }
 
   &__action {

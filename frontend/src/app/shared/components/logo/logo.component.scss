@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-primary-shade));
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-container));
   border-radius: 22%;
   overflow: hidden;
   flex-shrink: 0;
@@ -15,10 +15,10 @@
   }
 
   &__text {
-    color: #fff;
+    color: var(--color-on-primary);
     font-weight: 700;
     // Use container-relative sizing so the letter scales with logo size.
-    // container-type is set on .logo below.
+    // container-type is set on .logo above.
     font-size: 40cqmin;
     text-transform: uppercase;
     line-height: 1;

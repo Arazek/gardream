@@ -2,7 +2,7 @@
 set -euo pipefail
 
 COMPOSE_BASE="-f docker-compose.yml"
-COMPOSE_LOCAL="${COMPOSE_BASE} -f docker-compose.local.yml"
+COMPOSE_LOCAL="-f docker-compose.local.yml"
 COMPOSE_PROD="${COMPOSE_BASE} -f docker-compose.prod.yml"
 
 # Colors
@@ -21,6 +21,10 @@ require_env() {
   if [ ! -f .env ]; then
     error ".env file not found. Copy .env.example to .env and fill in the values."
   fi
+  set -a
+  # shellcheck source=.env
+  source .env
+  set +a
 }
 
 require_tool() {
@@ -176,28 +180,26 @@ cmd_keycloak_user() {
   local password="${2:-testpass123}"
   local email="${3:-${username}@example.com}"
   require_env
-  local kc_admin; kc_admin=$(grep '^KEYCLOAK_ADMIN=' .env | cut -d= -f2- | tr -d '"')
-  local kc_pass;  kc_pass=$(grep '^KEYCLOAK_ADMIN_PASSWORD=' .env | cut -d= -f2- | tr -d '"')
   info "Creating Keycloak dev user '${username}' in realm 'pwa'..."
-  $DOCKER compose ${COMPOSE_BASE} exec keycloak \
+  $DOCKER compose ${COMPOSE_LOCAL} exec keycloak \
     /opt/keycloak/bin/kcadm.sh config credentials \
       --server http://localhost:8080/auth \
       --realm master \
-      --user "${kc_admin:-admin}" \
-      --password "${kc_pass:-devpassword123}"
-  $DOCKER compose ${COMPOSE_BASE} exec keycloak \
+      --user "${KEYCLOAK_ADMIN:-admin}" \
+      --password "${KEYCLOAK_ADMIN_PASSWORD:-admin}"
+  $DOCKER compose ${COMPOSE_LOCAL} exec keycloak \
     /opt/keycloak/bin/kcadm.sh create users \
       -r pwa \
       -s username="${username}" \
       -s email="${email}" \
       -s enabled=true
-  $DOCKER compose ${COMPOSE_BASE} exec keycloak \
+  $DOCKER compose ${COMPOSE_LOCAL} exec keycloak \
     /opt/keycloak/bin/kcadm.sh set-password \
       -r pwa \
       --username "${username}" \
       --new-password "${password}" \
       --temporary=false
-  $DOCKER compose ${COMPOSE_BASE} exec keycloak \
+  $DOCKER compose ${COMPOSE_LOCAL} exec keycloak \
     /opt/keycloak/bin/kcadm.sh add-roles \
       -r pwa \
       --uusername "${username}" \

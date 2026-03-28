@@ -1,113 +1,150 @@
 import { Component, OnInit, inject } from '@angular/core';
 import {
   IonContent, IonList, IonItem, IonLabel,
-  IonSegment, IonSegmentButton, IonIcon, IonRippleEffect,
+  IonSegment, IonSegmentButton, IonIcon, IonToggle,
 } from '@ionic/angular/standalone';
+import { AsyncPipe } from '@angular/common';
 import { addIcons } from 'ionicons';
 import { logOutOutline, chevronForward } from 'ionicons/icons';
 import { KeycloakProfile } from 'keycloak-js';
+import { Store } from '@ngrx/store';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { ThemeService, ColorScheme, Accent } from '../../core/theme/theme.service';
+import { ThemeService, ColorScheme } from '../../core/theme/theme.service';
 import {
-  PageHeaderComponent, SectionComponent, DividerComponent, AvatarComponent,
+  TopAppBarComponent, SectionComponent, DividerComponent, AvatarComponent,
 } from '../../shared';
-
-interface AccentOption { value: Accent; color: string; label: string; }
-
-const ACCENT_OPTIONS: AccentOption[] = [
-  { value: null,    color: '#3880ff', label: 'Blue'  },
-  { value: 'clay',  color: '#b5603a', label: 'Clay'  },
-  { value: 'moss',  color: '#4a7c59', label: 'Moss'  },
-  { value: 'dune',  color: '#9b7b4e', label: 'Dune'  },
-  { value: 'slate', color: '#5b7fa6', label: 'Slate' },
-];
+import { NotificationsActions } from '../../store/notifications/notifications.actions';
+import {
+  selectMorningReminder, selectEveningReminder, selectInAppAlerts, selectNotificationsSaving,
+} from '../../store/notifications/notifications.selectors';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
   imports: [
+    AsyncPipe,
     IonContent, IonList, IonItem, IonLabel,
-    IonSegment, IonSegmentButton, IonIcon, IonRippleEffect,
-    PageHeaderComponent, SectionComponent, DividerComponent, AvatarComponent,
+    IonSegment, IonSegmentButton, IonIcon, IonToggle,
+    TopAppBarComponent, SectionComponent, DividerComponent, AvatarComponent,
   ],
   styleUrl: './settings.page.scss',
   template: `
-    <app-page-header title="Settings" />
+    <app-top-app-bar title="Settings" />
 
     <ion-content class="settings-content">
+      <div class="settings-body">
 
-      <!-- Profile -->
-      <div class="settings-profile">
-        <app-avatar [name]="fullName" size="xl" />
-        <div class="settings-profile__info">
-          <p class="settings-profile__name">{{ fullName }}</p>
-          <p class="settings-profile__email">{{ profile?.email }}</p>
+        <!-- Profile -->
+        <div class="settings-profile">
+          <app-avatar [name]="fullName" size="xl" />
+          <div class="settings-profile__info">
+            <p class="settings-profile__name">{{ fullName }}</p>
+            <p class="settings-profile__email">{{ profile?.email }}</p>
+          </div>
         </div>
-      </div>
 
-      <app-divider />
+        <app-divider />
 
-      <!-- Appearance -->
-      <app-section title="Appearance">
-        <ion-list lines="none" class="settings-list">
+        <!-- Appearance -->
+        <app-section title="Appearance">
+          <ion-list lines="none" class="settings-list">
 
-          <ion-item class="settings-item">
-            <ion-label>Color scheme</ion-label>
-            <ion-segment
-              class="settings-segment"
-              [value]="theme.scheme()"
-              (ionChange)="onSchemeChange($event)"
+            <ion-item class="settings-item">
+              <ion-label>Color scheme</ion-label>
+              <ion-segment
+                class="settings-segment"
+                [value]="theme.scheme()"
+                (ionChange)="onSchemeChange($event)"
+              >
+                <ion-segment-button value="light">Light</ion-segment-button>
+                <ion-segment-button value="system">Auto</ion-segment-button>
+                <ion-segment-button value="dark">Dark</ion-segment-button>
+              </ion-segment>
+            </ion-item>
+
+
+
+          </ion-list>
+        </app-section>
+
+        <app-divider />
+
+        <!-- Notifications -->
+        <app-section title="Notifications">
+          <ion-list lines="none" class="settings-list">
+
+            <ion-item class="settings-item">
+              <ion-label>
+                <p>Morning reminder</p>
+                <p class="settings-item__hint">Daily task summary in the morning</p>
+              </ion-label>
+              <ion-toggle
+                slot="end"
+                [checked]="morningReminder$ | async"
+                [disabled]="saving$ | async"
+                (ionChange)="onToggle('morning_reminder', $event)"
+              />
+            </ion-item>
+
+            <ion-item class="settings-item">
+              <ion-label>
+                <p>Evening reminder</p>
+                <p class="settings-item__hint">Upcoming tasks for tomorrow</p>
+              </ion-label>
+              <ion-toggle
+                slot="end"
+                [checked]="eveningReminder$ | async"
+                [disabled]="saving$ | async"
+                (ionChange)="onToggle('evening_reminder', $event)"
+              />
+            </ion-item>
+
+            <ion-item class="settings-item">
+              <ion-label>
+                <p>In-app alerts</p>
+                <p class="settings-item__hint">Overdue tasks and weather warnings</p>
+              </ion-label>
+              <ion-toggle
+                slot="end"
+                [checked]="inAppAlerts$ | async"
+                [disabled]="saving$ | async"
+                (ionChange)="onToggle('in_app_alerts', $event)"
+              />
+            </ion-item>
+
+          </ion-list>
+        </app-section>
+
+        <app-divider />
+
+        <!-- Account -->
+        <app-section title="Account">
+          <ion-list lines="none" class="settings-list">
+            <ion-item
+              class="settings-item settings-item--danger"
+              button
+              detail="false"
+              (click)="logout()"
             >
-              <ion-segment-button value="light">Light</ion-segment-button>
-              <ion-segment-button value="system">Auto</ion-segment-button>
-              <ion-segment-button value="dark">Dark</ion-segment-button>
-            </ion-segment>
-          </ion-item>
+              <ion-icon slot="start" name="log-out-outline" />
+              <ion-label>Sign out</ion-label>
+            </ion-item>
+          </ion-list>
+        </app-section>
 
-          <ion-item class="settings-item">
-            <ion-label>Accent color</ion-label>
-            <div class="accent-picker">
-              @for (opt of accentOptions; track opt.label) {
-                <button
-                  class="accent-swatch ion-activatable"
-                  [class.accent-swatch--active]="theme.accent() === opt.value"
-                  [style.--swatch-color]="opt.color"
-                  [attr.aria-label]="opt.label"
-                  (click)="onAccentChange(opt.value)"
-                >
-                  <ion-ripple-effect />
-                </button>
-              }
-            </div>
-          </ion-item>
-
-        </ion-list>
-      </app-section>
-
-      <app-divider />
-
-      <!-- Account -->
-      <app-section title="Account">
-        <ion-list lines="none" class="settings-list">
-          <ion-item
-            class="settings-item settings-item--danger"
-            button
-            detail="false"
-            (click)="logout()"
-          >
-            <ion-icon slot="start" name="log-out-outline" />
-            <ion-label>Sign out</ion-label>
-          </ion-item>
-        </ion-list>
-      </app-section>
-
+      </div>
     </ion-content>
   `,
 })
 export class SettingsPage implements OnInit {
+  private readonly store = inject(Store);
   readonly theme = inject(ThemeService);
-  readonly accentOptions = ACCENT_OPTIONS;
+
+  readonly morningReminder$ = this.store.select(selectMorningReminder);
+  readonly eveningReminder$ = this.store.select(selectEveningReminder);
+  readonly inAppAlerts$ = this.store.select(selectInAppAlerts);
+  readonly saving$ = this.store.select(selectNotificationsSaving);
 
   profile: KeycloakProfile | null = null;
 
@@ -122,14 +159,15 @@ export class SettingsPage implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.profile = await this.auth.getProfile();
+    this.store.dispatch(NotificationsActions.loadSettings());
   }
 
   onSchemeChange(event: CustomEvent): void {
     this.theme.setScheme(event.detail.value as ColorScheme);
   }
 
-  onAccentChange(accent: Accent): void {
-    this.theme.setAccent(accent);
+  onToggle(field: 'morning_reminder' | 'evening_reminder' | 'in_app_alerts', event: CustomEvent): void {
+    this.store.dispatch(NotificationsActions.updateSettings({ payload: { [field]: event.detail.checked } }));
   }
 
   logout(): void {

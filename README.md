@@ -1,7 +1,11 @@
-# pwa-ionic-python-template
+# Garden Task Planner
 
-A personal, reusable monorepo template for building **mobile-first Progressive Web Apps**.
-Production-ready out of the box: authentication, database, API, reverse proxy, TLS, and a component library — all running in Docker.
+A **mobile-first Progressive Web App** for hobbyist and urban gardeners to organize plots and manage gardening tasks.
+Production-ready out of the box: authentication, database, API, reverse proxy, TLS, and a comprehensive design system — all running in Docker.
+
+**Vision**: Help hobbyist and urban gardeners organize their plots and automatically manage gardening tasks through intelligent scheduling and simple visual planning.
+
+**Core Value Proposition**: Plan your garden visually, and always know what to do next.
 
 ---
 
@@ -58,7 +62,7 @@ Production-ready out of the box: authentication, database, API, reverse proxy, T
 ```bash
 # 1. Clone and enter the project
 git clone <repo-url>
-cd pwa-ionic-python-template
+cd gardream
 
 # 2. Create your environment file
 cp .env.example .env
@@ -97,7 +101,7 @@ All traffic enters through Traefik. Local dev uses port `4443` (HTTPS) and `8090
 ## Project Structure
 
 ```
-pwa-ionic-python-template/
+gardream/
 ├── frontend/                        # Ionic/Angular PWA + Capacitor
 │   ├── src/
 │   │   ├── app/
@@ -106,8 +110,14 @@ pwa-ionic-python-template/
 │   │   │   │   └── interceptors/    # auth (Bearer token), error (401 → re-login)
 │   │   │   ├── features/            # One folder per domain/feature
 │   │   │   │   ├── tabs/            # TabsPage — bottom navigation shell
-│   │   │   │   ├── home/            # HomePage — welcome screen
-│   │   │   │   └── example/         # Full CRUD feature with NgRx store
+│   │   │   │   ├── home/            # HomePage — garden dashboard
+│   │   │   │   ├── plots/           # Plot management (create, view, edit)
+│   │   │   │   ├── crops/           # Crop library/encyclopedia
+│   │   │   │   ├── calendar/        # Task calendar and scheduling
+│   │   │   │   ├── tasks/           # Task management
+│   │   │   │   ├── profile/         # User profile
+│   │   │   │   ├── settings/        # App settings
+│   │   │   │   └── example/         # Example CRUD feature with NgRx store
 │   │   │   ├── shared/              # Reusable across features
 │   │   │   │   ├── components/      # UI components (each with a .stories.ts)
 │   │   │   │   ├── services/        # Overlay services (Toast, Modal, etc.)
@@ -131,7 +141,12 @@ pwa-ionic-python-template/
 │   │   │   ├── router.py            # Aggregates all endpoint routers
 │   │   │   └── endpoints/
 │   │   │       ├── health.py        # GET /api/v1/health (public)
-│   │   │       ├── example.py       # Full CRUD (protected, owner-scoped)
+│   │   │       ├── example.py       # Example CRUD (protected, owner-scoped)
+│   │   │       ├── crops.py         # Crop management endpoints
+│   │   │       ├── plots.py         # Plot management endpoints
+│   │   │       ├── tasks.py         # Task management endpoints
+│   │   │       ├── weather.py       # Weather integration endpoints
+│   │   │       ├── notification_settings.py # User notification settings
 │   │   │       └── ws.py            # WebSocket /api/v1/ws/{channel}
 │   │   ├── core/
 │   │   │   ├── config.py            # pydantic-settings — all config from .env
@@ -141,7 +156,21 @@ pwa-ionic-python-template/
 │   │   │   ├── base.py              # SQLAlchemy DeclarativeBase
 │   │   │   └── session.py           # Async engine + session factory
 │   │   ├── models/                  # SQLAlchemy ORM models
+│   │   │   ├── example.py           # Example model
+│   │   │   ├── crop.py              # Crop model
+│   │   │   ├── plot.py              # Plot model
+│   │   │   ├── plot_slot.py         # Plot slot model
+│   │   │   ├── task.py              # Task model
+│   │   │   ├── user_profile.py      # User profile model
+│   │   │   └── notification_settings.py # Notification settings model
 │   │   └── schemas/                 # Pydantic request/response schemas
+│   │       ├── example.py           # Example schemas
+│   │       ├── crop.py              # Crop schemas
+│   │       ├── plot.py              # Plot schemas
+│   │       ├── plot_slot.py         # Plot slot schemas
+│   │       ├── task.py              # Task schemas
+│   │       ├── weather.py           # Weather schemas
+│   │       └── notification_settings.py # Notification settings schemas
 │   ├── alembic/                     # Migrations
 │   │   ├── versions/                # Generated migration files
 │   │   └── env.py
@@ -251,11 +280,25 @@ Driver: asyncpg (async PostgreSQL)
 | Method   | Path                    | Auth     | Description               |
 |----------|-------------------------|----------|---------------------------|
 | `GET`    | `/api/v1/health`        | Public   | Service health check      |
-| `GET`    | `/api/v1/example`       | Required | List items (owner-scoped) |
-| `POST`   | `/api/v1/example`       | Required | Create item               |
-| `GET`    | `/api/v1/example/{id}`  | Required | Get item by ID            |
-| `PUT`    | `/api/v1/example/{id}`  | Required | Update item               |
-| `DELETE` | `/api/v1/example/{id}`  | Required | Delete item               |
+| `GET`    | `/api/v1/example`       | Required | List example items        |
+| `POST`   | `/api/v1/example`       | Required | Create example item       |
+| `GET`    | `/api/v1/example/{id}`  | Required | Get example item by ID    |
+| `PUT`    | `/api/v1/example/{id}`  | Required | Update example item       |
+| `DELETE` | `/api/v1/example/{id}`  | Required | Delete example item       |
+| `GET`    | `/api/v1/crops`         | Required | List all crops            |
+| `GET`    | `/api/v1/crops/{id}`    | Required | Get crop by ID            |
+| `GET`    | `/api/v1/plots`         | Required | List user's plots         |
+| `POST`   | `/api/v1/plots`         | Required | Create new plot           |
+| `GET`    | `/api/v1/plots/{id}`    | Required | Get plot by ID            |
+| `PUT`    | `/api/v1/plots/{id}`    | Required | Update plot               |
+| `DELETE` | `/api/v1/plots/{id}`    | Required | Delete plot               |
+| `GET`    | `/api/v1/tasks`         | Required | List user's tasks         |
+| `POST`   | `/api/v1/tasks`         | Required | Create new task           |
+| `PUT`    | `/api/v1/tasks/{id}`    | Required | Update task               |
+| `DELETE` | `/api/v1/tasks/{id}`    | Required | Delete task               |
+| `GET`    | `/api/v1/weather`       | Required | Get weather data          |
+| `GET`    | `/api/v1/notification-settings` | Required | Get notification settings |
+| `PUT`    | `/api/v1/notification-settings` | Required | Update notification settings |
 | `WS`     | `/api/v1/ws/{channel}`  | Required | WebSocket — token via `?token=` query param |
 
 Interactive docs: `https://localhost:4443/api/v1/docs`
@@ -323,6 +366,26 @@ import { ToastService, AvatarComponent, TimeAgoPipe } from '@app/shared';
 ```
 
 ### Components
+
+#### Garden-Specific Components
+
+| Component                   | Selector                 | Description                                     |
+|-----------------------------|--------------------------|-------------------------------------------------|
+| `TaskCardComponent`         | `app-task-card`          | Task card with icon, title, description, timestamp |
+| `TaskListItemComponent`     | `app-task-list-item`     | Compact task row with checkbox                  |
+| `ProgressBarComponent`      | `app-progress-bar`       | Visual progress bar for growth/harvest          |
+| `StatChipComponent`         | `app-stat-chip`          | Metric display with icon, label, and value      |
+| `FilterChipComponent`       | `app-filter-chip`        | Toggle-button pill for filtering                |
+| `WeatherWidgetComponent`    | `app-weather-widget`     | Current conditions + 7-day forecast             |
+| `InsightCardComponent`      | `app-insight-card`       | AI insight panel with prediction placeholder    |
+| `GardenGridSlotComponent`   | `app-garden-grid-slot`   | Single cell in garden grid (filled/empty)       |
+| `SpecimenCardComponent`     | `app-specimen-card`      | Crop specimen display (large/compact variants)  |
+| `DayPickerComponent`        | `app-day-picker`         | Circular day-of-week toggle buttons             |
+| `PlotTypeSelectorComponent` | `app-plot-type-selector` | Card-button for choosing plot type              |
+| `HeroSectionComponent`      | `app-hero-section`       | Gradient background hero section                |
+| `IconContainerComponent`    | `app-icon-container`     | Circular container for Material icons           |
+| `TopAppBarComponent`        | `app-top-app-bar`        | Fixed glassmorphism navigation header           |
+| `BottomNavBarComponent`     | `app-bottom-nav-bar`     | Fixed bottom navigation with active pill        |
 
 #### Feedback & State
 
@@ -421,10 +484,11 @@ npm run build-storybook      # static build
 
 ### Coverage
 
-22 story files, one per shared component, organized by category:
+40+ story files, one per shared component, organized by category:
 
 | Category      | Components                                                          |
 |---------------|---------------------------------------------------------------------|
+| `Garden`      | TaskCard, TaskListItem, ProgressBar, StatChip, FilterChip, WeatherWidget, InsightCard, GardenGridSlot, SpecimenCard, DayPicker, PlotTypeSelector, HeroSection, IconContainer, TopAppBar, BottomNavBar |
 | `DataDisplay` | Avatar, Badge, Chip, ChipList                                       |
 | `Feedback`    | EmptyState, ErrorState, SuccessState, InlineAlert, LoadingSkeleton  |
 | `Forms`       | FormField, TextareaField, SelectField, SearchBar, ToggleField       |

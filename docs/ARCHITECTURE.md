@@ -1,10 +1,14 @@
-# PWA Template — Architecture Definition
+# Garden Task Planner — Architecture Definition
 
 ## Overview
 
-A mobile-first Progressive Web App template built as a monorepo. Designed for personal reuse
-as a production-ready starting point. All services run in Docker; local and prod environments
+A mobile-first Progressive Web App for hobbyist and urban gardeners to organize plots and manage gardening tasks.
+Built as a monorepo with production-ready infrastructure. All services run in Docker; local and prod environments
 share the same compose structure with environment-level overrides.
+
+**Vision**: Help hobbyist and urban gardeners organize their plots and automatically manage gardening tasks through intelligent scheduling and simple visual planning.
+
+**Core Value Proposition**: Plan your garden visually, and always know what to do next.
 
 ---
 
@@ -48,7 +52,7 @@ TLS:
 ## Monorepo Directory Structure
 
 ```
-pwa-template/
+gardream/
 ├── frontend/                        # Ionic/Angular PWA + Capacitor
 │   ├── src/
 │   │   ├── app/
@@ -58,7 +62,12 @@ pwa-template/
 │   │   │   │   └── theme/           # ThemeService — scheme + accent, persisted to localStorage
 │   │   │   ├── features/            # Feature slices (one folder per domain)
 │   │   │   │   ├── tabs/            # TabsPage — bottom tab navigation shell
-│   │   │   │   ├── home/            # HomePage — greeting + avatar + quick-action cards
+│   │   │   │   ├── home/            # HomePage — garden dashboard with tasks and plots overview
+│   │   │   │   ├── plots/           # Plot management (create, view, edit plots)
+│   │   │   │   ├── crops/           # Crop library/encyclopedia
+│   │   │   │   ├── calendar/        # Task calendar and scheduling
+│   │   │   │   ├── tasks/           # Task management
+│   │   │   │   ├── profile/         # User profile
 │   │   │   │   ├── settings/        # SettingsPage — profile, appearance picker, sign out
 │   │   │   │   └── example/         # Example feature (full NgRx pattern)
 │   │   │   │       ├── components/
@@ -95,7 +104,12 @@ pwa-template/
 │   │   │       ├── router.py        # Aggregates all v1 endpoint routers
 │   │   │       └── endpoints/
 │   │   │           ├── health.py    # GET /api/v1/health
-│   │   │           └── example.py   # Example CRUD endpoints
+│   │   │           ├── example.py   # Example CRUD endpoints
+│   │   │           ├── crops.py     # Crop management endpoints
+│   │   │           ├── plots.py     # Plot management endpoints
+│   │   │           ├── tasks.py     # Task management endpoints
+│   │   │           ├── weather.py   # Weather integration endpoints
+│   │   │           └── notification_settings.py # User notification settings
 │   │   ├── core/
 │   │   │   ├── config.py            # Settings via pydantic-settings (.env)
 │   │   │   ├── security.py          # JWT verification via Keycloak JWKS
@@ -105,9 +119,21 @@ pwa-template/
 │   │   │   ├── session.py           # Async engine + session factory
 │   │   │   └── init_db.py           # DB initialization helper
 │   │   ├── models/                  # SQLAlchemy ORM models
-│   │   │   └── example.py
+│   │   │   ├── example.py           # Example model
+│   │   │   ├── crop.py              # Crop model
+│   │   │   ├── plot.py              # Plot model
+│   │   │   ├── plot_slot.py         # Plot slot model
+│   │   │   ├── task.py              # Task model
+│   │   │   ├── user_profile.py      # User profile model
+│   │   │   └── notification_settings.py # Notification settings model
 │   │   └── schemas/                 # Pydantic request/response schemas
-│   │       └── example.py
+│   │       ├── example.py           # Example schemas
+│   │       ├── crop.py              # Crop schemas
+│   │       ├── plot.py              # Plot schemas
+│   │       ├── plot_slot.py         # Plot slot schemas
+│   │       ├── task.py              # Task schemas
+│   │       ├── weather.py           # Weather schemas
+│   │       └── notification_settings.py # Notification settings schemas
 │   ├── alembic/
 │   │   ├── versions/                # Migration files
 │   │   └── env.py
@@ -195,12 +221,26 @@ Keycloak Realm pre-configured with:
 
 ```
 GET  /api/v1/health              → public, returns service status
-GET  /api/v1/example             → protected, list items
-POST /api/v1/example             → protected, create item
-GET  /api/v1/example/{id}        → protected, get item
-PUT  /api/v1/example/{id}        → protected, update item
-DELETE /api/v1/example/{id}      → protected, delete item
-WS   /api/v1/ws/example          → protected WebSocket
+GET  /api/v1/example             → protected, list example items
+POST /api/v1/example             → protected, create example item
+GET  /api/v1/example/{id}        → protected, get example item by ID
+PUT  /api/v1/example/{id}        → protected, update example item
+DELETE /api/v1/example/{id}      → protected, delete example item
+GET  /api/v1/crops               → protected, list all crops
+GET  /api/v1/crops/{id}          → protected, get crop by ID
+GET  /api/v1/plots               → protected, list user's plots
+POST /api/v1/plots               → protected, create new plot
+GET  /api/v1/plots/{id}          → protected, get plot by ID
+PUT  /api/v1/plots/{id}          → protected, update plot
+DELETE /api/v1/plots/{id}        → protected, delete plot
+GET  /api/v1/tasks               → protected, list user's tasks
+POST /api/v1/tasks               → protected, create new task
+PUT  /api/v1/tasks/{id}          → protected, update task
+DELETE /api/v1/tasks/{id}        → protected, delete task
+GET  /api/v1/weather             → protected, get weather data
+GET  /api/v1/notification-settings → protected, get notification settings
+PUT  /api/v1/notification-settings → protected, update notification settings
+WS   /api/v1/ws/{channel}        → protected WebSocket
 ```
 
 ---
@@ -219,8 +259,12 @@ WS   /api/v1/ws/example          → protected WebSocket
 | Route             | Component        | Description                                          |
 |-------------------|------------------|------------------------------------------------------|
 | `/login`          | `LoginPage`      | Logo + social login buttons + "sign in with email"   |
-| `/tabs/home`      | `HomePage`       | Welcome greeting, user avatar, quick-action cards    |
-| `/tabs/settings`  | `SettingsPage`   | Profile info, theme/accent picker, sign out          |
+| `/tabs/home`      | `HomePage`       | Garden dashboard with tasks, plots overview, insights |
+| `/tabs/plots`     | `PlotsPage`      | List and manage garden plots                         |
+| `/tabs/calendar`  | `CalendarPage`   | Task calendar and scheduling                         |
+| `/tabs/library`   | `CropsPage`      | Crop library/encyclopedia                            |
+| `/tabs/profile`   | `ProfilePage`    | User profile information                             |
+| `/tabs/settings`  | `SettingsPage`   | App settings, theme/accent picker, sign out          |
 | `/tabs/example`   | `ExampleListPage`| Example CRUD feature (list + detail)                 |
 
 ### Theming System
@@ -240,11 +284,12 @@ The `SettingsPage` exposes the full picker UI (scheme segment + 5 accent swatche
 
 ### Shared Component Library
 
-27 standalone components in `shared/components/`, all barrel-exported from `shared/index.ts`.
+40+ standalone components in `shared/components/`, all barrel-exported from `shared/index.ts`.
 Every component has a co-located `.stories.ts` (Storybook) and `.scss` (BEM-styled).
 
 | Category        | Components |
 |-----------------|------------|
+| Garden          | TaskCard, TaskListItem, ProgressBar, StatChip, FilterChip, WeatherWidget, InsightCard, GardenGridSlot, SpecimenCard, DayPicker, PlotTypeSelector, HeroSection, IconContainer, TopAppBar, BottomNavBar |
 | Layout          | Card, Section, Divider, PageHeader, ListItem |
 | Identity        | Avatar, Badge, Logo |
 | Forms           | FormField, SelectField, TextareaField, ToggleField, SearchBar |
@@ -383,7 +428,7 @@ Storybook is set up in `frontend/` for developing and documenting shared UI comp
 - **Autodocs**: enabled — stories tagged with `autodocs` get an auto-generated docs page
 - **Theme toggle**: Light/Dark switcher in toolbar — sets `body.dark` class via `withTheme` decorator in `preview.ts`
 - **Font**: Source Sans 3 injected via `preview-head.html` (NOT imported in `preview.ts` — Angular builder handles global styles via `styles` array)
-- **Coverage**: stories across all 27 shared components
+- **Coverage**: stories across all 40+ shared components
 
 ### Story locations
 

@@ -1,5 +1,7 @@
+@use 'theme/mixins' as *;
+
 .login-content {
-  --background: var(--ion-background-color);
+  --background: var(--color-surface);
 }
 
 .login-layout {
@@ -7,8 +9,8 @@
   flex-direction: column;
   justify-content: space-between;
   min-height: 100%;
-  padding: 0 24px;
-  max-width: 400px;
+  padding: 0 var(--space-6);
+  max-width: 25rem;
   margin: 0 auto;
   box-sizing: border-box;
 }
@@ -19,20 +21,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: max(72px, 12vh);
-  gap: 12px;
+  padding-top: max(4.5rem, 12vh);
+  gap: var(--space-3);
 
   &__name {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--ion-text-color);
-    margin: 4px 0 0;
+    @include type-heading-3;
+    color: var(--color-on-surface);
+    margin: var(--space-1) 0 0;
     letter-spacing: -0.02em;
   }
 
   &__tagline {
-    font-size: 15px;
-    color: var(--ion-color-medium);
+    @include type-body-lg;
+    color: var(--color-on-surface-variant);
     margin: 0;
   }
 }
@@ -40,14 +41,13 @@
 // ─── Actions area ─────────────────────────────────────────────────────────────
 
 .login-actions {
-  padding-bottom: max(40px, 6vh);
-  padding-top: 32px;
+  padding-bottom: max(2.5rem, 6vh);
+  padding-top: var(--space-8);
 
   ion-button {
-    --border-radius: 10px;
-    --padding-top: 14px;
-    --padding-bottom: 14px;
-    font-size: 15px;
-    font-weight: 600;
+    --border-radius: var(--radius-sm);
+    --padding-top: 0.875rem;
+    --padding-bottom: 0.875rem;
+    @include type-label-lg;
   }
 }
