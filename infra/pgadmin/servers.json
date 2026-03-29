@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "PostgreSQL (TimescaleDB + PostGIS)",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "Username": "appuser",
+      "SSLMode": "prefer",
+      "MaintenanceDB": "app_db"
+    }
+  }
+}

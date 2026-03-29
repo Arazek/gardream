@@ -70,10 +70,10 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "redirectUris": [
-        "https://pgadmin.localhost/oauth2/authorize"
+        "https://gateway.localhost/pgadmin/oauth2/authorize"
       ],
       "webOrigins": [
-        "https://pgadmin.localhost"
+        "https://gateway.localhost"
       ],
       "defaultClientScopes": [
         "web-origins",

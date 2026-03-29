@@ -1,0 +1,178 @@
+services:
+  # ===========================================================================
+  # Traefik - Reverse Proxy
+  # ===========================================================================
+  traefik:
+    image: traefik:v3.6
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - traefik_certs:/etc/traefik/certs
+    networks:
+      - proxy-network
+    labels:
+      - "traefik.enable=true"
+      # Dashboard — path-based under gateway.localhost/traefik
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`${GATEWAY_HOSTNAME}`) && (PathPrefix(`/traefik/dashboard`) || PathPrefix(`/traefik/api`))"
+      - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.traefik-dashboard.service=api@internal"
+      - "traefik.http.routers.traefik-dashboard.tls=true"
+      # Dashboard BasicAuth + StripPrefix
+      - "traefik.http.routers.traefik-dashboard.middlewares=dashboard-auth,traefik-stripprefix"
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH}"
+      - "traefik.http.middlewares.traefik-stripprefix.stripprefix.prefixes=/traefik"
+
+  # ===========================================================================
+  # PostgreSQL - Database (TimescaleDB + PostGIS)
+  # container_name matches POSTGRES_HOST=postgres in app .env
+  # ===========================================================================
+  postgres:
+    build:
+      context: ./postgres
+      dockerfile: Dockerfile
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      KEYCLOAK_DB_USER: ${KEYCLOAK_DB_USER}
+      KEYCLOAK_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      KEYCLOAK_DB: ${KEYCLOAK_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - proxy-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================================================
+  # Keycloak - Identity & Access Management
+  # ===========================================================================
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: keycloak
+    restart: unless-stopped
+    command: start --import-realm
+    environment:
+      # Database connection (KC_DB_* are Keycloak's own env var names)
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${KEYCLOAK_DB}
+      KC_DB_USERNAME: ${KEYCLOAK_DB_USER}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      # Admin credentials
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      # Proxy settings (Traefik terminates TLS)
+      KC_PROXY_HEADERS: xforwarded
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME: https://${GATEWAY_HOSTNAME}/keycloak
+      KC_HTTP_RELATIVE_PATH: /keycloak
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+      - ./keycloak/realm-config.json:/opt/keycloak/data/import/realm-config.json:ro
+      - ./keycloak/themes:/opt/keycloak/themes:ro
+    networks:
+      - proxy-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      # HTTP routing — path-based under gateway.localhost/keycloak
+      - "traefik.http.routers.keycloak-http.rule=Host(`${GATEWAY_HOSTNAME}`) && PathPrefix(`/keycloak`)"
+      - "traefik.http.routers.keycloak-http.entrypoints=web"
+      - "traefik.http.routers.keycloak-http.service=keycloak"
+      # HTTPS routing — path-based under gateway.localhost/keycloak
+      - "traefik.http.routers.keycloak.rule=Host(`${GATEWAY_HOSTNAME}`) && PathPrefix(`/keycloak`)"
+      - "traefik.http.routers.keycloak.entrypoints=websecure"
+      - "traefik.http.routers.keycloak.tls=true"
+      - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+
+  # ===========================================================================
+  # pgAdmin - Database Management (OAuth2 via Keycloak)
+  # ===========================================================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      SCRIPT_NAME: /pgadmin
+      # OAuth2 — browser-side URL (external, via Traefik at gateway.localhost)
+      OAUTH2_AUTHORIZATION_URL: https://${GATEWAY_HOSTNAME}/keycloak/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth
+      # OAuth2 — server-side URLs (internal Docker network — bypasses Traefik TLS)
+      OAUTH2_CLIENT_ID: pgadmin
+      OAUTH2_CLIENT_SECRET: ${PGADMIN_OAUTH_CLIENT_SECRET}
+      OAUTH2_TOKEN_URL: http://keycloak:8080/keycloak/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token
+      OAUTH2_API_BASE_URL: http://keycloak:8080/keycloak/realms/${KEYCLOAK_REALM}/protocol/openid-connect/
+      OAUTH2_SERVER_METADATA_URL: http://keycloak:8080/keycloak/realms/${KEYCLOAK_REALM}/.well-known/openid-configuration
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin/config_local.py:/pgadmin4/config_local.py:ro
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+    networks:
+      - proxy-network
+    depends_on:
+      - keycloak
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pgadmin.rule=Host(`${GATEWAY_HOSTNAME}`) && PathPrefix(`/pgadmin`)"
+      - "traefik.http.routers.pgadmin.entrypoints=websecure"
+      - "traefik.http.routers.pgadmin.tls=true"
+      - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
+      # Rate limiting
+      - "traefik.http.routers.pgadmin.middlewares=pgadmin-ratelimit"
+      - "traefik.http.middlewares.pgadmin-ratelimit.ratelimit.average=20"
+      - "traefik.http.middlewares.pgadmin-ratelimit.ratelimit.burst=50"
+      - "traefik.http.middlewares.pgadmin-ratelimit.ratelimit.period=1m"
+
+  # ===========================================================================
+  # Webhook - Automated Deployments
+  # ===========================================================================
+  webhook:
+    build:
+      context: ./webhooks
+      dockerfile: Dockerfile
+    container_name: webhook
+    restart: unless-stopped
+    environment:
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET}
+      GARDREAM_DIR: /repos/gardream
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../:/repos/gardream
+    networks:
+      - proxy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.webhook.rule=Host(`${GATEWAY_HOSTNAME}`) && PathPrefix(`/webhook`)"
+      - "traefik.http.routers.webhook.entrypoints=websecure"
+      - "traefik.http.routers.webhook.tls=true"
+      - "traefik.http.services.webhook.loadbalancer.server.port=9000"
+      - "traefik.http.routers.webhook.middlewares=webhook-stripprefix"
+      - "traefik.http.middlewares.webhook-stripprefix.stripprefix.prefixes=/webhook"
+
+volumes:
+  postgres_data:
+    driver: local
+  keycloak_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  traefik_certs:
+    driver: local
+
+networks:
+  proxy-network:
+    name: proxy-network
+    driver: bridge

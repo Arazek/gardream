@@ -24,13 +24,13 @@ class Settings(BaseSettings):
 
     # Keycloak
     KEYCLOAK_INTERNAL_URL: str = "http://keycloak:8080"
-    KEYCLOAK_PUBLIC_URL: str = "https://localhost:4443/auth"
-    KEYCLOAK_REALM: str = "pwa"
+    KEYCLOAK_PUBLIC_URL: str = "https://gateway.localhost/keycloak"
+    KEYCLOAK_REALM: str = "gardream"
 
     @property
     def KEYCLOAK_JWKS_URL(self) -> str:
         return (
-            f"{self.KEYCLOAK_INTERNAL_URL}/auth/realms"
+            f"{self.KEYCLOAK_INTERNAL_URL}/keycloak/realms"
             f"/{self.KEYCLOAK_REALM}/protocol/openid-connect/certs"
         )
 

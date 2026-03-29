@@ -73,7 +73,10 @@ export class PlotsEffects {
       ofType(PlotsActions.createSlot),
       mergeMap(({ plotId, payload }) =>
         this.api.createSlot(plotId, payload).pipe(
-          map(slot => PlotsActions.createSlotSuccess({ plotId, slot })),
+          switchMap(slot => [
+            PlotsActions.createSlotSuccess({ plotId, slot }),
+            PlotsActions.loadSlots({ plotId }),
+          ]),
           catchError(err => of(PlotsActions.createSlotFailure({ error: err.message }))),
         ),
       ),

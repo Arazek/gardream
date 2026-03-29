@@ -4,6 +4,7 @@ set -euo pipefail
 COMPOSE_BASE="-f docker-compose.yml"
 COMPOSE_LOCAL="-f docker-compose.local.yml"
 COMPOSE_PROD="${COMPOSE_BASE} -f docker-compose.prod.yml"
+COMPOSE_INFRA="-f infra/docker-compose.yml"
 
 # Colors
 RED='\033[0;31m'
@@ -49,14 +50,42 @@ cmd_certs() {
     warn "Certs already exist at infra/traefik/certs/. Delete them to regenerate."
     return
   fi
-  info "Generating self-signed certificate for localhost..."
+  info "Generating self-signed certificate for localhost and gateway.localhost..."
   openssl req -x509 -newkey rsa:4096 -nodes \
     -keyout infra/traefik/certs/local.key \
     -out infra/traefik/certs/local.crt \
     -days 365 \
     -subj "/CN=localhost" \
-    -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+    -addext "subjectAltName=DNS:localhost,DNS:gateway.localhost,IP:127.0.0.1"
   success "Certificates generated."
+}
+
+# ---------------------------------------------------------------------------
+# Infra: start / stop / logs
+# ---------------------------------------------------------------------------
+cmd_infra_start() {
+  require_env
+  require_tool docker
+  $DOCKER info &>/dev/null || error "Docker daemon is not running. Start it with: sudo systemctl start docker"
+  [ ! -f infra/traefik/certs/local.crt ] && cmd_certs
+  info "Starting infra services (Traefik, Postgres, Keycloak, pgAdmin, Webhook)..."
+  $DOCKER compose ${COMPOSE_INFRA} --env-file .env up -d "$@"
+  success "Infra started. Keycloak may take ~30s to be ready."
+  info "  https://gateway.localhost/keycloak           — Keycloak"
+  info "  https://gateway.localhost/pgadmin            — pgAdmin"
+  info "  https://gateway.localhost/traefik/dashboard/ — Traefik dashboard (admin / changeme_dashboard)"
+  info "  https://gateway.localhost/webhook            — Webhook server"
+}
+
+cmd_infra_stop() {
+  require_env
+  info "Stopping infra services..."
+  $DOCKER compose ${COMPOSE_INFRA} --env-file .env down "$@"
+}
+
+cmd_infra_logs() {
+  local svc="${1:-}"
+  $DOCKER compose ${COMPOSE_INFRA} --env-file .env logs -f ${svc}
 }
 
 # ---------------------------------------------------------------------------
@@ -66,8 +95,10 @@ cmd_dev() {
   require_env
   require_tool docker
   $DOCKER info &>/dev/null || error "Docker daemon is not running. Start it with: sudo systemctl start docker"
-  [ ! -f infra/traefik/certs/local.crt ] && cmd_certs
-  info "Starting services in dev mode..."
+  if ! $DOCKER network inspect proxy-network &>/dev/null 2>&1; then
+    error "proxy-network not found. Run './run.sh infra:start' first to start the infra stack."
+  fi
+  info "Starting app services in dev mode..."
   $DOCKER compose ${COMPOSE_LOCAL} up --build "$@"
 }
 
@@ -180,28 +211,28 @@ cmd_keycloak_user() {
   local password="${2:-testpass123}"
   local email="${3:-${username}@example.com}"
   require_env
-  info "Creating Keycloak dev user '${username}' in realm 'pwa'..."
-  $DOCKER compose ${COMPOSE_LOCAL} exec keycloak \
+  info "Creating Keycloak dev user '${username}' in realm '${KEYCLOAK_REALM:-gardream}'..."
+  $DOCKER compose ${COMPOSE_INFRA} --env-file .env exec keycloak \
     /opt/keycloak/bin/kcadm.sh config credentials \
-      --server http://localhost:8080/auth \
+      --server http://localhost:8080 \
       --realm master \
       --user "${KEYCLOAK_ADMIN:-admin}" \
       --password "${KEYCLOAK_ADMIN_PASSWORD:-admin}"
-  $DOCKER compose ${COMPOSE_LOCAL} exec keycloak \
+  $DOCKER compose ${COMPOSE_INFRA} --env-file .env exec keycloak \
     /opt/keycloak/bin/kcadm.sh create users \
-      -r pwa \
+      -r "${KEYCLOAK_REALM:-gardream}" \
       -s username="${username}" \
       -s email="${email}" \
       -s enabled=true
-  $DOCKER compose ${COMPOSE_LOCAL} exec keycloak \
+  $DOCKER compose ${COMPOSE_INFRA} --env-file .env exec keycloak \
     /opt/keycloak/bin/kcadm.sh set-password \
-      -r pwa \
+      -r "${KEYCLOAK_REALM:-gardream}" \
       --username "${username}" \
       --new-password "${password}" \
       --temporary=false
-  $DOCKER compose ${COMPOSE_LOCAL} exec keycloak \
+  $DOCKER compose ${COMPOSE_INFRA} --env-file .env exec keycloak \
     /opt/keycloak/bin/kcadm.sh add-roles \
-      -r pwa \
+      -r "${KEYCLOAK_REALM:-gardream}" \
       --uusername "${username}" \
       --rolename user
   success "User '${username}' created. Password: ${password}"
@@ -213,13 +244,13 @@ cmd_keycloak_user() {
 cmd_keycloak_export() {
   require_env
   info "Exporting Keycloak realm 'pwa'..."
-  $DOCKER compose ${COMPOSE_BASE} exec keycloak \
+  $DOCKER compose ${COMPOSE_INFRA} --env-file .env exec keycloak \
     /opt/keycloak/bin/kc.sh export \
-    --realm pwa \
+    --realm "${KEYCLOAK_REALM:-gardream}" \
     --file /tmp/realm-export.json \
     --users realm_file
-  $DOCKER compose ${COMPOSE_BASE} cp keycloak:/tmp/realm-export.json ./infra/keycloak/realm-export.json
-  success "Realm exported to infra/keycloak/realm-export.json"
+  $DOCKER compose ${COMPOSE_INFRA} --env-file .env cp keycloak:/tmp/realm-export.json ./infra/keycloak/realm-config.json
+  success "Realm exported to infra/keycloak/realm-config.json"
 }
 
 # ---------------------------------------------------------------------------
@@ -240,9 +271,12 @@ cmd_help() {
   echo "Usage: ./run.sh <command> [args]"
   echo ""
   echo "Commands:"
-  echo "  dev                   Start all services (local, with hot reload)"
+  echo "  infra:start           Start infra services (Traefik, Postgres, Keycloak, pgAdmin, Webhook)"
+  echo "  infra:stop            Stop infra services"
+  echo "  infra:logs [service]  Tail infra logs (all services or specific)"
+  echo "  dev                   Start app services (backend + frontend, hot reload)"
   echo "  prod                  Start all services (production mode, detached)"
-  echo "  stop                  Stop all services"
+  echo "  stop                  Stop app services"
   echo "  restart               Stop + dev"
   echo "  logs [service]        Tail logs (all services or specific)"
   echo "  build                 Rebuild all Docker images"
@@ -252,7 +286,7 @@ cmd_help() {
   echo "  db:reset              Drop + recreate app DB (dev only, destructive)"
   echo "  frontend:sync         Build Angular + run Capacitor sync"
   echo "  storybook             Start Storybook component explorer (http://localhost:6006)"
-  echo "  keycloak:user [u] [p] Create a dev user in the pwa realm (default: testuser/testpass123)"
+  echo "  keycloak:user [u] [p] Create a dev user in the gardream realm (default: testuser/testpass123)"
   echo "  keycloak:export       Export Keycloak realm config to infra/keycloak/"
   echo "  shell [service]       Open a bash shell in a service (default: backend)"
   echo ""
@@ -265,6 +299,9 @@ CMD="${1:-help}"
 shift || true
 
 case "$CMD" in
+  infra:start)      cmd_infra_start "$@" ;;
+  infra:stop)       cmd_infra_stop "$@" ;;
+  infra:logs)       cmd_infra_logs "$@" ;;
   dev)              cmd_dev "$@" ;;
   prod)             cmd_prod "$@" ;;
   stop)             cmd_stop "$@" ;;

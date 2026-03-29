@@ -113,10 +113,7 @@ export class CropPickerComponent implements OnInit {
 
   private applySearch(): void {
     this.displayCrops = this.searchQuery
-      ? this.allCrops.filter(c =>
-          c.name.toLowerCase().includes(this.searchQuery) ||
-          c.latin_name.toLowerCase().includes(this.searchQuery),
-        )
+      ? this.allCrops.filter(c => c.name.toLowerCase().includes(this.searchQuery))
       : this.allCrops;
   }
 }

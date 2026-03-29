@@ -244,6 +244,37 @@ Add a new entry to the `clients` array before first startup:
 > is not re-imported automatically. Use the Keycloak Admin UI or Admin REST API to create
 > the client on a live instance.
 
+### Configuring Token Claims (Client Mappers)
+
+By default, Keycloak includes standard OIDC claims in tokens: `sub`, `email`, `given_name`, `family_name`, `preferred_username`, and `realm_access.roles`.
+
+To add custom claims to tokens, use **Client Mappers** in the Keycloak Admin UI:
+
+1. Navigate to `Clients → your-service → Client Scopes → {scope-name} → Add Mapper`
+2. Choose **User Attribute** to expose a user property, or **User Session Note** to include custom data
+3. Map the claim name to the JWT token claim name
+
+**Common frontend use cases:**
+
+- Add `email_verified` (User Attribute mapper: `emailVerified` → `email_verified`)
+- Add custom department or team info (User Attribute mapper: `department` → `department`)
+- Add user picture URL (Protocol Mapper: `User Attribute` with `https://www.iam.example.com/picture`)
+
+**Best Practice:** Configure mappers *before* first client use to ensure all frontends get consistent claims.
+
+**Frontend token claim extraction safety:**
+
+When extracting claims in frontend code (e.g., Angular):
+
+```typescript
+// Safe extraction with defaults
+const email = payload.email || 'unknown@example.com';
+const roles = payload.realm_access?.roles || [];
+const department = payload.department || null;
+```
+
+Always provide sensible defaults for optional claims, as not all client types may include all mappers.
+
 **Option B — Keycloak Admin REST API (for live instances)**
 
 ```bash

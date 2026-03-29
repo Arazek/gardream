@@ -1,7 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import { addIcons } from 'ionicons';
-import { homeOutline, listOutline, settingsOutline } from 'ionicons/icons';
+
 import { BreakpointService } from '../../../core/breakpoint.service';
 import { SidebarComponent, SidebarItem } from '../sidebar/sidebar.component';
 import { DrawerComponent } from '../drawer/drawer.component';
@@ -52,14 +51,14 @@ export class ShellComponent {
   readonly sidebarCollapsed = signal(false);
   readonly drawerOpen = signal(false);
 
-  constructor() { addIcons({ homeOutline, listOutline, settingsOutline }); }
+  constructor() { }
 
   readonly navItems: SidebarItem[] = [
-    { label: 'Home',     icon: 'home-outline',     route: '/tabs/home' },
-    { label: 'Plots',    icon: 'list-outline',     route: '/tabs/plots' },
-    { label: 'Calendar', icon: 'list-outline',     route: '/tabs/calendar' },
-    { label: 'Library',  icon: 'list-outline',     route: '/tabs/library' },
-    { label: 'Settings', icon: 'settings-outline', route: '/tabs/settings' },
+    { label: 'My Garden', icon: 'psychology_alt', route: '/tabs/home' },
+    { label: 'Plots',     icon: 'grid_view',      route: '/tabs/plots' },
+    { label: 'Calendar',  icon: 'calendar_today', route: '/tabs/calendar' },
+    { label: 'Library',   icon: 'local_library',  route: '/tabs/library' },
+    { label: 'Settings',  icon: 'person',         route: '/tabs/settings' },
   ];
 
   navigate(item: SidebarItem): void {

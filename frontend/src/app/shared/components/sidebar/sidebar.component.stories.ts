@@ -2,20 +2,20 @@ import type { Meta, StoryObj } from '@storybook/angular';
 import { SidebarComponent, SidebarItem } from './sidebar.component';
 
 const items: SidebarItem[] = [
-  { label: 'Dashboard', icon: 'home-outline',        route: '/dashboard' },
-  { label: 'Users',     icon: 'people-outline',      route: '/users',    badge: 3 },
-  { label: 'Analytics', icon: 'stats-chart-outline', route: '/analytics' },
+  { label: 'Dashboard', icon: 'home',        route: '/dashboard' },
+  { label: 'Users',     icon: 'person',      route: '/users',    badge: 3 },
+  { label: 'Analytics', icon: 'monitoring', route: '/analytics' },
   {
     label: 'Content',
-    icon: 'document-text-outline',
+    icon: 'description',
     children: [
-      { label: 'Posts',    icon: 'document-text-outline', route: '/content/posts' },
-      { label: 'Media',    icon: 'document-text-outline', route: '/content/media' },
+      { label: 'Posts',    icon: 'description', route: '/content/posts' },
+      { label: 'Media',    icon: 'description', route: '/content/media' },
     ],
   },
-  { label: 'Finance',   icon: 'cash-outline',         route: '/finance',  badge: 12 },
-  { label: 'Security',  icon: 'shield-outline',       route: '/security'  },
-  { label: 'Settings',  icon: 'settings-outline',     route: '/settings'  },
+  { label: 'Finance',   icon: 'payments',         route: '/finance',  badge: 12 },
+  { label: 'Security',  icon: 'shield',       route: '/security'  },
+  { label: 'Settings',  icon: 'settings',     route: '/settings'  },
 ];
 
 const meta: Meta<SidebarComponent> = {
@@ -51,11 +51,11 @@ export const Collapsed: Story = {
 export const WithBadges: Story = {
   args: {
     items: [
-      { label: 'Dashboard',     icon: 'home-outline',          route: '/' },
-      { label: 'Notifications', icon: 'notifications-outline', route: '/notifications', badge: 5 },
-      { label: 'Users',         icon: 'people-outline',         route: '/users',        badge: 99 },
-      { label: 'Finance',       icon: 'cash-outline',           route: '/finance',      badge: 1 },
-      { label: 'Settings',      icon: 'settings-outline',       route: '/settings' },
+      { label: 'Dashboard',     icon: 'home',          route: '/' },
+      { label: 'Notifications', icon: 'notifications', route: '/notifications', badge: 5 },
+      { label: 'Users',         icon: 'person',         route: '/users',        badge: 99 },
+      { label: 'Finance',       icon: 'payments',           route: '/finance',      badge: 1 },
+      { label: 'Settings',      icon: 'settings',       route: '/settings' },
     ],
     collapsed: false,
     activeRoute: '/',
@@ -69,26 +69,26 @@ export const WithBadges: Story = {
 export const WithNestedItems: Story = {
   args: {
     items: [
-      { label: 'Dashboard', icon: 'home-outline', route: '/' },
+      { label: 'Dashboard', icon: 'home', route: '/' },
       {
         label: 'Content',
-        icon: 'document-text-outline',
+        icon: 'description',
         children: [
-          { label: 'Posts',     icon: 'document-text-outline', route: '/content/posts' },
-          { label: 'Pages',     icon: 'document-text-outline', route: '/content/pages' },
-          { label: 'Media',     icon: 'document-text-outline', route: '/content/media' },
+          { label: 'Posts',     icon: 'description', route: '/content/posts' },
+          { label: 'Pages',     icon: 'description', route: '/content/pages' },
+          { label: 'Media',     icon: 'description', route: '/content/media' },
         ],
       },
       {
         label: 'Users',
-        icon: 'people-outline',
+        icon: 'person',
         badge: 3,
         children: [
-          { label: 'All Users', icon: 'people-outline', route: '/users/all' },
-          { label: 'Roles',     icon: 'shield-outline',  route: '/users/roles' },
+          { label: 'All Users', icon: 'person', route: '/users/all' },
+          { label: 'Roles',     icon: 'shield',  route: '/users/roles' },
         ],
       },
-      { label: 'Settings', icon: 'settings-outline', route: '/settings' },
+      { label: 'Settings', icon: 'settings', route: '/settings' },
     ],
     collapsed: false,
     activeRoute: '/content/posts',

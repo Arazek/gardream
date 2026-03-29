@@ -1,12 +1,4 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { IonIcon } from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  homeOutline, peopleOutline, settingsOutline, statsChartOutline,
-  documentTextOutline, cashOutline, chevronForwardOutline,
-  chevronBackOutline, chevronDownOutline, menuOutline,
-  shieldOutline, notificationsOutline, helpCircleOutline,
-} from 'ionicons/icons';
 
 export interface SidebarItem {
   label: string;
@@ -19,7 +11,7 @@ export interface SidebarItem {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [IonIcon],
+  imports: [],
   styleUrl: './sidebar.component.scss',
   template: `
     <nav class="sidebar" [class.sidebar--collapsed]="collapsed">
@@ -29,7 +21,9 @@ export interface SidebarItem {
           <span class="sidebar__brand">Admin</span>
         }
         <button class="sidebar__toggle" (click)="toggleCollapsed()" [attr.aria-label]="collapsed ? 'Expand sidebar' : 'Collapse sidebar'">
-          <ion-icon [name]="collapsed ? 'chevron-forward-outline' : 'chevron-back-outline'" />
+          <span class="material-symbols-outlined sidebar__icon">
+            {{ collapsed ? 'chevron_right' : 'chevron_left' }}
+          </span>
         </button>
       </div>
 
@@ -43,18 +37,19 @@ export interface SidebarItem {
               [attr.aria-label]="item.label"
               [attr.title]="collapsed ? item.label : null"
             >
-              <ion-icon class="sidebar__icon" [name]="item.icon" />
+              <span class="material-symbols-outlined sidebar__icon">{{ item.icon }}</span>
               @if (!collapsed) {
                 <span class="sidebar__label">{{ item.label }}</span>
                 @if (item.badge) {
                   <span class="sidebar__badge">{{ item.badge > 99 ? '99+' : item.badge }}</span>
                 }
                 @if (item.children?.length) {
-                  <ion-icon
-                    class="sidebar__chevron"
+                  <span
+                    class="material-symbols-outlined sidebar__chevron"
                     [class.sidebar__chevron--open]="isExpanded(item)"
-                    name="chevron-down-outline"
-                  />
+                  >
+                    expand_more
+                  </span>
                 }
               } @else {
                 @if (item.badge) {
@@ -72,7 +67,7 @@ export interface SidebarItem {
                       [class.sidebar__link--active]="activeRoute === child.route"
                       (click)="onItemClick(child)"
                     >
-                      <ion-icon class="sidebar__icon sidebar__icon--sm" [name]="child.icon" />
+                      <span class="material-symbols-outlined sidebar__icon sidebar__icon--sm">{{ child.icon }}</span>
                       <span class="sidebar__label">{{ child.label }}</span>
                       @if (child.badge) {
                         <span class="sidebar__badge">{{ child.badge }}</span>
@@ -98,14 +93,7 @@ export class SidebarComponent {
 
   private expandedItems = new Set<string>();
 
-  constructor() {
-    addIcons({
-      homeOutline, peopleOutline, settingsOutline, statsChartOutline,
-      documentTextOutline, cashOutline, chevronForwardOutline,
-      chevronBackOutline, chevronDownOutline, menuOutline,
-      shieldOutline, notificationsOutline, helpCircleOutline,
-    });
-  }
+  constructor() {}
 
   isExpanded(item: SidebarItem): boolean {
     return this.expandedItems.has(item.label);

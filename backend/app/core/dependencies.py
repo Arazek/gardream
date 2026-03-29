@@ -22,10 +22,6 @@ async def get_current_user(
 ) -> dict:
     user = await verify_token(credentials.credentials)
 
-    # Upsert user profile so the scheduler can find email addresses
-    email = user.get("email")
-    name = user.get("name") or user.get("preferred_username")
-
     # Get user_id from 'sub' claim or fallback to preferred_username
     user_id = user.get("sub") or user.get("preferred_username")
     if not user_id:
@@ -34,6 +30,14 @@ async def get_current_user(
             detail="Token missing 'sub' or 'preferred_username' claim",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    # Ensure 'sub' claim exists in user dict (add it if missing)
+    if "sub" not in user:
+        user["sub"] = user_id
+
+    # Upsert user profile so the scheduler can find email addresses
+    email = user.get("email")
+    name = user.get("name") or user.get("preferred_username")
 
     if email:
         result = await db.execute(

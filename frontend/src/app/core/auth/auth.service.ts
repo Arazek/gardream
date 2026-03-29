@@ -11,7 +11,28 @@ export class AuthService {
   }
 
   async getProfile(): Promise<KeycloakProfile> {
-    return this.keycloak.loadUserProfile();
+    // Extract profile from JWT token claims instead of calling the account endpoint
+    try {
+      const token = await this.keycloak.getToken();
+      if (!token) {
+        return {};
+      }
+
+      // Decode JWT payload (format: header.payload.signature)
+      const payload = JSON.parse(atob(token.split('.')[1]));
+
+      return {
+        id: payload.sub,
+        username: payload.preferred_username,
+        email: payload.email,
+        firstName: payload.given_name,
+        lastName: payload.family_name,
+        emailVerified: payload.email_verified,
+      };
+    } catch (err) {
+      console.error('[AuthService] Failed to extract profile from token:', err);
+      return {};
+    }
   }
 
   async getToken(): Promise<string> {
