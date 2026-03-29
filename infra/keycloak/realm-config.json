@@ -1,0 +1,105 @@
+{
+  "realm": "gardream",
+  "enabled": true,
+  "displayName": "Gardream",
+  "loginTheme": "pwa",
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Administrator role with full access"
+      },
+      {
+        "name": "user",
+        "description": "Standard user role"
+      }
+    ]
+  },
+  "groups": [
+    {
+      "name": "administrators",
+      "realmRoles": ["admin"]
+    },
+    {
+      "name": "users",
+      "realmRoles": ["user"]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "pwa-frontend",
+      "name": "Gardream PWA",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "redirectUris": [
+        "https://localhost/*",
+        "https://localhost:4443/*",
+        "http://localhost:4200/*",
+        "capacitor://localhost/*"
+      ],
+      "webOrigins": [
+        "https://localhost",
+        "https://localhost:4443",
+        "http://localhost:4200"
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    },
+    {
+      "clientId": "pgadmin",
+      "name": "pgAdmin",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "changeme_pgadmin_secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "https://pgadmin.localhost/oauth2/authorize"
+      ],
+      "webOrigins": [
+        "https://pgadmin.localhost"
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "testuser",
+      "enabled": true,
+      "email": "testuser@example.com",
+      "firstName": "Test",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "testpassword",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["user"],
+      "groups": ["users"]
+    }
+  ]
+}

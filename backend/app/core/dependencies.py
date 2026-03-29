@@ -25,13 +25,23 @@ async def get_current_user(
     # Upsert user profile so the scheduler can find email addresses
     email = user.get("email")
     name = user.get("name") or user.get("preferred_username")
+
+    # Get user_id from 'sub' claim or fallback to preferred_username
+    user_id = user.get("sub") or user.get("preferred_username")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token missing 'sub' or 'preferred_username' claim",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     if email:
         result = await db.execute(
-            select(UserProfile).where(UserProfile.user_id == user["sub"])
+            select(UserProfile).where(UserProfile.user_id == user_id)
         )
         profile = result.scalar_one_or_none()
         if profile is None:
-            db.add(UserProfile(user_id=user["sub"], email=email, display_name=name))
+            db.add(UserProfile(user_id=user_id, email=email, display_name=name))
             await db.commit()
         elif profile.email != email or profile.display_name != name:
             profile.email = email
