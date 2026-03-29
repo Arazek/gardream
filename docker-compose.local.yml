@@ -11,6 +11,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       target: development
+    ports:
+      - "8000:8000"
     env_file:
       - .env
     volumes:
@@ -19,6 +21,11 @@ services:
       - proxy-network
     labels:
       - "traefik.enable=true"
+      # HTTP routing
+      - "traefik.http.routers.backend-http.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend-http.entrypoints=web"
+      - "traefik.http.routers.backend-http.service=backend"
+      # HTTPS routing
       - "traefik.http.routers.backend.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls=true"
@@ -29,6 +36,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       target: development
+    ports:
+      - "4200:4200"
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -36,6 +45,11 @@ services:
       - proxy-network
     labels:
       - "traefik.enable=true"
+      # HTTP routing
+      - "traefik.http.routers.frontend-http.rule=Host(`${DOMAIN:-localhost}`)"
+      - "traefik.http.routers.frontend-http.entrypoints=web"
+      - "traefik.http.routers.frontend-http.service=frontend"
+      # HTTPS routing
       - "traefik.http.routers.frontend.rule=Host(`${DOMAIN:-localhost}`)"
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls=true"
