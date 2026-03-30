@@ -17,24 +17,26 @@ import { rootReducers, rootEffects } from './store';
 import { environment } from '../environments/environment';
 
 function initializeKeycloak(keycloak: KeycloakService) {
-  return async () => {
-    try {
-      await keycloak.init({
-        config: environment.keycloak,
-        initOptions: {
-          checkLoginIframe: false,
-          silentCheckSsoRedirectUri: window.location.origin + '/assets/silent-check-sso.html',
-          pkceMethod: 'S256',
-        },
-        enableBearerInterceptor: false,
-      });
-    } catch (err) {
+  return () => {
+    // Don't await - let Keycloak initialize in the background
+    // This allows the app to render immediately instead of blocking
+    keycloak.init({
+      config: environment.keycloak,
+      initOptions: {
+        checkLoginIframe: false,
+        silentCheckSsoRedirectUri: window.location.origin + '/assets/silent-check-sso.html',
+        pkceMethod: 'S256',
+      },
+      enableBearerInterceptor: false,
+    }).catch((err) => {
       console.error(
         '[Keycloak] Initialization failed. Make sure Keycloak is running and the ' +
         'self-signed cert at ' + environment.keycloak.url + ' is trusted in your browser.',
         err,
       );
-    }
+    });
+    // Return immediately - don't wait for Keycloak to finish
+    return Promise.resolve();
   };
 }
 
