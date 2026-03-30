@@ -22,7 +22,7 @@ function initializeKeycloak(keycloak: KeycloakService) {
       await keycloak.init({
         config: environment.keycloak,
         initOptions: {
-          onLoad: 'check-sso',
+          onLoad: 'allow-silent-sso',
           silentCheckSsoRedirectUri: window.location.origin + '/assets/silent-check-sso.html',
           pkceMethod: 'S256',
         },
