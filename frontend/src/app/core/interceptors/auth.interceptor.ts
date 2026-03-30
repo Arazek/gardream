@@ -1,6 +1,6 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { from, switchMap } from 'rxjs';
+import { from, switchMap, catchError, throwError } from 'rxjs';
 import { KeycloakService } from 'keycloak-angular';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
@@ -17,6 +17,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
         : req;
       return next(authReq);
+    }),
+    catchError((err) => {
+      console.error('[authInterceptor] Failed to get token:', err);
+      return throwError(() => err);
     }),
   );
 };

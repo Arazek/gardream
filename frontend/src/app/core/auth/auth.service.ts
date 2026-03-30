@@ -43,7 +43,18 @@ export class AuthService {
     return this.keycloak.login({ redirectUri: window.location.origin });
   }
 
-  logout(): Promise<void> {
+  async logout(): Promise<void> {
+    // Clear all local auth-related storage
+    localStorage.removeItem('auth_token');
+
+    // Clear any Keycloak callback data stored in localStorage
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('kc-')) {
+        localStorage.removeItem(key);
+      }
+    });
+
+    // Logout from Keycloak (will redirect to /login)
     return this.keycloak.logout(window.location.origin + '/login');
   }
 
