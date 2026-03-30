@@ -233,7 +233,7 @@ cmd_keycloak_user() {
   $DOCKER compose ${COMPOSE_INFRA} --env-file .env exec keycloak \
     /opt/keycloak/bin/kcadm.sh add-roles \
       -r "${KEYCLOAK_REALM:-gardream}" \
-      --uusername "${username}" \
+      --username "${username}" \
       --rolename user
   success "User '${username}' created. Password: ${password}"
 }
