@@ -78,7 +78,6 @@ services:
       KC_HTTP_RELATIVE_PATH: /keycloak
     volumes:
       - keycloak_data:/opt/keycloak/data
-      - ./keycloak/realm-config.json:/opt/keycloak/data/import/realm-config.json:ro
       - ./keycloak/themes:/opt/keycloak/themes:ro
     networks:
       - proxy-network
