@@ -61,7 +61,7 @@ services:
     image: quay.io/keycloak/keycloak:26.0
     container_name: keycloak
     restart: unless-stopped
-    command: start --import-realm
+    command: start
     environment:
       # Database connection (KC_DB_* are Keycloak's own env var names)
       KC_DB: postgres
