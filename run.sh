@@ -239,6 +239,25 @@ cmd_keycloak_user() {
 }
 
 # ---------------------------------------------------------------------------
+# Keycloak: import realm config (first-time setup)
+# ---------------------------------------------------------------------------
+cmd_keycloak_import() {
+  require_env
+  warn "This will reset Keycloak to the state in realm-config.json. Proceed? (yes/N)"
+  read -r confirm
+  [ "$confirm" != "yes" ] && { info "Aborted."; exit 0; }
+
+  info "Stopping Keycloak and clearing data..."
+  $DOCKER compose ${COMPOSE_INFRA} --env-file .env stop keycloak
+  $DOCKER volume rm gardream-keycloak_data 2>/dev/null || true
+
+  info "Starting Keycloak with realm import..."
+  $DOCKER compose ${COMPOSE_INFRA} --env-file .env up -d keycloak --build
+  success "Keycloak restarted. Realm will be imported from realm-config.json."
+  info "Keycloak may take ~30s to be ready. Check status with: ./run.sh infra:logs keycloak"
+}
+
+# ---------------------------------------------------------------------------
 # Keycloak: export realm config
 # ---------------------------------------------------------------------------
 cmd_keycloak_export() {
@@ -287,6 +306,7 @@ cmd_help() {
   echo "  frontend:sync         Build Angular + run Capacitor sync"
   echo "  storybook             Start Storybook component explorer (http://localhost:6006)"
   echo "  keycloak:user [u] [p] Create a dev user in the gardream realm (default: testuser/testpass123)"
+  echo "  keycloak:import       Import realm from realm-config.json (first-time setup, destructive)"
   echo "  keycloak:export       Export Keycloak realm config to infra/keycloak/"
   echo "  shell [service]       Open a bash shell in a service (default: backend)"
   echo ""
@@ -315,6 +335,7 @@ case "$CMD" in
   frontend:sync)    cmd_frontend_sync ;;
   storybook)        cmd_storybook ;;
   keycloak:user)    cmd_keycloak_user "$@" ;;
+  keycloak:import)  cmd_keycloak_import ;;
   keycloak:export)  cmd_keycloak_export ;;
   shell)            cmd_shell "$@" ;;
   help|--help|-h)   cmd_help ;;
