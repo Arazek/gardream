@@ -113,8 +113,13 @@ export class PlotDetailPage implements OnInit {
   }
 
   async onSlotClick(plotId: string, cell: GridCell): Promise<void> {
-    // If the slot is already occupied, do nothing (use long-press to remove)
-    if (cell.crop) return;
+    // If the slot is already occupied, navigate to specimen detail
+    if (cell.crop) {
+      if (cell.slotId) {
+        this.router.navigate(['/tabs/plots', plotId, 'slots', cell.slotId, 'specimen']);
+      }
+      return;
+    }
 
     const result = await this.sheet.open({
       component: CropPickerComponent,

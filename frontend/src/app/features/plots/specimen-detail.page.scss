@@ -1,0 +1,181 @@
+@use '../../../theme/variables.scss' as *;
+
+
+.specimen-container {
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+  padding-top: var(--space-4);
+  padding-bottom: calc(var(--bottom-nav-height) + var(--space-4));
+}
+
+.progress-section {
+  background: var(--color-surface-container);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  box-shadow: var(--shadow-card);
+}
+
+body.dark .progress-section {
+  background: var(--color-surface-container);
+  box-shadow: var(--shadow-card);
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+
+  h2 {
+    margin: 0;
+    @include type-heading-4;
+    text-transform: capitalize;
+    color: var(--color-on-surface);
+  }
+
+  .progress-label {
+    @include type-label-lg;
+    color: var(--color-on-surface-variant);
+  }
+}
+
+body.dark .progress-header {
+  h2 { color: var(--color-on-surface); }
+  .progress-label { color: var(--color-on-surface-variant); }
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-container-high);
+  appearance: none;
+  -webkit-appearance: none;
+
+  &::-webkit-progress-bar {
+    background: var(--color-surface-container-high);
+    border-radius: var(--radius-sm);
+  }
+
+  &::-webkit-progress-value {
+    background: var(--color-primary);
+    border-radius: var(--radius-sm);
+  }
+
+  &::-moz-progress-bar {
+    background: var(--color-primary);
+    border-radius: var(--radius-sm);
+  }
+}
+
+body.dark .progress-bar {
+  background: var(--color-surface-container-high);
+  &::-webkit-progress-bar { background: var(--color-surface-container-high); }
+  &::-webkit-progress-value { background: var(--color-primary-fixed-dim); }
+  &::-moz-progress-bar { background: var(--color-primary-fixed-dim); }
+}
+
+.stage-override-section,
+.notes-section,
+.photo-section,
+.milestones-section {
+  margin-bottom: var(--space-8);
+
+  h3 {
+    margin: 0 0 var(--space-3) 0;
+    @include type-label;
+    color: var(--color-on-surface-variant);
+  }
+}
+
+body.dark .stage-override-section h3,
+body.dark .notes-section h3,
+body.dark .photo-section h3,
+body.dark .milestones-section h3 {
+  color: var(--color-on-surface-variant);
+}
+
+.stage-override {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.stage-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-full);
+  @include type-label-lg;
+  text-transform: capitalize;
+
+  &--override {
+    background: var(--ion-color-warning);
+    color: var(--ion-color-warning-contrast);
+  }
+
+  .clear-btn {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 1.25rem;
+    padding: 0;
+    line-height: 1;
+    transition: opacity var(--duration-quick) var(--ease-standard);
+
+    &:hover {
+      opacity: 0.8;
+    }
+
+    &:active {
+      opacity: 0.6;
+    }
+  }
+}
+
+.notes-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: var(--space-3);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  @include type-body;
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
+  resize: vertical;
+  transition: border-color var(--duration-quick) var(--ease-standard);
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(22, 53, 38, 0.1);
+  }
+
+  &::placeholder {
+    color: var(--color-on-surface-variant);
+  }
+}
+
+.loading {
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  @include type-body;
+  color: var(--color-on-surface-variant);
+}
+
+.error {
+  padding: var(--space-4);
+  text-align: center;
+  @include type-body;
+  color: var(--color-on-error-container);
+  background: var(--color-error-container);
+  border-radius: var(--radius-md);
+}

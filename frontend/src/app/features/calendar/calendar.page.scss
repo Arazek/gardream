@@ -1,15 +1,11 @@
 @use 'theme/mixins' as *;
 
-.calendar-content {
-  --background: var(--color-surface);
-}
-
 // ─── Month header ─────────────────────────────────────────────────────────────
 .cal-month-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(var(--top-app-bar-height) + var(--space-5)) var(--space-4) var(--space-3);
+  padding: var(--space-5) var(--space-4) var(--space-3);
   background: var(--color-surface);
 
   &__center {

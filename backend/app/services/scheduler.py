@@ -67,7 +67,7 @@ async def _send_reminders(target_date: date, reminder_field: str, send_fn) -> No
             tasks_row = await db.execute(
                 select(Task).where(
                     Task.user_id == ns.user_id,
-                    Task.due_date == target_date.isoformat(),
+                    Task.due_date == target_date,
                     Task.completed.is_(False),
                 )
             )

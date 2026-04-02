@@ -39,3 +39,6 @@ class PlotSlot(Base):
     tasks: Mapped[list["Task"]] = relationship(  # noqa: F821
         "Task", back_populates="plot_slot", cascade="all, delete-orphan"
     )
+    specimen: Mapped["Specimen"] = relationship(  # noqa: F821
+        "Specimen", back_populates="plot_slot", uselist=False, cascade="all, delete-orphan"
+    )

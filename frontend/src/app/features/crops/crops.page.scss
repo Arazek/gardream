@@ -1,11 +1,9 @@
 @use 'theme/mixins' as *;
 
-.crops-content {
-  --background: var(--color-surface);
-}
 
 .crops-search-wrap {
-  padding: calc(var(--top-app-bar-height) + var(--space-3)) var(--space-4) 0;
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-3);
 }
 
 .crops-filters {
@@ -22,7 +20,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
   gap: var(--space-3);
-  padding: 0 var(--space-4) calc(var(--bottom-nav-height) + var(--space-4));
+  padding-bottom: calc(var(--bottom-nav-height) + var(--space-4));
 }
 
 .crops-skeleton {

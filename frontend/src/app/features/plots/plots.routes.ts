@@ -13,4 +13,8 @@ export const plotsRoutes: Routes = [
     path: ':id',
     loadComponent: () => import('./plot-detail.page').then((m) => m.PlotDetailPage),
   },
+  {
+    path: ':id/slots/:slotId/specimen',
+    loadComponent: () => import('./specimen-detail.page').then((m) => m.SpecimenDetailPage),
+  },
 ];

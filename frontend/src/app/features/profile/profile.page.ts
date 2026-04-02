@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import {
-  IonContent, IonList, IonItem, IonLabel, IonIcon,
+  IonList, IonItem, IonLabel, IonIcon,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -9,22 +9,23 @@ import {
 import { KeycloakProfile } from 'keycloak-js';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { TopAppBarComponent, SectionComponent, AvatarComponent, DividerComponent } from '../../shared';
+import { TopAppBarComponent, SectionComponent, AvatarComponent, DividerComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
   imports: [
-    IonContent, IonList, IonItem, IonLabel, IonIcon,
-    TopAppBarComponent, SectionComponent, AvatarComponent, DividerComponent,
+    IonList, IonItem, IonLabel, IonIcon,
+    TopAppBarComponent, SectionComponent, AvatarComponent, DividerComponent, PageContentComponent, PageBodyWrapperComponent,
   ],
   styleUrl: './profile.page.scss',
   template: `
     <app-top-app-bar title="Profile" />
 
-    <ion-content class="profile-content">
+    <app-page-content class="profile-content">
+      <app-page-body-wrapper>
 
-      <div class="profile-hero">
+        <div class="profile-hero">
         <app-avatar [name]="fullName" size="xl" class="profile-hero__avatar" />
         <h1 class="profile-hero__name">{{ fullName || '—' }}</h1>
         <p class="profile-hero__email">{{ profile?.email || '—' }}</p>
@@ -94,7 +95,8 @@ import { TopAppBarComponent, SectionComponent, AvatarComponent, DividerComponent
         </ion-list>
       </app-section>
 
-    </ion-content>
+      </app-page-body-wrapper>
+    </app-page-content>
   `,
 })
 export class ProfilePage implements OnInit {

@@ -1,0 +1,16 @@
+/**
+ * PageBodyWrapper Component Styles
+ *
+ * Provides consistent horizontal padding for page content.
+ * This allows full-width sections to exist alongside padded content sections.
+ *
+ * CSS Custom Properties:
+ * - --page-body-padding-start: Left padding (default: --space-4)
+ * - --page-body-padding-end: Right padding (default: --space-4)
+ */
+
+:host {
+  display: block;
+  padding-left: var(--page-body-padding-start, var(--space-4));
+  padding-right: var(--page-body-padding-end, var(--space-4));
+}

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import {
-  IonContent, IonList, IonItem, IonLabel,
+  IonList, IonItem, IonLabel,
   IonSegment, IonSegmentButton, IonIcon, IonToggle,
 } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
@@ -12,7 +12,7 @@ import { Store } from '@ngrx/store';
 import { AuthService } from '../../core/auth/auth.service';
 import { ThemeService, ColorScheme } from '../../core/theme/theme.service';
 import {
-  TopAppBarComponent, SectionComponent, DividerComponent, AvatarComponent,
+  TopAppBarComponent, SectionComponent, DividerComponent, AvatarComponent, PageContentComponent, PageBodyWrapperComponent,
 } from '../../shared';
 import { NotificationsActions } from '../../store/notifications/notifications.actions';
 import {
@@ -24,16 +24,16 @@ import {
   standalone: true,
   imports: [
     AsyncPipe,
-    IonContent, IonList, IonItem, IonLabel,
+    IonList, IonItem, IonLabel,
     IonSegment, IonSegmentButton, IonIcon, IonToggle,
-    TopAppBarComponent, SectionComponent, DividerComponent, AvatarComponent,
+    TopAppBarComponent, SectionComponent, DividerComponent, AvatarComponent, PageContentComponent, PageBodyWrapperComponent,
   ],
   styleUrl: './settings.page.scss',
   template: `
     <app-top-app-bar title="Settings" />
 
-    <ion-content class="settings-content">
-      <div class="settings-body">
+    <app-page-content class="settings-content">
+      <app-page-body-wrapper class="settings-body">
 
         <!-- Profile -->
         <div class="settings-profile">
@@ -133,8 +133,8 @@ import {
           </ion-list>
         </app-section>
 
-      </div>
-    </ion-content>
+      </app-page-body-wrapper>
+    </app-page-content>
   `,
 })
 export class SettingsPage implements OnInit {

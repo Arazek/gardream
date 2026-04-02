@@ -15,6 +15,7 @@ import app.models.plot  # noqa: F401
 import app.models.plot_slot  # noqa: F401
 import app.models.task  # noqa: F401
 import app.models.notification_settings  # noqa: F401
+import app.models.specimen  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)

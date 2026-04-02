@@ -18,18 +18,26 @@ import { environment } from '../environments/environment';
 
 function initializeKeycloak(keycloak: KeycloakService) {
   return () => {
-    return keycloak.init({
-      config: environment.keycloak,
-      initOptions: {
-        checkLoginIframe: false,
-        silentCheckSsoRedirectUri: window.location.origin + '/assets/silent-check-sso.html',
-        pkceMethod: 'S256',
-        onLoad: 'check-sso',
-      },
-      enableBearerInterceptor: false,
-    }).catch((err) => {
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Keycloak init timeout')), 10000)
+    );
+
+    return Promise.race([
+      keycloak.init({
+        config: environment.keycloak,
+        initOptions: {
+          checkLoginIframe: false,
+          silentCheckSsoRedirectUri: window.location.origin + '/assets/silent-check-sso.html',
+          pkceMethod: 'S256',
+          onLoad: 'check-sso',
+        },
+        enableBearerInterceptor: false,
+        loadUserProfileAtStartUp: false,
+      }),
+      timeoutPromise,
+    ]).catch((err) => {
       console.error(
-        '[Keycloak] Initialization failed. Make sure Keycloak is running and the ' +
+        '[Keycloak] Initialization failed or timed out. Make sure Keycloak is running and the ' +
         'self-signed cert at ' + environment.keycloak.url + ' is trusted in your browser.',
         err,
       );

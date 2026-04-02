@@ -2,36 +2,57 @@
 
 .garden-grid-slot {
   position: relative;
+  width: 100%;
+  aspect-ratio: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border-radius: var(--radius-lg);
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  width: 100%;
+  justify-content: center;
 
-  &:focus-visible {
-    outline: 0.125rem solid var(--color-primary);
-    outline-offset: 0.125rem;
-    border-radius: var(--radius-lg);
+  &--empty {
+    opacity: 1; // Remove disabled appearance
   }
 
+  // Main content button (occupied slot)
+  &__content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-lg);
+    transition: background-color var(--duration-short) var(--ease-standard);
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    &:active {
+      background-color: var(--color-secondary-container);
+    }
+  }
+
+  // Image container
   &__image-wrap {
-    width: 3.75rem;
-    height: 3.75rem;
+    width: 2.5rem;
+    height: 2.5rem;
     border-radius: var(--radius-full);
     overflow: hidden;
-    box-shadow: 0 0.125rem 0.5rem rgba(var(--ion-color-primary-rgb, 22 53 38), 0.18);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
     background: var(--color-secondary-container);
-    transition: transform var(--duration-standard) var(--ease-standard);
     flex-shrink: 0;
+    transition: transform var(--duration-short) var(--ease-standard);
   }
 
-  &:active &__image-wrap {
-    transform: scale(0.96);
+  &__content:active &__image-wrap {
+    transform: scale(0.95);
   }
 
   &__image {
@@ -40,77 +61,135 @@
     object-fit: cover;
   }
 
+  // Info section (name + latin name)
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    width: 100%;
+    min-width: 0; // Enables text truncation
+    text-align: center;
+  }
+
   &__name {
-    @include type-label-lg;
+    @include type-label-lg; // Primary crop name
     color: var(--color-on-surface);
     margin: 0;
-    text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
+    font-weight: 500;
   }
 
   &__latin {
-    @include type-latin-name;
+    @include type-latin-name; // Uses existing mixin for scientific name
     color: var(--color-on-surface-variant);
     margin: 0;
-    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   app-progress-bar {
     width: 100%;
   }
 
-  // Long-press remove overlay
-  &--pressing {
-    .garden-grid-slot__image-wrap {
-      transform: scale(0.92);
-      filter: brightness(0.7);
+  // Remove button (visible affordance)
+  &__remove-btn {
+    position: absolute;
+    top: var(--space-1);
+    right: var(--space-1);
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: var(--radius-full);
+    background: var(--color-error-container);
+    color: var(--color-error);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--duration-short) var(--ease-standard),
+                transform var(--duration-short) var(--ease-standard);
+    padding: 0;
+
+    .material-symbols-outlined {
+      font-size: 1.25rem;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-error);
+      outline-offset: 2px;
+    }
+
+    &:active {
+      transform: scale(0.95);
     }
   }
 
-  &__remove-hint {
+  // Show remove button on hover/focus
+  &:hover &__remove-btn,
+  &:focus-within &__remove-btn {
+    opacity: 1;
+  }
+
+  // Press feedback (visual indication during long-press if kept)
+  &__press-feedback {
     position: absolute;
     inset: 0;
+    border-radius: var(--radius-lg);
+    background: rgba(var(--color-error-rgb, 186 26 26) / 0.1);
+    pointer-events: none;
+  }
+
+  // Empty slot button
+  &__empty-btn {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-lg);
-    background: rgba(var(--color-error-rgb, 186 26 26) / 0.15);
-    pointer-events: none;
+    transition: background-color var(--duration-short) var(--ease-standard);
 
-    .material-symbols-outlined {
-      font-size: var(--icon-size-lg);
-      color: var(--color-error);
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    &:active {
+      background-color: var(--color-secondary-container);
     }
   }
 
-  // Empty state
-  &--empty {
-    opacity: 0.6;
+  &__empty-circle {
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--radius-full);
+    border: 2px dashed var(--color-outline-variant);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-surface-container-low);
+    transition: all var(--duration-short) var(--ease-standard);
 
-    .garden-grid-slot__empty-circle {
-      width: 3.75rem;
-      height: 3.75rem;
-      border-radius: var(--radius-full);
-      border: 0.125rem dashed var(--color-outline-variant);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--color-surface-container-low);
-
-      .material-symbols-outlined {
-        font-size: var(--icon-size-sm);
-        color: var(--color-outline);
-        opacity: 0.6;
-      }
+    .material-symbols-outlined {
+      font-size: 1.5rem;
+      color: var(--color-outline);
     }
+  }
 
-    &:active .garden-grid-slot__empty-circle {
-      background: var(--color-secondary-container);
-      border-color: var(--color-primary);
-      opacity: 1;
-    }
+  &__empty-btn:active &__empty-circle {
+    background: var(--color-secondary-container);
+    border-color: var(--color-primary);
+  }
+
+  &__empty-btn:focus-visible ~ .garden-grid-slot__empty-circle {
+    border-color: var(--color-primary);
   }
 }

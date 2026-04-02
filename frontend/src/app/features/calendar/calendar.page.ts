@@ -1,12 +1,12 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { IonContent, IonFab, IonFabButton, IonIcon } from '@ionic/angular/standalone';
+import { IonFab, IonFabButton, IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { add, chevronBack, chevronForward } from 'ionicons/icons';
 import { Store } from '@ngrx/store';
 
-import { TopAppBarComponent, TaskCardComponent, FilterChipComponent } from '../../shared';
+import { TopAppBarComponent, TaskCardComponent, FilterChipComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
 import { BottomSheetService } from '../../shared/services/bottom-sheet.service';
 import { TasksActions } from '../tasks/store/tasks.actions';
 import { selectAllTasks, selectTasksLoading } from '../tasks/store/tasks.selectors';
@@ -62,8 +62,8 @@ function buildMonthGrid(year: number, month: number): CalDay[] {
   standalone: true,
   imports: [
     AsyncPipe,
-    IonContent, IonFab, IonFabButton, IonIcon,
-    TopAppBarComponent, TaskCardComponent, FilterChipComponent,
+    IonFab, IonFabButton, IonIcon,
+    TopAppBarComponent, TaskCardComponent, FilterChipComponent, PageContentComponent, PageBodyWrapperComponent,
   ],
   styleUrl: './calendar.page.scss',
   template: `
@@ -73,10 +73,11 @@ function buildMonthGrid(year: number, month: number): CalDay[] {
       </button>
     </app-top-app-bar>
 
-    <ion-content class="calendar-content">
+    <app-page-content class="calendar-content">
+      <app-page-body-wrapper>
 
-      <!-- Month header -->
-      <div class="cal-month-header">
+        <!-- Month header -->
+        <div class="cal-month-header">
         <button class="cal-month-header__arrow" type="button" (click)="shiftMonth(-1)" aria-label="Previous month">
           <ion-icon name="chevron-back" />
         </button>
@@ -148,6 +149,8 @@ function buildMonthGrid(year: number, month: number): CalDay[] {
         }
       </div>
 
+      </app-page-body-wrapper>
+
       <!-- Add task FAB -->
       <ion-fab slot="fixed" vertical="bottom" horizontal="end">
         <ion-fab-button (click)="openAddTask()">
@@ -155,7 +158,7 @@ function buildMonthGrid(year: number, month: number): CalDay[] {
         </ion-fab-button>
       </ion-fab>
 
-    </ion-content>
+    </app-page-content>
   `,
 })
 export class CalendarPage implements OnInit {

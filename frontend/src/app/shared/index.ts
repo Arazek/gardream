@@ -39,6 +39,8 @@ export { TextareaFieldComponent } from './components/textarea-field/textarea-fie
 
 // ─── Layout & Media ───────────────────────────────────────────────────────────
 export { PageHeaderComponent } from './components/page-header/page-header.component';
+export { PageContentComponent } from './components/page-content/page-content.component';
+export { PageBodyWrapperComponent } from './components/page-body-wrapper/page-body-wrapper.component';
 export { DividerComponent } from './components/divider/divider.component';
 export { ImageWithFallbackComponent } from './components/image-with-fallback/image-with-fallback.component';
 

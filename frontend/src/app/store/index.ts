@@ -9,6 +9,9 @@ import { CropsEffects } from '../features/crops/store/crops.effects';
 import { plotsReducer } from '../features/plots/store/plots.reducer';
 import { PlotsState } from '../features/plots/store/plots.state';
 import { PlotsEffects } from '../features/plots/store/plots.effects';
+import { specimensReducer } from '../features/plots/store/specimens.reducer';
+import { SpecimensState } from '../features/plots/store/specimens.state';
+import { SpecimensEffects } from '../features/plots/store/specimens.effects';
 import { tasksReducer } from '../features/tasks/store/tasks.reducer';
 import { TasksState } from '../features/tasks/store/tasks.state';
 import { TasksEffects } from '../features/tasks/store/tasks.effects';
@@ -24,6 +27,7 @@ export interface AppState {
   example: ExampleState;
   crops: CropsState;
   plots: PlotsState;
+  specimens: SpecimensState;
   tasks: TasksState;
   weather: WeatherState;
   notifications: NotificationsState;
@@ -34,9 +38,10 @@ export const rootReducers: ActionReducerMap<AppState> = {
   example: exampleReducer,
   crops: cropsReducer,
   plots: plotsReducer,
+  specimens: specimensReducer,
   tasks: tasksReducer,
   weather: weatherReducer,
   notifications: notificationsReducer,
 };
 
-export const rootEffects = [ExampleEffects, CropsEffects, PlotsEffects, TasksEffects, WeatherEffects, NotificationsEffects];
+export const rootEffects = [ExampleEffects, CropsEffects, PlotsEffects, SpecimensEffects, TasksEffects, WeatherEffects, NotificationsEffects];

@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { IonContent, IonRippleEffect } from '@ionic/angular/standalone';
+import { IonRippleEffect } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
 
 import { AuthService } from '../../core/auth/auth.service';
@@ -13,6 +13,8 @@ import {
   StatChipComponent,
   WeatherWidgetComponent,
   InlineAlertComponent,
+  PageContentComponent,
+  PageBodyWrapperComponent,
 } from '../../shared';
 import { CurrentWeather as WidgetCurrentWeather, DayForecast as WidgetDayForecast } from '../../shared/components/weather-widget/weather-widget.component';
 import { PlotsActions } from '../plots/store/plots.actions';
@@ -80,7 +82,6 @@ const INSIGHTS = [
   standalone: true,
   imports: [
     AsyncPipe,
-    IonContent,
     IonRippleEffect,
     TopAppBarComponent,
     HeroSectionComponent,
@@ -89,6 +90,8 @@ const INSIGHTS = [
     StatChipComponent,
     WeatherWidgetComponent,
     InlineAlertComponent,
+    PageContentComponent,
+    PageBodyWrapperComponent,
   ],
   styleUrl: './home.page.scss',
   template: `
@@ -101,9 +104,9 @@ const INSIGHTS = [
       </button>
     </app-top-app-bar>
 
-    <ion-content class="home-content">
+    <app-page-content class="home-content">
 
-      <!-- Hero -->
+      <!-- Hero (full-width) -->
       <app-hero-section [greeting]="greeting" [subtitle]="heroSubtitle" [statement]="statement">
         <div class="home-stats">
           <app-stat-chip icon="task_alt" label="Today" [value]="todayCount + ' tasks'" />
@@ -112,7 +115,8 @@ const INSIGHTS = [
         </div>
       </app-hero-section>
 
-      <div class="home-body">
+      <!-- Main content with horizontal padding -->
+      <app-page-body-wrapper class="home-body">
 
         <!-- Weather widget -->
         @if (widgetCurrent) {
@@ -213,8 +217,8 @@ const INSIGHTS = [
           />
         </section>
 
-      </div>
-    </ion-content>
+      </app-page-body-wrapper>
+    </app-page-content>
   `,
 })
 export class HomePage implements OnInit {

@@ -77,3 +77,53 @@ ion-card::part(native) {
     grid-template-columns: 1fr;
   }
 }
+
+// ─── Specimen Detail Page — Design System Alignment ──────────────────────────
+// Using ::ng-deep to ensure design system consistency across view encapsulation
+::ng-deep app-specimen-detail .progress-section {
+  background: var(--color-surface-container) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+::ng-deep app-specimen-detail .stage-chip {
+  background: var(--color-primary-container) !important;
+  color: var(--color-on-primary-container) !important;
+  border-radius: var(--radius-full) !important;
+}
+
+::ng-deep app-specimen-detail .stage-chip--override {
+  background: var(--ion-color-warning) !important;
+  color: var(--ion-color-warning-contrast) !important;
+}
+
+::ng-deep app-specimen-detail .progress-bar {
+  background: var(--color-surface-container-high) !important;
+
+  &::-webkit-progress-bar {
+    background: var(--color-surface-container-high) !important;
+  }
+
+  &::-webkit-progress-value {
+    background: var(--color-primary) !important;
+  }
+
+  &::-moz-progress-bar {
+    background: var(--color-primary) !important;
+  }
+}
+
+::ng-deep body.dark app-specimen-detail .progress-bar {
+  background: var(--color-surface-container-high) !important;
+
+  &::-webkit-progress-bar {
+    background: var(--color-surface-container-high) !important;
+  }
+
+  &::-webkit-progress-value {
+    background: var(--color-primary-fixed-dim) !important;
+  }
+
+  &::-moz-progress-bar {
+    background: var(--color-primary-fixed-dim) !important;
+  }
+}

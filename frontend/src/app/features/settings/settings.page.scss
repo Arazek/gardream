@@ -1,12 +1,9 @@
 @use 'theme/mixins' as *;
 
-.settings-content {
-  --background: var(--color-surface);
-}
 
 // ─── Body ─────────────────────────────────────────────────────────────────────
 .settings-body {
-  padding: calc(var(--top-app-bar-height) + var(--space-4)) var(--space-4) calc(var(--bottom-nav-height) + var(--space-4));
+  padding: var(--space-4) var(--space-4) calc(var(--bottom-nav-height) + var(--space-4));
 }
 
 // ─── Profile card ─────────────────────────────────────────────────────────────

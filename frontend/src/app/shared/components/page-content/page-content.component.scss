@@ -1,0 +1,43 @@
+/**
+ * PageContent Component Styles
+ *
+ * Handles automatic padding for fixed navbars (top app bar and bottom nav).
+ * Only manages vertical (top/bottom) spacing - horizontal padding is handled by
+ * PageBodyWrapperComponent or individual page layouts to allow full-width sections.
+ *
+ * CSS Custom Properties:
+ * - --page-background: Background color (default: --color-surface)
+ */
+
+:host.page-content-host {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.page-content {
+  // ─── Layout ───────────────────────────────────────────────────────────────
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+
+  // ─── Ionic overrides ──────────────────────────────────────────────────────
+  --background: var(--page-background, var(--color-surface));
+
+  // ─── Padding: Navbar spacing only (top/bottom) ────────────────────────────
+  // Top: navbar height only
+  // Bottom: bottom nav height only
+  // Left/Right: 0 (handled by PageBodyWrapperComponent or page-specific layouts)
+  --padding-top: var(--top-app-bar-height);
+  --padding-bottom: var(--bottom-nav-height);
+  --padding-start: 0;
+  --padding-end: 0;
+
+  // ─── Direct padding as well (for safety) ──────────────────────────────────
+  padding-top: var(--top-app-bar-height);
+  padding-bottom: var(--bottom-nav-height);
+  padding-left: 0;
+  padding-right: 0;
+}

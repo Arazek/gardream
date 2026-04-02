@@ -1,10 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { IonContent } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
 
-import { TopAppBarComponent, SearchBarComponent, FilterChipComponent, SpecimenCardComponent } from '../../shared';
+import { TopAppBarComponent, SearchBarComponent, FilterChipComponent, SpecimenCardComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
 import { CropsActions } from './store/crops.actions';
 import { selectFilteredCrops, selectCropsLoading, selectCategoryFilter } from './store/crops.selectors';
 import { Crop, CropCategory } from './store/crops.state';
@@ -22,7 +21,7 @@ const CATEGORIES: CategoryOption[] = [
 @Component({
   selector: 'app-crops',
   standalone: true,
-  imports: [AsyncPipe, IonContent, TopAppBarComponent, SearchBarComponent, FilterChipComponent, SpecimenCardComponent],
+  imports: [AsyncPipe, TopAppBarComponent, SearchBarComponent, FilterChipComponent, SpecimenCardComponent, PageContentComponent, PageBodyWrapperComponent],
   styleUrl: './crops.page.scss',
   template: `
     <app-top-app-bar title="Crop Library">
@@ -31,9 +30,10 @@ const CATEGORIES: CategoryOption[] = [
       </button>
     </app-top-app-bar>
 
-    <ion-content class="crops-content">
+    <app-page-content class="crops-content">
+      <app-page-body-wrapper>
 
-      <div class="crops-search-wrap">
+        <div class="crops-search-wrap">
         <app-search-bar placeholder="Search crops…" (search)="onSearch($event)" />
       </div>
 
@@ -66,7 +66,8 @@ const CATEGORIES: CategoryOption[] = [
         }
       </div>
 
-    </ion-content>
+      </app-page-body-wrapper>
+    </app-page-content>
   `,
 })
 export class CropsPage implements OnInit {

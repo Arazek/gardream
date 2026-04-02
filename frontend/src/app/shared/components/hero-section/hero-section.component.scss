@@ -3,7 +3,7 @@
 .hero-section {
   position: relative;
   background: linear-gradient(160deg, var(--color-primary) 0%, var(--color-primary-container) 100%);
-  padding: calc(var(--top-app-bar-height) + var(--space-10)) var(--space-6) var(--space-8);
+  padding: var(--space-10) var(--space-6) var(--space-8);
   overflow: hidden;
 
   &__blob {
