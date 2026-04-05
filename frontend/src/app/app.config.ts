@@ -18,31 +18,39 @@ import { environment } from '../environments/environment';
 
 function initializeKeycloak(keycloak: KeycloakService) {
   return () => {
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Keycloak init timeout')), 10000)
-    );
+    console.log('[Keycloak] Starting initialization with config:', environment.keycloak);
 
-    return Promise.race([
-      keycloak.init({
+    const initPromise = keycloak
+      .init({
         config: environment.keycloak,
         initOptions: {
           checkLoginIframe: false,
           silentCheckSsoRedirectUri: window.location.origin + '/assets/silent-check-sso.html',
           pkceMethod: 'S256',
           onLoad: 'check-sso',
+          silentCheckSsoFallback: false,
         },
         enableBearerInterceptor: false,
         loadUserProfileAtStartUp: false,
-      }),
-      timeoutPromise,
-    ]).catch((err) => {
-      console.error(
-        '[Keycloak] Initialization failed or timed out. Make sure Keycloak is running and the ' +
-        'self-signed cert at ' + environment.keycloak.url + ' is trusted in your browser.',
-        err,
-      );
-      return false;
-    });
+      })
+      .then((authenticated) => {
+        console.log('[Keycloak] Initialization complete. Authenticated:', authenticated);
+        return authenticated;
+      })
+      .catch((err) => {
+        console.warn('[Keycloak] Initialization failed, continuing unauthenticated:', err);
+        return false;
+      });
+
+    // Wait for Keycloak, but give up after 10s so a dead server doesn't hang the app.
+    const timeout = new Promise<boolean>((resolve) =>
+      setTimeout(() => {
+        console.warn('[Keycloak] Init timed out after 10s, continuing unauthenticated.');
+        resolve(false);
+      }, 10000)
+    );
+
+    return Promise.race([initPromise, timeout]);
   };
 }
 

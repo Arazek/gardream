@@ -147,6 +147,67 @@ cmd_build() {
 }
 
 # ---------------------------------------------------------------------------
+# DB: create users, databases, and extensions in Postgres (idempotent)
+# ---------------------------------------------------------------------------
+cmd_db_setup() {
+  require_env
+  info "Waiting for Postgres to be ready..."
+  until $DOCKER compose ${COMPOSE_INFRA} --env-file .env exec -T postgres \
+      pg_isready -U postgres &>/dev/null 2>&1; do
+    sleep 2
+  done
+  success "Postgres is ready."
+
+  info "Creating users (if absent)..."
+  $DOCKER compose ${COMPOSE_INFRA} --env-file .env exec -T postgres \
+    psql -U postgres <<SQL
+DO \$body\$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${POSTGRES_USER}') THEN
+    EXECUTE format('CREATE USER %I WITH PASSWORD %L', '${POSTGRES_USER}', '${POSTGRES_PASSWORD}');
+    RAISE NOTICE 'Created user: ${POSTGRES_USER}';
+  ELSE
+    RAISE NOTICE 'User already exists: ${POSTGRES_USER}';
+  END IF;
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${KEYCLOAK_DB_USER}') THEN
+    EXECUTE format('CREATE USER %I WITH PASSWORD %L', '${KEYCLOAK_DB_USER}', '${KEYCLOAK_DB_PASSWORD}');
+    RAISE NOTICE 'Created user: ${KEYCLOAK_DB_USER}';
+  ELSE
+    RAISE NOTICE 'User already exists: ${KEYCLOAK_DB_USER}';
+  END IF;
+END
+\$body\$;
+SQL
+
+  info "Creating databases (if absent)..."
+  $DOCKER compose ${COMPOSE_INFRA} --env-file .env exec -T postgres \
+    psql -U postgres <<SQL
+SELECT format('CREATE DATABASE %I OWNER %I', '${POSTGRES_DB}', '${POSTGRES_USER}')
+  WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '${POSTGRES_DB}')
+\gexec
+SELECT format('CREATE DATABASE %I OWNER %I', '${KEYCLOAK_DB}', '${KEYCLOAK_DB_USER}')
+  WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '${KEYCLOAK_DB}')
+\gexec
+SQL
+
+  info "Enabling extensions on ${POSTGRES_DB}..."
+  $DOCKER compose ${COMPOSE_INFRA} --env-file .env exec -T postgres \
+    psql -U postgres -d "${POSTGRES_DB}" -c "
+      CREATE EXTENSION IF NOT EXISTS timescaledb;
+      CREATE EXTENSION IF NOT EXISTS postgis;
+      CREATE EXTENSION IF NOT EXISTS postgis_topology;"
+
+  info "Enabling extensions on ${KEYCLOAK_DB}..."
+  $DOCKER compose ${COMPOSE_INFRA} --env-file .env exec -T postgres \
+    psql -U postgres -d "${KEYCLOAK_DB}" -c "
+      CREATE EXTENSION IF NOT EXISTS timescaledb;
+      CREATE EXTENSION IF NOT EXISTS postgis;
+      CREATE EXTENSION IF NOT EXISTS postgis_topology;"
+
+  success "Database setup complete."
+}
+
+# ---------------------------------------------------------------------------
 # DB: run Alembic migrations
 # ---------------------------------------------------------------------------
 cmd_db_migrate() {
@@ -273,6 +334,81 @@ cmd_keycloak_export() {
 }
 
 # ---------------------------------------------------------------------------
+# Setup: full first-time dev environment bootstrap
+# ---------------------------------------------------------------------------
+cmd_setup_dev() {
+  require_env
+  require_tool docker
+  $DOCKER info &>/dev/null || error "Docker daemon is not running. Start it with: sudo systemctl start docker"
+
+  info "╔══════════════════════════════════════════╗"
+  info "║      Garden Dream — Dev Setup            ║"
+  info "╚══════════════════════════════════════════╝"
+
+  # ── 1. TLS certs ────────────────────────────────────────────────────────────
+  [ ! -f infra/traefik/certs/local.crt ] && cmd_certs
+
+  # ── 2. Start infra ──────────────────────────────────────────────────────────
+  info "Starting infra services..."
+  $DOCKER compose ${COMPOSE_INFRA} --env-file .env up -d
+  success "Infra started."
+
+  # ── 3. Postgres: users, databases, extensions ────────────────────────────────
+  cmd_db_setup
+
+  # ── 4. Wait for Keycloak ────────────────────────────────────────────────────
+  info "Waiting for Keycloak to be ready (up to 120s)..."
+  local max_wait=120
+  local waited=0
+  until $DOCKER compose ${COMPOSE_INFRA} --env-file .env exec -T keycloak \
+      /opt/keycloak/bin/kcadm.sh config credentials \
+        --server http://localhost:8080/keycloak \
+        --realm master \
+        --user "${KEYCLOAK_ADMIN:-admin}" \
+        --password "${KEYCLOAK_ADMIN_PASSWORD:-admin}" &>/dev/null 2>&1; do
+    if [ "$waited" -ge "$max_wait" ]; then
+      error "Keycloak did not become ready within ${max_wait}s. Check: ./run.sh infra:logs keycloak"
+    fi
+    sleep 5
+    waited=$((waited + 5))
+    info "  Still waiting for Keycloak... (${waited}s / ${max_wait}s)"
+  done
+  success "Keycloak is ready."
+
+  # ── 5. Import realm (idempotent — skipped if realm already exists) ──────────
+  local realm="${KEYCLOAK_REALM:-gardream}"
+  if $DOCKER compose ${COMPOSE_INFRA} --env-file .env exec -T keycloak \
+      /opt/keycloak/bin/kcadm.sh get realms/"${realm}" &>/dev/null 2>&1; then
+    warn "Realm '${realm}' already exists — skipping import."
+  else
+    info "Importing realm '${realm}' from infra/keycloak/realm-config.json..."
+    $DOCKER cp infra/keycloak/realm-config.json keycloak:/tmp/realm-config.json
+    $DOCKER compose ${COMPOSE_INFRA} --env-file .env exec -T keycloak \
+      /opt/keycloak/bin/kcadm.sh create realms -f /tmp/realm-config.json
+    success "Realm '${realm}' imported."
+  fi
+
+  # ── 6. Run DB migrations ─────────────────────────────────────────────────────
+  info "Running database migrations..."
+  $DOCKER compose ${COMPOSE_LOCAL} run --rm backend alembic upgrade head
+  success "Migrations applied."
+
+  # ── 7. Create default dev user ───────────────────────────────────────────────
+  info "Creating default dev user (testuser / testpass123)..."
+  cmd_keycloak_user "testuser" "testpass123" "testuser@example.com" || warn "Dev user may already exist — skipping."
+
+  success "╔══════════════════════════════════════════╗"
+  success "║        Dev setup complete!               ║"
+  success "╚══════════════════════════════════════════╝"
+  info ""
+  info "  Start the app:     ./run.sh dev"
+  info "  Frontend:          http://localhost:4200"
+  info "  Keycloak admin:    https://gateway.localhost/keycloak"
+  info "  Default login:     testuser / testpass123"
+  info ""
+}
+
+# ---------------------------------------------------------------------------
 # Shell into a service
 # ---------------------------------------------------------------------------
 cmd_shell() {
@@ -290,6 +426,7 @@ cmd_help() {
   echo "Usage: ./run.sh <command> [args]"
   echo ""
   echo "Commands:"
+  echo "  setup:dev             Bootstrap full dev environment (infra + realm + migrations + dev user)"
   echo "  infra:start           Start infra services (Traefik, Postgres, Keycloak, pgAdmin, Webhook)"
   echo "  infra:stop            Stop infra services"
   echo "  infra:logs [service]  Tail infra logs (all services or specific)"
@@ -300,6 +437,7 @@ cmd_help() {
   echo "  logs [service]        Tail logs (all services or specific)"
   echo "  build                 Rebuild all Docker images"
   echo "  certs                 Generate self-signed TLS certs for local dev"
+  echo "  db:setup              Create Postgres users, databases, and extensions (idempotent)"
   echo "  db:migrate            Run Alembic migrations (upgrade head)"
   echo "  db:revision <msg>     Create new Alembic autogenerate revision"
   echo "  db:reset              Drop + recreate app DB (dev only, destructive)"
@@ -319,6 +457,7 @@ CMD="${1:-help}"
 shift || true
 
 case "$CMD" in
+  setup:dev)        cmd_setup_dev ;;
   infra:start)      cmd_infra_start "$@" ;;
   infra:stop)       cmd_infra_stop "$@" ;;
   infra:logs)       cmd_infra_logs "$@" ;;
@@ -329,6 +468,7 @@ case "$CMD" in
   logs)             cmd_logs "$@" ;;
   build)            cmd_build "$@" ;;
   certs)            cmd_certs ;;
+  db:setup)         cmd_db_setup ;;
   db:migrate)       cmd_db_migrate ;;
   db:revision)      cmd_db_revision "$@" ;;
   db:reset)         cmd_db_reset ;;

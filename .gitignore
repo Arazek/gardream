@@ -1,9 +1,8 @@
 # =============================================================================
 # Python / Backend
 # =============================================================================
-__pycache__/
-*.py[cod]
-*.pyo
+**/__pycache__/
+**/*.py[cod]
 *.pyd
 .Python
 *.egg-info/
@@ -20,12 +19,12 @@ env/
 # Node / Frontend
 # =============================================================================
 node_modules/
-frontend/node_modules/
-frontend/.angular/
+**/node_modules/
+**/.angular/
 frontend/www/
 frontend/dist/
 package-lock.json
-frontend/package-lock.json
+**/package-lock.json
 
 # =============================================================================
 # Environment & secrets
