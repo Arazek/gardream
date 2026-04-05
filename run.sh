@@ -214,7 +214,7 @@ cmd_keycloak_user() {
   info "Creating Keycloak dev user '${username}' in realm '${KEYCLOAK_REALM:-gardream}'..."
   $DOCKER compose ${COMPOSE_INFRA} --env-file .env exec keycloak \
     /opt/keycloak/bin/kcadm.sh config credentials \
-      --server http://localhost:8080 \
+      --server http://localhost:8080/keycloak \
       --realm master \
       --user "${KEYCLOAK_ADMIN:-admin}" \
       --password "${KEYCLOAK_ADMIN_PASSWORD:-admin}"
@@ -233,7 +233,7 @@ cmd_keycloak_user() {
   $DOCKER compose ${COMPOSE_INFRA} --env-file .env exec keycloak \
     /opt/keycloak/bin/kcadm.sh add-roles \
       -r "${KEYCLOAK_REALM:-gardream}" \
-      --username "${username}" \
+      --uusername "${username}" \
       --rolename user
   success "User '${username}' created. Password: ${password}"
 }
