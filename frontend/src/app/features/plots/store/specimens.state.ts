@@ -1,8 +1,16 @@
+export const SYSTEM_STAGES = ['germinating', 'seedling', 'vegetative', 'flowering', 'harvest-ready'] as const;
+export type SystemStage = (typeof SYSTEM_STAGES)[number];
+
 export interface PhotoEntry {
   url: string;
   filename: string;
   taken_at: string; // ISO date string
   note?: string;
+}
+
+export interface NoteEntry {
+  text: string;
+  date: string; // ISO date string YYYY-MM-DD
 }
 
 export interface Milestone {
@@ -15,7 +23,7 @@ export interface Milestone {
 export interface Specimen {
   id: string;
   plot_slot_id: string;
-  notes?: string;
+  note_entries: NoteEntry[];
   stage_override?: string;
   photo_log: PhotoEntry[];
   milestones: Milestone[];
@@ -26,7 +34,7 @@ export interface Specimen {
 }
 
 export interface SpecimenUpdate {
-  notes?: string;
+  note_entries?: NoteEntry[];
   stage_override?: string | null;
   photo_log?: PhotoEntry[];
   milestones?: Milestone[];

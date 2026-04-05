@@ -3,12 +3,28 @@
 .milestones {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-6);
 }
 
+// ─── Section headings ────────────────────────────────────────────────────────
+.milestones__section-title {
+  margin: 0 0 var(--space-4) 0;
+  @include type-label;
+  color: var(--color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+// ─── Visual divider between system and custom sections ───────────────────────
+.system-milestones {
+  padding-bottom: var(--space-6);
+  border-bottom: 0.0625rem solid var(--color-outline-variant);
+}
+
+// ─── Timeline ────────────────────────────────────────────────────────────────
 .milestones__timeline {
   position: relative;
-  padding: var(--space-4) 0;
+  padding: var(--space-2) 0;
 
   &::before {
     content: '';
@@ -21,39 +37,55 @@
   }
 }
 
+// ─── Timeline item ────────────────────────────────────────────────────────────
 .milestones__item {
   display: flex;
-  gap: var(--space-4);
-  margin-bottom: var(--space-6);
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
   position: relative;
-  padding-left: var(--space-8);
+  padding-left: calc(var(--icon-container-sm) + var(--space-3));
+
+  &:last-child { margin-bottom: 0; }
 
   &--active {
     .milestones__dot {
       background: var(--color-primary);
       border-color: var(--color-primary);
     }
-
     .milestones__stage {
       color: var(--color-primary);
       font-weight: 600;
     }
+  }
+
+  &--reached {
+    .milestones__dot {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+    }
+    .milestones__stage { color: var(--color-on-surface); }
   }
 }
 
 .milestones__dot {
   position: absolute;
   left: 0;
-  top: var(--space-1);
+  top: 0.25rem;
   width: var(--icon-container-sm);
   height: var(--icon-container-sm);
   border-radius: var(--radius-full);
   background: var(--color-surface-container-lowest);
   border: 0.1875rem solid var(--color-outline-variant);
+  flex-shrink: 0;
+  transition:
+    background var(--duration-quick) var(--ease-standard),
+    border-color var(--duration-quick) var(--ease-standard);
 }
 
 .milestones__content {
   flex: 1;
+  min-width: 0;
 }
 
 .milestones__stage {
@@ -64,16 +96,18 @@
   color: var(--color-on-surface);
 }
 
-.milestones__day,
-.milestones__actual {
+.milestones__day {
   display: block;
   @include type-body-sm;
   color: var(--color-on-surface-variant);
 }
 
 .milestones__actual {
+  display: block;
+  @include type-body-sm;
   color: var(--color-primary);
   font-weight: 500;
+  margin-top: var(--space-1);
 }
 
 .milestones__notes {
@@ -83,29 +117,45 @@
   font-style: italic;
 }
 
-.milestones__record-btn {
+// ─── Mark-reached button ──────────────────────────────────────────────────────
+.milestones__mark-btn {
+  flex-shrink: 0;
   padding: var(--space-1) var(--space-3);
-  background: var(--ion-color-warning-tint);
-  color: var(--ion-color-warning-shade);
-  border: 0.0625rem solid var(--ion-color-warning);
+  background: transparent;
+  color: var(--color-primary);
+  border: 0.0625rem solid var(--color-primary);
   border-radius: var(--radius-sm);
   cursor: pointer;
   @include type-label;
   font-weight: 500;
+  transition:
+    background var(--duration-quick) var(--ease-standard),
+    color var(--duration-quick) var(--ease-standard);
+  min-height: 2rem;
+  white-space: nowrap;
 
-  &:hover {
-    background: var(--ion-color-warning);
-    color: var(--ion-color-warning-contrast);
+  &:hover:not(:disabled) {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: var(--color-outline-variant);
+    color: var(--color-on-surface-variant);
   }
 }
 
+// ─── Empty state ─────────────────────────────────────────────────────────────
 .milestones__empty {
-  text-align: center;
   @include type-body;
   color: var(--color-on-surface-variant);
-  padding: var(--space-4) 0;
+  font-style: italic;
+  margin: 0 0 var(--space-4);
 }
 
+// ─── Add milestone button ─────────────────────────────────────────────────────
 .milestones__add-btn {
   display: flex;
   align-items: center;
@@ -114,21 +164,20 @@
   padding: var(--space-3) var(--space-4);
   background: var(--color-surface-container-low);
   color: var(--color-primary);
-  border: 0.0625rem solid var(--color-outline-variant);
-  border-radius: var(--radius-sm);
+  border: 0.0625rem dashed var(--color-outline-variant);
+  border-radius: var(--radius-md);
   cursor: pointer;
   @include type-body;
   font-weight: 500;
+  width: 100%;
+  transition: background var(--duration-quick) var(--ease-standard);
 
-  &:hover {
-    background: var(--color-surface-container);
-  }
+  &:hover { background: var(--color-surface-container); }
 
-  span {
-    font-size: var(--icon-size-md);
-  }
+  span { font-size: var(--icon-size-md); }
 }
 
+// ─── Add-milestone form ────────────────────────────────────────────────────────
 .milestone-form {
   background: var(--color-surface-container-low);
   border: 0.0625rem solid var(--color-outline-variant);
@@ -149,15 +198,14 @@
   @include type-body;
   background: var(--color-surface-container-lowest);
   color: var(--color-on-surface);
+  min-height: 2.75rem;
 
-  &::placeholder {
-    color: var(--color-on-surface-variant);
-  }
+  &::placeholder { color: var(--color-on-surface-variant); }
 
   &:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 0.1875rem rgba(22, 53, 38, 0.1);
+    box-shadow: 0 0 0 0.1875rem color-mix(in srgb, var(--color-primary) 15%, transparent);
   }
 }
 
@@ -179,22 +227,18 @@
   cursor: pointer;
   @include type-body;
   font-weight: 500;
+  min-height: 2.75rem;
+  transition: opacity var(--duration-quick) var(--ease-standard);
 
   &--primary {
     background: var(--color-primary);
     color: var(--color-on-primary);
-
-    &:hover {
-      opacity: 0.88;
-    }
+    &:hover { opacity: 0.88; }
   }
 
   &--secondary {
     background: var(--color-surface-container);
     color: var(--color-on-surface);
-
-    &:hover {
-      background: var(--color-surface-container-high);
-    }
+    &:hover { background: var(--color-surface-container-high); }
   }
 }

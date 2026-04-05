@@ -271,10 +271,14 @@ async def update_specimen(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Specimen not found")
 
     # Partial update with exclude_unset
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    payload_data = payload.model_dump(exclude_unset=True)
+    for field, value in payload_data.items():
         if field == "photo_log" and value is not None:
-            # photo_log is fully replaced
-            specimen.photo_log = [p.model_dump() for p in value]
+            # photo_log is fully replaced; serialize Pydantic models to JSON-safe dicts
+            specimen.photo_log = [p.model_dump(mode="json") for p in (payload.photo_log or [])]
+        elif field == "note_entries" and value is not None:
+            # note_entries fully replaced; serialize dates to ISO strings for JSONB
+            specimen.note_entries = [n.model_dump(mode="json") for n in (payload.note_entries or [])]
         elif field == "milestones" and value is not None:
             # milestones is fully replaced
             specimen.milestones = value

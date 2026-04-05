@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import String, Text, DateTime, ForeignKey, UniqueConstraint, func
+from sqlalchemy import String, DateTime, ForeignKey, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -20,7 +20,9 @@ class Specimen(Base):
     plot_slot_id: Mapped[str] = mapped_column(
         String, ForeignKey("plot_slots.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    note_entries: Mapped[list[dict]] = mapped_column(
+        JSONB, nullable=False, server_default="[]"
+    )
     stage_override: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # JSONB arrays for structured data

@@ -1,0 +1,105 @@
+@use '../../../../theme/variables.scss' as *;
+
+.kpi-row {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: var(--space-1); // space for scrollbar on desktop
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+// ─── Card base ────────────────────────────────────────────────────────────────
+.kpi-card {
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  min-width: calc(var(--space-8) * 2);   // ~7.5rem equivalent via token multiples
+  min-height: calc(var(--space-8) * 2);  // square-ish card
+  background: var(--color-surface-container);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  box-shadow: var(--shadow-card);
+
+  &__icon {
+    font-size: var(--icon-size-md);
+    color: var(--color-primary);
+    margin-bottom: var(--space-1);
+  }
+
+  &__value {
+    @include type-heading-4;
+    color: var(--color-on-surface);
+    line-height: 1;
+  }
+
+  &__label {
+    @include type-label;
+    color: var(--color-on-surface-variant);
+  }
+
+  &__sub {
+    @include type-body-sm;
+    color: var(--color-on-surface-variant);
+    opacity: 0.7;
+  }
+
+  // Progress bar inside Avg progress card
+  &__bar {
+    width: 100%;
+    height: var(--space-1);
+    background: var(--color-surface-container-high);
+    border-radius: var(--radius-full);
+    margin-top: var(--space-1);
+    overflow: hidden;
+  }
+
+  &__bar-fill {
+    height: 100%;
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+    transition: width var(--duration-standard) var(--ease-standard);
+  }
+
+  // ─── Skeleton ───────────────────────────────────────────────────────────────
+  &--skeleton {
+    min-width: calc(var(--space-8) * 2);
+    min-height: calc(var(--space-8) * 2);
+    background: linear-gradient(
+      90deg,
+      var(--color-surface-container) 25%,
+      var(--color-surface-container-low) 50%,
+      var(--color-surface-container) 75%
+    );
+    background-size: 200% 100%;
+    animation: kpi-shimmer 1.4s infinite;
+    box-shadow: var(--shadow-card);
+  }
+}
+
+@keyframes kpi-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// ─── Variant: Near harvest (green accent) ────────────────────────────────────
+.kpi-card--harvest {
+  .kpi-card__icon { color: var(--color-primary); }
+  .kpi-card__value { color: var(--color-primary); }
+}
+
+// ─── Variant: Overdue (amber accent) ─────────────────────────────────────────
+.kpi-card--overdue {
+  .kpi-card__icon { color: var(--ion-color-warning-shade); }
+  .kpi-card__value { color: var(--ion-color-warning-shade); }
+}
+
+// ─── Variant: Next harvest (secondary accent) ────────────────────────────────
+.kpi-card--next {
+  .kpi-card__icon { color: var(--color-secondary); }
+}

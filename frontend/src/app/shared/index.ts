@@ -64,6 +64,8 @@ export { InsightCardComponent } from './components/insight-card/insight-card.com
 export { HeroSectionComponent } from './components/hero-section/hero-section.component';
 export { TopAppBarComponent, NavAction } from './components/top-app-bar/top-app-bar.component';
 export { BottomNavBarComponent, NavItem } from './components/bottom-nav-bar/bottom-nav-bar.component';
+export { GardenKpiRowComponent, NextHarvest } from './components/garden-kpi-row/garden-kpi-row.component';
+export { StageDistributionBarComponent } from './components/stage-distribution-bar/stage-distribution-bar.component';
 
 // ─── Pipes ────────────────────────────────────────────────────────────────────
 export { TimeAgoPipe } from './pipes/time-ago.pipe';

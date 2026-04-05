@@ -4,6 +4,7 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { SpecimensApiService } from '../../../core/api/specimens-api.service';
 import { SpecimensActions } from './specimens.actions';
+import { PlotsActions } from './plots.actions';
 
 @Injectable()
 export class SpecimensEffects {
@@ -59,6 +60,17 @@ export class SpecimensEffects {
             of(SpecimensActions.uploadPhotoFailure({ error: error.message }))
           )
         )
+      )
+    )
+  );
+
+  // When a slot's sow_date changes, the backend recalculates current_stage and
+  // progress_pct. Reload the specimen so the UI reflects the updated values.
+  reloadSpecimenAfterSlotUpdate$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(PlotsActions.updateSlotSuccess),
+      map(({ plotId, slot }) =>
+        SpecimensActions.loadSpecimen({ plotId, slotId: slot.id })
       )
     )
   );

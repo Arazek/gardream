@@ -27,3 +27,11 @@ export const selectTodayTasks = createSelector(
   selectAllTasks, selectSelectedDate,
   (tasks, date) => date ? tasks.filter(t => t.due_date === date) : [],
 );
+
+export const selectOverdueTasks = createSelector(
+  selectPendingTasks,
+  tasks => {
+    const today = new Date().toISOString().slice(0, 10);
+    return tasks.filter(t => t.due_date < today);
+  },
+);

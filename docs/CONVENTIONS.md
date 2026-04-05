@@ -384,6 +384,30 @@ Prefer Ionic's built-in utilities for common one-liners. Only write a BEM class 
 <div class="my-padding">...</div>
 ```
 
+### Units
+
+Never use raw `px` values in SCSS. Use `rem` for all lengths or design system tokens where available.
+
+- Lengths: `1rem`, `0.5rem`, `0.125rem`, etc.
+- Spacing: `var(--space-*)` tokens
+- Radii: `var(--radius-*)` tokens
+- Icon sizes: `var(--icon-size-*)`, `var(--icon-container-*)` tokens
+- Colors: `var(--color-*)` tokens
+
+Exception: hairline borders — prefer `0.0625rem` even then (e.g. `border: 0.0625rem solid var(--color-border)`).
+
+```scss
+// Correct
+padding: var(--space-4);
+border-radius: var(--radius-md);
+font-size: 0.875rem;
+
+// Wrong
+padding: 16px;
+border-radius: 8px;
+font-size: 14px;
+```
+
 ---
 
 ## Frontend — NgRx

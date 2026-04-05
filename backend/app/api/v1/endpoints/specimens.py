@@ -10,7 +10,7 @@ from app.models.plot import Plot
 from app.models.plot_slot import PlotSlot
 from app.models.specimen import Specimen
 from app.models.crop import Crop
-from app.schemas.specimen import SpecimenResponse
+from app.schemas.specimen import SpecimenResponse, NoteEntry, PhotoEntry
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +62,7 @@ def populate_specimen_response(
     return SpecimenResponse(
         id=specimen.id,
         plot_slot_id=specimen.plot_slot_id,
-        notes=specimen.notes,
+        note_entries=[NoteEntry(**n) for n in specimen.note_entries],
         stage_override=specimen.stage_override,
         photo_log=[PhotoEntry(**p) for p in specimen.photo_log],
         milestones=specimen.milestones,

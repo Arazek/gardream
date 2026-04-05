@@ -366,7 +366,7 @@ Every component has a co-located `.stories.ts` (Storybook) and `.scss` (BEM-styl
 
 | Category        | Components |
 |-----------------|------------|
-| Garden          | TaskCard, TaskListItem, ProgressBar, StatChip, FilterChip, WeatherWidget, InsightCard, GardenGridSlot, SpecimenCard, DayPicker, PlotTypeSelector, HeroSection, IconContainer, TopAppBar, BottomNavBar |
+| Garden          | TaskCard, TaskListItem, ProgressBar, StatChip, FilterChip, WeatherWidget, InsightCard, GardenGridSlot, SpecimenCard, DayPicker, PlotTypeSelector, HeroSection, IconContainer, TopAppBar (supports `[actions]: NavAction[]` + `(actionClick)` for declarative trailing icon buttons), BottomNavBar |
 | Layout          | Card, Section, Divider, PageHeader, ListItem |
 | Identity        | Avatar, Badge, Logo |
 | Forms           | FormField, SelectField, TextareaField, ToggleField, SearchBar |
@@ -417,11 +417,15 @@ The HTTP interceptor (`core/interceptors/http-error.interceptor.ts`) automatical
 
 **4. Token Refresh Lifecycle**
 
-`keycloak-angular` automatically refreshes tokens before expiry. Components don't need to handle refresh logic — just get the token when needed:
+`keycloak-angular`'s `getToken()` does **not** auto-refresh the access token — it returns the current token as-is, which may be expired. The `authInterceptor` must call `updateToken(30)` before calling `getToken()`. This silently refreshes the access token if it expires within 30 seconds, preventing stale tokens from reaching the API:
 
 ```typescript
-const token = await this.keycloak.getToken(); // auto-refreshed if needed
+// In auth.interceptor.ts — always refresh before use
+await keycloak.updateToken(30); // refresh if expiring within 30s
+const token = await keycloak.getToken();
 ```
+
+Skipping `updateToken` leads to 401 responses from the API, which the error interceptor converts into a redirect to `/login`. The login guard then bounces the user back (Keycloak session is still valid via refresh token), causing a redirect loop.
 
 **5. Error Handling**
 
@@ -543,6 +547,8 @@ ACME_EMAIL=your@email.com
 ./run.sh db:migrate           # Run Alembic migrations (upgrade head)
 ./run.sh db:revision <msg>    # Create new Alembic autogenerate revision
 ./run.sh db:reset             # Drop + recreate app_db (dev only, destructive)
+./run.sh db:setup             # Idempotently create app_db / keycloak_db and extensions
+./run.sh setup:dev            # Full dev bootstrap: certs → infra → DB setup → Keycloak → migrations → dev user
 
 # Frontend / mobile
 ./run.sh frontend:sync        # Angular build + Capacitor sync (iOS/Android)

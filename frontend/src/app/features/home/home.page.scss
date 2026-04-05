@@ -26,6 +26,14 @@
     gap: var(--space-3);
   }
 
+  &--kpi {
+    // Allow the KPI row to scroll horizontally without clipping
+  }
+
+  &--stages {
+    // Subtle section; no extra styling needed
+  }
+
   &__header {
     display: flex;
     align-items: center;

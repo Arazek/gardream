@@ -3,6 +3,7 @@ import { AsyncPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { IonRippleEffect } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
+import { combineLatest } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import {
@@ -15,15 +16,18 @@ import {
   InlineAlertComponent,
   PageContentComponent,
   PageBodyWrapperComponent,
+  GardenKpiRowComponent,
+  NextHarvest,
+  StageDistributionBarComponent,
 } from '../../shared';
 import { CurrentWeather as WidgetCurrentWeather, DayForecast as WidgetDayForecast } from '../../shared/components/weather-widget/weather-widget.component';
 import { PlotsActions } from '../plots/store/plots.actions';
 import { TasksActions } from '../tasks/store/tasks.actions';
 import { WeatherActions } from '../../store/weather/weather.actions';
-import { selectAllPlots, selectPlotsLoading } from '../plots/store/plots.selectors';
-import { selectTodayTasks, selectPendingTasks, selectTasksLoading } from '../tasks/store/tasks.selectors';
+import { selectAllPlots, selectPlotsLoading, selectCropsNearHarvest, selectNextHarvest, selectStageDistribution, selectAvgProgress } from '../plots/store/plots.selectors';
+import { selectTodayTasks, selectPendingTasks, selectTasksLoading, selectOverdueTasks } from '../tasks/store/tasks.selectors';
 import { selectCurrentWeather, selectForecast, selectTodayRainExpected, selectWeatherLoading } from '../../store/weather/weather.selectors';
-import { Plot, PlotType } from '../plots/store/plots.state';
+import { Plot, PlotType, PlotSlot } from '../plots/store/plots.state';
 import { Task } from '../tasks/store/tasks.state';
 import { DayForecast } from '../../store/weather/weather.state';
 
@@ -64,19 +68,6 @@ const GARDEN_STATEMENTS = [
   'Your garden is a living journal.',
 ];
 
-const INSIGHTS = [
-  'You have 3 crops approaching harvest window this week.',
-  'Basil thrives when kept above 15°C — bring it indoors tonight.',
-  'Rotate your brassicas next season to prevent soil depletion.',
-  'Your tomatoes are on track. Keep up the weekly feed.',
-  'Water in the early morning to reduce evaporation and fungal risk.',
-  'Companion planting calendula near tomatoes deters aphids naturally.',
-  'A well-fed soil means a well-fed garden — top up compost this week.',
-  'Pinching out side shoots on tomatoes focuses energy on fruit.',
-  'Harvest courgettes young (10–15 cm) for best flavour and plant health.',
-  'Check undersides of leaves weekly — pests hide where you least look.',
-];
-
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -92,6 +83,8 @@ const INSIGHTS = [
     InlineAlertComponent,
     PageContentComponent,
     PageBodyWrapperComponent,
+    GardenKpiRowComponent,
+    StageDistributionBarComponent,
   ],
   styleUrl: './home.page.scss',
   template: `
@@ -102,9 +95,9 @@ const INSIGHTS = [
       <!-- Hero (full-width) -->
       <app-hero-section [greeting]="greeting" [subtitle]="heroSubtitle" [statement]="statement">
         <div class="home-stats">
-          <app-stat-chip icon="task_alt" label="Today" [value]="todayCount + ' tasks'" />
-          <app-stat-chip icon="yard" label="Plots" [value]="plotCount + ' active'" />
-          <app-stat-chip icon="pending" label="Pending" [value]="pendingCount + ' open'" />
+          <app-stat-chip icon="task_alt"    label="Today"   [value]="todayCount + ' tasks'" />
+          <app-stat-chip icon="grass"        label="Crops"   [value]="totalCrops + ' in ground'" />
+          <app-stat-chip icon="warning"     label="Overdue" [value]="overdueCount + ' tasks'" />
         </div>
       </app-hero-section>
 
@@ -122,6 +115,30 @@ const INSIGHTS = [
                 message="You may want to skip watering your outdoor plots today."
               />
             }
+          </section>
+        }
+
+        <!-- KPI cards -->
+        <section class="home-section home-section--kpi">
+          <div class="home-section__header">
+            <h2 class="home-section__title">Garden Overview</h2>
+          </div>
+          <app-garden-kpi-row
+            [loading]="(plotsLoading$ | async) ?? true"
+            [nearHarvestCount]="nearHarvestCount"
+            [avgProgress]="avgProgress"
+            [overdueCount]="overdueCount"
+            [nextHarvest]="nextHarvest"
+          />
+        </section>
+
+        <!-- Stage distribution -->
+        @if (totalCrops > 0) {
+          <section class="home-section home-section--stages">
+            <div class="home-section__header">
+              <h2 class="home-section__title">Crop Stages</h2>
+            </div>
+            <app-stage-distribution-bar [distribution]="stageDistribution" />
           </section>
         }
 
@@ -233,30 +250,66 @@ export class HomePage implements OnInit {
   readonly todayTasks$ = this.store.select(selectTodayTasks);
   readonly tasksLoading$ = this.store.select(selectTasksLoading);
   readonly pendingTasks$ = this.store.select(selectPendingTasks);
+  readonly overdueTasks$ = this.store.select(selectOverdueTasks);
   readonly todayRainExpected$ = this.store.select(selectTodayRainExpected);
+  readonly nearHarvest$ = this.store.select(selectCropsNearHarvest);
+  readonly nextHarvest$ = this.store.select(selectNextHarvest);
+  readonly stageDistribution$ = this.store.select(selectStageDistribution);
+  readonly avgProgress$ = this.store.select(selectAvgProgress);
 
   greeting = 'Good morning';
   heroSubtitle = '';
   statement = GARDEN_STATEMENTS[new Date().getDay() % GARDEN_STATEMENTS.length];
   readonly today = TODAY;
+
+  // Hero chips
   todayCount = 0;
   plotCount = 0;
-  pendingCount = 0;
+  totalCrops = 0;
+  overdueCount = 0;
+
+  // KPI row
+  nearHarvestCount = 0;
+  avgProgress = 0;
+  nextHarvest: NextHarvest | null = null;
+  stageDistribution: Record<string, number> = {};
+
   widgetCurrent: WidgetCurrentWeather | null = null;
   widgetForecast: WidgetDayForecast[] = [];
-  insight = INSIGHTS[new Date().getDay() % INSIGHTS.length];
+  insight = GARDEN_STATEMENTS[new Date().getDay() % GARDEN_STATEMENTS.length];
 
   async ngOnInit(): Promise<void> {
     this.greeting = this.getTimeGreeting();
     this.heroSubtitle = this.formatDate(new Date());
 
     this.store.dispatch(PlotsActions.loadPlots());
-    this.store.dispatch(TasksActions.loadTasks({ due_date: TODAY }));
+    // Set the selected date so selectTodayTasks can filter correctly
+    this.store.dispatch(TasksActions.setSelectedDate({ date: TODAY }));
+    // Load all pending tasks — covers today's tasks + overdue calculation
+    this.store.dispatch(TasksActions.loadTasks({ completed: false }));
     this.loadWeather();
 
-    this.plots$.subscribe(plots => (this.plotCount = plots.length));
+    // Hero chip subscriptions
     this.todayTasks$.subscribe(tasks => (this.todayCount = tasks.length));
-    this.pendingTasks$.subscribe(tasks => (this.pendingCount = tasks.length));
+    this.plots$.subscribe(plots => {
+      this.plotCount = plots.length;
+      this.totalCrops = plots.reduce((a, p) => a + p.crop_count, 0);
+      // Load slots for each plot to power KPI cards
+      plots.forEach(p => this.store.dispatch(PlotsActions.loadSlots({ plotId: p.id })));
+    });
+    this.overdueTasks$.subscribe(tasks => {
+      this.overdueCount = tasks.length;
+      this.updateInsight();
+    });
+
+    // KPI row subscriptions
+    this.nearHarvest$.subscribe(slots => {
+      this.nearHarvestCount = slots.length;
+      this.updateInsight();
+    });
+    this.nextHarvest$.subscribe(nh => (this.nextHarvest = nh));
+    this.avgProgress$.subscribe(p => (this.avgProgress = p));
+    this.stageDistribution$.subscribe(d => (this.stageDistribution = d));
 
     this.store.select(selectCurrentWeather).subscribe(c => {
       if (!c) return;
@@ -284,6 +337,18 @@ export class HomePage implements OnInit {
 
   onTaskToggle(task: Task, completed: boolean): void {
     this.store.dispatch(TasksActions.updateTask({ id: task.id, payload: { completed } }));
+  }
+
+  private updateInsight(): void {
+    if (this.nearHarvestCount > 0) {
+      this.insight = `${this.nearHarvestCount} crop${this.nearHarvestCount > 1 ? 's are' : ' is'} approaching harvest — check them soon.`;
+    } else if (this.overdueCount > 0) {
+      this.insight = `You have ${this.overdueCount} overdue task${this.overdueCount > 1 ? 's' : ''} — check your calendar.`;
+    } else if (this.avgProgress > 75) {
+      this.insight = `Your garden is thriving — ${this.avgProgress}% average lifecycle progress.`;
+    } else {
+      this.insight = GARDEN_STATEMENTS[new Date().getDay() % GARDEN_STATEMENTS.length];
+    }
   }
 
   private loadWeather(): void {
