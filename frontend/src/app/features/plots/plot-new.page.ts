@@ -5,7 +5,7 @@ import { IonContent } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
 
 import {
-  TopAppBarComponent,
+  TopAppBarComponent, NavAction,
   PlotTypeSelectorComponent, PlotTypeOption,
   DayPickerComponent,
   FormFieldComponent,
@@ -33,12 +33,9 @@ const PLOT_TYPE_OPTIONS: PlotTypeOption[] = [
   ],
   styleUrl: './plot-new.page.scss',
   template: `
-    <app-top-app-bar title="New Plot">
+    <app-top-app-bar title="New Plot" [actions]="topBarActions" (actionClick)="onTopBarAction($event)">
       <button leading class="icon-btn" aria-label="Cancel" (click)="cancel()">
         <span class="material-symbols-outlined">close</span>
-      </button>
-      <button trailing class="icon-btn" aria-label="Profile" (click)="goToSettings()">
-        <span class="material-symbols-outlined">person</span>
       </button>
     </app-top-app-bar>
 
@@ -127,6 +124,14 @@ export class PlotNewPage {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+
+  readonly topBarActions: NavAction[] = [
+    { id: 'profile', icon: 'person', label: 'Profile' },
+  ];
+
+  onTopBarAction(id: string): void {
+    if (id === 'profile') this.goToSettings();
+  }
 
   readonly plotTypeOptions = PLOT_TYPE_OPTIONS;
 

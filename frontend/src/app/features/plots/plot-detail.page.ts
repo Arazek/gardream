@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { IonContent, AlertController } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
 
-import { TopAppBarComponent, GardenGridSlotComponent, GridCropInfo } from '../../shared';
+import { TopAppBarComponent, NavAction, GardenGridSlotComponent, GridCropInfo } from '../../shared';
 import { BottomSheetService } from '../../shared/services/bottom-sheet.service';
 import { PlotsActions } from './store/plots.actions';
 import { selectSelectedPlot, selectSelectedPlotSlots, selectSlotsLoading } from './store/plots.selectors';
@@ -26,12 +26,9 @@ interface GridCell {
   imports: [AsyncPipe, IonContent, TopAppBarComponent, GardenGridSlotComponent],
   styleUrl: './plot-detail.page.scss',
   template: `
-    <app-top-app-bar [title]="(plot$ | async)?.name ?? 'Plot'">
+    <app-top-app-bar [title]="(plot$ | async)?.name ?? 'Plot'" [actions]="topBarActions" (actionClick)="onTopBarAction($event)">
       <button leading class="icon-btn" aria-label="Back" (click)="goBack()">
         <span class="material-symbols-outlined">arrow_back</span>
-      </button>
-      <button trailing class="icon-btn" aria-label="Profile" (click)="goToSettings()">
-        <span class="material-symbols-outlined">person</span>
       </button>
     </app-top-app-bar>
 
@@ -70,6 +67,14 @@ export class PlotDetailPage implements OnInit {
   private readonly router = inject(Router);
   private readonly sheet = inject(BottomSheetService);
   private readonly alert = inject(AlertController);
+
+  readonly topBarActions: NavAction[] = [
+    { id: 'profile', icon: 'person', label: 'Profile' },
+  ];
+
+  onTopBarAction(id: string): void {
+    if (id === 'profile') this.goToSettings();
+  }
 
   readonly plot$ = this.store.select(selectSelectedPlot);
   readonly slots$ = this.store.select(selectSelectedPlotSlots);

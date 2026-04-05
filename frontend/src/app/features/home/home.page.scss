@@ -1,29 +1,5 @@
 @use 'theme/mixins' as *;
 
-// ─── Icon button in top bar ───────────────────────────────────────────────────
-.icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--icon-container-md);
-  height: var(--icon-container-md);
-  border-radius: var(--radius-full);
-  background: transparent;
-  border: none;
-  color: var(--color-on-surface-variant);
-  cursor: pointer;
-  padding: 0;
-  transition: background var(--duration-quick) var(--ease-standard);
-
-  &:hover {
-    background: var(--color-surface-container);
-  }
-
-  .material-symbols-outlined {
-    font-size: var(--icon-size-md);
-  }
-}
-
 // ─── Hero stats row ───────────────────────────────────────────────────────────
 .home-stats {
   display: flex;
@@ -33,20 +9,28 @@
 
 // ─── Body ─────────────────────────────────────────────────────────────────────
 .home-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-  padding-top: var(--space-4);
-  padding-bottom: calc(var(--bottom-nav-height) + var(--space-4));
+  padding-top: var(--space-6);
+  padding-bottom: calc(var(--bottom-nav-height) + var(--space-6));
 }
 
 // ─── Section ──────────────────────────────────────────────────────────────────
 .home-section {
+  // Space between sibling sections
+  & + & {
+    margin-top: var(--space-8);
+  }
+
+  &--weather {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
   &__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: var(--space-3);
+    margin-bottom: var(--space-4);
   }
 
   &__title {
@@ -71,7 +55,7 @@
 .home-plot-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 .home-plot-card {
@@ -167,14 +151,14 @@
 .home-skeleton-row {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 // ─── Task list ────────────────────────────────────────────────────────────────
 .home-task-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .home-task-skeleton {

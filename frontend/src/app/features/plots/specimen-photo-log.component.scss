@@ -1,21 +1,23 @@
+@use '../../../theme/variables.scss' as *;
+
 .photo-log {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .photo-log__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(6.25rem, 1fr));
+  gap: var(--space-3);
 }
 
 .photo-log__item {
   position: relative;
   aspect-ratio: 1;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
-  background: #f5f5f5;
+  background: var(--color-surface-container);
 }
 
 .photo-log__image {
@@ -30,10 +32,10 @@
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 0.25rem;
+  padding: var(--space-1);
   font-size: 0.7rem;
   background: rgba(0, 0, 0, 0.6);
-  color: white;
+  color: var(--color-on-primary);
 }
 
 .photo-log__date {
@@ -41,7 +43,7 @@
 }
 
 .photo-log__note {
-  bottom: 1rem;
+  bottom: var(--space-4);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -51,44 +53,46 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: #e3f2fd;
-  color: #1976d2;
-  border: 1px solid #90caf9;
-  border-radius: 4px;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-container-low);
+  color: var(--color-primary);
+  border: 0.0625rem solid var(--color-outline-variant);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.9rem;
+  @include type-body;
   font-weight: 500;
 
   &:hover {
-    background: #bbdefb;
+    background: var(--color-surface-container);
   }
 
   span {
-    font-size: 1.25rem;
+    font-size: var(--icon-size-md);
   }
 }
 
 .photo-modal {
-  padding: 2rem;
+  padding: var(--space-8);
   height: 100%;
   overflow-y: auto;
 
   h2 {
-    margin: 0 0 1.5rem 0;
-    font-size: 1.25rem;
+    margin: 0 0 var(--space-6) 0;
+    @include type-heading-4;
+    color: var(--color-on-surface);
   }
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
 
   label {
     display: block;
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-2);
     font-weight: 500;
-    font-size: 0.9rem;
+    @include type-body;
+    color: var(--color-on-surface);
   }
 }
 
@@ -98,79 +102,86 @@
 
 .browse-btn {
   display: block;
-  padding: 0.75rem 1rem;
-  background: #f5f5f5;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-container-low);
+  border: 0.0625rem solid var(--color-outline-variant);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.9rem;
+  @include type-body;
+  color: var(--color-on-surface);
   width: 100%;
 
   &:hover {
-    background: #eeeeee;
+    background: var(--color-surface-container);
   }
 }
 
 .file-name {
   display: block;
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
-  color: #666;
+  margin-top: var(--space-2);
+  @include type-body-sm;
+  color: var(--color-on-surface-variant);
   word-break: break-all;
 }
 
 .note-textarea {
   width: 100%;
-  min-height: 80px;
-  padding: 0.75rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  font-family: inherit;
-  font-size: 0.9rem;
+  min-height: 5rem;
+  padding: var(--space-3);
+  border: 0.0625rem solid var(--color-outline-variant);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  @include type-body;
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
   resize: vertical;
+
+  &::placeholder {
+    color: var(--color-on-surface-variant);
+  }
 
   &:focus {
     outline: none;
-    border-color: #1976d2;
-    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.1875rem rgba(22, 53, 38, 0.1);
   }
 }
 
 .modal-actions {
   display: flex;
-  gap: 1rem;
+  gap: var(--space-4);
   justify-content: flex-end;
-  margin-top: 2rem;
+  margin-top: var(--space-8);
 }
 
 .btn {
-  padding: 0.75rem 1.5rem;
+  padding: var(--space-3) var(--space-6);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.9rem;
+  @include type-body;
   font-weight: 500;
 
   &--primary {
-    background: #1976d2;
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
 
     &:hover:not(:disabled) {
-      background: #1565c0;
+      opacity: 0.88;
     }
 
     &:disabled {
-      opacity: 0.5;
+      opacity: 0.38;
       cursor: not-allowed;
     }
   }
 
   &--secondary {
-    background: #f5f5f5;
-    color: #333;
+    background: var(--color-surface-container);
+    color: var(--color-on-surface);
 
     &:hover {
-      background: #eeeeee;
+      background: var(--color-surface-container-high);
     }
   }
 }

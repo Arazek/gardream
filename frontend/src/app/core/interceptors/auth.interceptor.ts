@@ -1,6 +1,6 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { from, switchMap, catchError, throwError, timeout } from 'rxjs';
+import { from, of, switchMap, catchError, timeout } from 'rxjs';
 import { KeycloakService } from 'keycloak-angular';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
@@ -10,19 +10,21 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
-  return from(keycloak.getToken()).pipe(
-    timeout(5000), // 5 second timeout for token fetch
+  // updateToken(30) refreshes the access token if it expires within 30 seconds,
+  // ensuring we never send a stale token to the API.
+  return from(keycloak.updateToken(30)).pipe(
+    timeout(5000),
+    switchMap(() => from(keycloak.getToken())),
+    catchError((err) => {
+      console.error('[authInterceptor] Failed to refresh/get token:', err);
+      return of('');
+    }),
     switchMap((token) => {
       console.log('[authInterceptor] url:', req.url, '| token present:', !!token, '| token prefix:', token ? token.substring(0, 20) + '...' : 'NONE');
       const authReq = token
         ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
         : req;
       return next(authReq);
-    }),
-    catchError((err) => {
-      console.error('[authInterceptor] Failed to get token:', err);
-      // If token fetch fails, try request without auth token
-      return next(req);
     }),
   );
 };

@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { IonRippleEffect } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
 
-import { TopAppBarComponent, IconContainerComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
+import { TopAppBarComponent, NavAction, IconContainerComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
 import { PlotsActions } from './store/plots.actions';
 import { selectAllPlots, selectPlotsLoading } from './store/plots.selectors';
 import { Plot, PlotType } from './store/plots.state';
@@ -31,14 +31,7 @@ const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   imports: [AsyncPipe, IonRippleEffect, TopAppBarComponent, IconContainerComponent, PageContentComponent, PageBodyWrapperComponent],
   styleUrl: './plots.page.scss',
   template: `
-    <app-top-app-bar title="My Plots">
-      <button trailing class="icon-btn" aria-label="Add plot" (click)="addPlot()">
-        <span class="material-symbols-outlined">add</span>
-      </button>
-      <button trailing class="icon-btn" aria-label="Profile" (click)="goToSettings()">
-        <span class="material-symbols-outlined">person</span>
-      </button>
-    </app-top-app-bar>
+    <app-top-app-bar title="My Plots" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
 
     <app-page-content class="plots-content">
       <app-page-body-wrapper>
@@ -104,6 +97,16 @@ const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 export class PlotsPage implements OnInit {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
+
+  readonly topBarActions: NavAction[] = [
+    { id: 'add-plot', icon: 'add',    label: 'Add plot' },
+    { id: 'profile',  icon: 'person', label: 'Profile' },
+  ];
+
+  onTopBarAction(id: string): void {
+    if (id === 'add-plot') this.addPlot();
+    if (id === 'profile')  this.goToSettings();
+  }
 
   readonly plots$ = this.store.select(selectAllPlots);
   readonly loading$ = this.store.select(selectPlotsLoading);

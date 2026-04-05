@@ -8,7 +8,7 @@ RUN npm ci
 FROM base AS development
 COPY . .
 EXPOSE 4200
-CMD ["npx", "ng", "serve", "--host", "0.0.0.0", "--port", "4200", "--poll", "2000"]
+CMD ["npx", "ng", "serve", "--host", "0.0.0.0", "--port", "4200", "--poll", "500", "--live-reload", "--hmr"]
 
 # ---------------------------------------------------------------------------
 FROM base AS builder

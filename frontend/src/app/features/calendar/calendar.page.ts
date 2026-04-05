@@ -6,7 +6,7 @@ import { addIcons } from 'ionicons';
 import { add, chevronBack, chevronForward } from 'ionicons/icons';
 import { Store } from '@ngrx/store';
 
-import { TopAppBarComponent, TaskCardComponent, FilterChipComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
+import { TopAppBarComponent, NavAction, TaskCardComponent, FilterChipComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
 import { BottomSheetService } from '../../shared/services/bottom-sheet.service';
 import { TasksActions } from '../tasks/store/tasks.actions';
 import { selectAllTasks, selectTasksLoading } from '../tasks/store/tasks.selectors';
@@ -67,11 +67,7 @@ function buildMonthGrid(year: number, month: number): CalDay[] {
   ],
   styleUrl: './calendar.page.scss',
   template: `
-    <app-top-app-bar title="Calendar">
-      <button trailing class="icon-btn" aria-label="Profile" (click)="goToSettings()">
-        <span class="material-symbols-outlined">person</span>
-      </button>
-    </app-top-app-bar>
+    <app-top-app-bar title="Calendar" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
 
     <app-page-content class="calendar-content">
       <app-page-body-wrapper>
@@ -165,6 +161,14 @@ export class CalendarPage implements OnInit {
   private readonly store = inject(Store);
   private readonly sheet = inject(BottomSheetService);
   private readonly router = inject(Router);
+
+  readonly topBarActions: NavAction[] = [
+    { id: 'profile', icon: 'person', label: 'Profile' },
+  ];
+
+  onTopBarAction(id: string): void {
+    if (id === 'profile') this.goToSettings();
+  }
 
   readonly tasksLoading$ = this.store.select(selectTasksLoading);
   readonly dayLetters = DAYS_LETTER;

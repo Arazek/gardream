@@ -1,39 +1,41 @@
+@use '../../../theme/variables.scss' as *;
+
 .milestones {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .milestones__timeline {
   position: relative;
-  padding: 1rem 0;
+  padding: var(--space-4) 0;
 
   &::before {
     content: '';
     position: absolute;
-    left: 11px;
+    left: 0.6875rem;
     top: 0;
     bottom: 0;
-    width: 2px;
-    background: #e0e0e0;
+    width: 0.125rem;
+    background: var(--color-outline-variant);
   }
 }
 
 .milestones__item {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
   position: relative;
-  padding-left: 2rem;
+  padding-left: var(--space-8);
 
   &--active {
     .milestones__dot {
-      background: #4caf50;
-      border-color: #4caf50;
+      background: var(--color-primary);
+      border-color: var(--color-primary);
     }
 
     .milestones__stage {
-      color: #4caf50;
+      color: var(--color-primary);
       font-weight: 600;
     }
   }
@@ -42,12 +44,12 @@
 .milestones__dot {
   position: absolute;
   left: 0;
-  top: 0.25rem;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: white;
-  border: 3px solid #e0e0e0;
+  top: var(--space-1);
+  width: var(--icon-container-sm);
+  height: var(--icon-container-sm);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-lowest);
+  border: 0.1875rem solid var(--color-outline-variant);
 }
 
 .milestones__content {
@@ -55,136 +57,144 @@
 }
 
 .milestones__stage {
-  margin: 0 0 0.25rem 0;
-  font-size: 0.95rem;
+  margin: 0 0 var(--space-1) 0;
+  @include type-body-lg;
   font-weight: 500;
   text-transform: capitalize;
+  color: var(--color-on-surface);
 }
 
 .milestones__day,
 .milestones__actual {
   display: block;
-  font-size: 0.85rem;
-  color: #666;
+  @include type-body-sm;
+  color: var(--color-on-surface-variant);
 }
 
 .milestones__actual {
-  color: #4caf50;
+  color: var(--color-primary);
   font-weight: 500;
 }
 
 .milestones__notes {
-  margin: 0.5rem 0 0 0;
-  font-size: 0.85rem;
-  color: #999;
+  margin: var(--space-2) 0 0 0;
+  @include type-body-sm;
+  color: var(--color-on-surface-variant);
   font-style: italic;
 }
 
 .milestones__record-btn {
-  padding: 0.4rem 0.75rem;
-  background: #fff3e0;
-  color: #f57c00;
-  border: 1px solid #ffe0b2;
-  border-radius: 4px;
+  padding: var(--space-1) var(--space-3);
+  background: var(--ion-color-warning-tint);
+  color: var(--ion-color-warning-shade);
+  border: 0.0625rem solid var(--ion-color-warning);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.8rem;
+  @include type-label;
   font-weight: 500;
 
   &:hover {
-    background: #ffe0b2;
+    background: var(--ion-color-warning);
+    color: var(--ion-color-warning-contrast);
   }
 }
 
 .milestones__empty {
   text-align: center;
-  color: #999;
-  font-size: 0.9rem;
-  padding: 1rem 0;
+  @include type-body;
+  color: var(--color-on-surface-variant);
+  padding: var(--space-4) 0;
 }
 
 .milestones__add-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: #f3e5f5;
-  color: #7b1fa2;
-  border: 1px solid #e1bee7;
-  border-radius: 4px;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-container-low);
+  color: var(--color-primary);
+  border: 0.0625rem solid var(--color-outline-variant);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.9rem;
+  @include type-body;
   font-weight: 500;
 
   &:hover {
-    background: #e1bee7;
+    background: var(--color-surface-container);
   }
 
   span {
-    font-size: 1.25rem;
+    font-size: var(--icon-size-md);
   }
 }
 
 .milestone-form {
-  background: #f9f9f9;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-top: 1rem;
+  background: var(--color-surface-container-low);
+  border: 0.0625rem solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-top: var(--space-4);
 }
 
 .form-input,
 .form-textarea {
   display: block;
   width: 100%;
-  margin-bottom: 0.75rem;
-  padding: 0.75rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  font-family: inherit;
-  font-size: 0.9rem;
+  margin-bottom: var(--space-3);
+  padding: var(--space-3);
+  border: 0.0625rem solid var(--color-outline-variant);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  @include type-body;
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
+
+  &::placeholder {
+    color: var(--color-on-surface-variant);
+  }
 
   &:focus {
     outline: none;
-    border-color: #7b1fa2;
-    box-shadow: 0 0 0 2px rgba(123, 31, 162, 0.1);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.1875rem rgba(22, 53, 38, 0.1);
   }
 }
 
 .form-textarea {
-  min-height: 80px;
+  min-height: 5rem;
   resize: vertical;
 }
 
 .form-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: var(--space-3);
   justify-content: flex-end;
 }
 
 .btn {
-  padding: 0.6rem 1.25rem;
+  padding: var(--space-2) var(--space-5);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.9rem;
+  @include type-body;
   font-weight: 500;
 
   &--primary {
-    background: #7b1fa2;
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
 
     &:hover {
-      background: #6a1b9a;
+      opacity: 0.88;
     }
   }
 
   &--secondary {
-    background: #e0e0e0;
-    color: #333;
+    background: var(--color-surface-container);
+    color: var(--color-on-surface);
 
     &:hover {
-      background: #d0d0d0;
+      background: var(--color-surface-container-high);
     }
   }
 }

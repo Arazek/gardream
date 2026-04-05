@@ -6,7 +6,7 @@ import { Store } from '@ngrx/store';
 
 import { AuthService } from '../../core/auth/auth.service';
 import {
-  TopAppBarComponent,
+  TopAppBarComponent, NavAction,
   HeroSectionComponent,
   TaskListItemComponent,
   InsightCardComponent,
@@ -95,14 +95,7 @@ const INSIGHTS = [
   ],
   styleUrl: './home.page.scss',
   template: `
-    <app-top-app-bar title="My Garden">
-      <button trailing class="icon-btn" aria-label="Notifications">
-        <span class="material-symbols-outlined">notifications</span>
-      </button>
-      <button trailing class="icon-btn" aria-label="Profile" (click)="goToSettings()">
-        <span class="material-symbols-outlined">person</span>
-      </button>
-    </app-top-app-bar>
+    <app-top-app-bar title="My Garden" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
 
     <app-page-content class="home-content">
 
@@ -225,6 +218,15 @@ export class HomePage implements OnInit {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+
+  readonly topBarActions: NavAction[] = [
+    { id: 'notifications', icon: 'notifications', label: 'Notifications' },
+    { id: 'profile',       icon: 'person',        label: 'Profile' },
+  ];
+
+  onTopBarAction(id: string): void {
+    if (id === 'profile') this.goToSettings();
+  }
 
   readonly plots$ = this.store.select(selectAllPlots);
   readonly plotsLoading$ = this.store.select(selectPlotsLoading);

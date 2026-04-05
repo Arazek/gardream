@@ -3,7 +3,7 @@ import { AsyncPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 
-import { TopAppBarComponent, SearchBarComponent, FilterChipComponent, SpecimenCardComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
+import { TopAppBarComponent, NavAction, SearchBarComponent, FilterChipComponent, SpecimenCardComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
 import { CropsActions } from './store/crops.actions';
 import { selectFilteredCrops, selectCropsLoading, selectCategoryFilter } from './store/crops.selectors';
 import { Crop, CropCategory } from './store/crops.state';
@@ -24,11 +24,7 @@ const CATEGORIES: CategoryOption[] = [
   imports: [AsyncPipe, TopAppBarComponent, SearchBarComponent, FilterChipComponent, SpecimenCardComponent, PageContentComponent, PageBodyWrapperComponent],
   styleUrl: './crops.page.scss',
   template: `
-    <app-top-app-bar title="Crop Library">
-      <button trailing class="icon-btn" aria-label="Profile" (click)="goToSettings()">
-        <span class="material-symbols-outlined">person</span>
-      </button>
-    </app-top-app-bar>
+    <app-top-app-bar title="Crop Library" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
 
     <app-page-content class="crops-content">
       <app-page-body-wrapper>
@@ -73,6 +69,14 @@ const CATEGORIES: CategoryOption[] = [
 export class CropsPage implements OnInit {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
+
+  readonly topBarActions: NavAction[] = [
+    { id: 'profile', icon: 'person', label: 'Profile' },
+  ];
+
+  onTopBarAction(id: string): void {
+    if (id === 'profile') this.goToSettings();
+  }
 
   readonly loading$ = this.store.select(selectCropsLoading);
   readonly categoryFilter$ = this.store.select(selectCategoryFilter);

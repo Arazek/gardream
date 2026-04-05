@@ -1,24 +1,5 @@
 @use 'theme/mixins' as *;
 
-.icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--icon-container-md);
-  height: var(--icon-container-md);
-  border-radius: var(--radius-full);
-  background: transparent;
-  border: none;
-  color: var(--color-on-surface-variant);
-  cursor: pointer;
-  padding: 0;
-  transition: background var(--duration-quick) var(--ease-standard);
-
-  &:hover { background: var(--color-surface-container); }
-
-  .material-symbols-outlined { font-size: var(--icon-size-md); }
-}
-
 .plots-list {
   display: flex;
   flex-direction: column;

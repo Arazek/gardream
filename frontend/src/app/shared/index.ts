@@ -62,7 +62,7 @@ export { SpecimenCardComponent, SpecimenCardSize } from './components/specimen-c
 export { WeatherWidgetComponent, CurrentWeather, DayForecast } from './components/weather-widget/weather-widget.component';
 export { InsightCardComponent } from './components/insight-card/insight-card.component';
 export { HeroSectionComponent } from './components/hero-section/hero-section.component';
-export { TopAppBarComponent } from './components/top-app-bar/top-app-bar.component';
+export { TopAppBarComponent, NavAction } from './components/top-app-bar/top-app-bar.component';
 export { BottomNavBarComponent, NavItem } from './components/bottom-nav-bar/bottom-nav-bar.component';
 
 // ─── Pipes ────────────────────────────────────────────────────────────────────

@@ -42,4 +42,39 @@
     flex-shrink: 0;
     margin-left: auto;
   }
+
+  // ─── Internally-rendered action buttons ──────────────────────────────────
+  &__action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--icon-container-md);
+    height: var(--icon-container-md);
+    border-radius: var(--radius-full);
+    background: transparent;
+    border: none;
+    color: var(--color-on-surface-variant);
+    cursor: pointer;
+    padding: 0;
+    transition: background var(--duration-quick) var(--ease-standard);
+
+    &:hover {
+      background: var(--color-surface-container);
+    }
+
+    &:focus-visible {
+      outline: 0.125rem solid var(--color-primary);
+      outline-offset: 0.125rem;
+    }
+
+    .material-symbols-outlined {
+      font-size: var(--icon-size-md);
+    }
+
+    &--disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+  }
 }
