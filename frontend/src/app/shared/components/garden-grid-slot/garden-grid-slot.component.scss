@@ -4,6 +4,7 @@
   position: relative;
   width: 100%;
   aspect-ratio: 1;
+  overflow: hidden; // enforce square — no content blowout
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -39,10 +40,10 @@
     }
   }
 
-  // Image container
+  // Image container — compact by default, larger when container is wide
   &__image-wrap {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 1.875rem;
+    height: 1.875rem;
     border-radius: var(--radius-full);
     overflow: hidden;
     box-shadow: var(--shadow-card);
@@ -72,22 +73,18 @@
   }
 
   &__name {
-    @include type-label-lg; // Primary crop name
+    font-size: 0.625rem;
+    font-weight: 600;
     color: var(--color-on-surface);
     margin: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-weight: 500;
+    line-height: 1.2;
   }
 
   &__latin {
-    @include type-latin-name; // Uses existing mixin for scientific name
-    color: var(--color-on-surface-variant);
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: none; // hidden on small cells
   }
 
   app-progress-bar {
@@ -128,10 +125,20 @@
     }
   }
 
-  // Show remove button on hover/focus
+  // Show remove button on hover/focus (pointer devices)
   &:hover &__remove-btn,
   &:focus-within &__remove-btn {
     opacity: 1;
+  }
+
+  // Always show on touch devices — no hover available
+  @media (hover: none) {
+    &__remove-btn {
+      opacity: 1;
+      width: 1.375rem;
+      height: 1.375rem;
+      .material-symbols-outlined { font-size: 0.875rem; }
+    }
   }
 
   // Press feedback (visual indication during long-press if kept)
@@ -191,5 +198,30 @@
 
   &__empty-btn:focus-visible ~ .garden-grid-slot__empty-circle {
     border-color: var(--color-primary);
+  }
+}
+
+// ─── Wider cells: restore full content ────────────────────────────────────────
+@container (min-width: 30rem) {
+  .garden-grid-slot {
+    &__image-wrap {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
+
+    &__name {
+      @include type-label-lg;
+      font-size: inherit;
+    }
+
+    &__latin {
+      display: block;
+      @include type-latin-name;
+      color: var(--color-on-surface-variant);
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 }

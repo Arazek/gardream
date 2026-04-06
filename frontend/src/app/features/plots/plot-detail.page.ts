@@ -45,15 +45,17 @@ interface GridCell {
         @if (slotsLoading$ | async) {
           <div class="plot-grid-skeleton">Loading grid…</div>
         } @else {
-          <div class="plot-grid" [style.--grid-cols]="plot.cols">
-            @for (cell of buildGrid(plot, (slots$ | async) ?? []); track cell.key) {
-              <app-garden-grid-slot
-                [crop]="cell.crop"
-                [empty]="!cell.crop"
-                (slotClicked)="onSlotClick(plot.id, cell)"
-                (slotRemoveRequested)="onRemoveSlot(plot.id, cell)"
-              />
-            }
+          <div class="plot-grid-scroll">
+            <div class="plot-grid" [style.--grid-cols]="plot.cols">
+              @for (cell of buildGrid(plot, (slots$ | async) ?? []); track cell.key) {
+                <app-garden-grid-slot
+                  [crop]="cell.crop"
+                  [empty]="!cell.crop"
+                  (slotClicked)="onSlotClick(plot.id, cell)"
+                  (slotRemoveRequested)="onRemoveSlot(plot.id, cell)"
+                />
+              }
+            </div>
           </div>
         }
       }

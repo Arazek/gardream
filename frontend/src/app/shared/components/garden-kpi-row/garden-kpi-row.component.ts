@@ -23,7 +23,7 @@ export interface NextHarvest {
 
         <!-- Near harvest -->
         <div class="kpi-card kpi-card--harvest">
-          <span class="material-symbols-outlined kpi-card__icon">agriculture</span>
+          <span class="material-symbols-outlined kpi-card__icon">potted_plant</span>
           <span class="kpi-card__value">{{ nearHarvestCount }}</span>
           <span class="kpi-card__label">Near harvest</span>
           <span class="kpi-card__sub">≤ 14 days</span>

@@ -6,16 +6,17 @@
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: var(--space-1); // space for scrollbar on desktop
+  padding-bottom: var(--space-1);
+  padding-right: var(--space-3); // prevent last card clipping
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
 
 // ─── Card base ────────────────────────────────────────────────────────────────
 .kpi-card {
-  flex-shrink: 0;
+  flex: 0 0 calc(var(--space-8) * 3);
   scroll-snap-align: start;
-  min-width: calc(var(--space-8) * 2);   // ~7.5rem equivalent via token multiples
+  width: calc(var(--space-8) * 3);
   min-height: calc(var(--space-8) * 2);  // square-ish card
   background: var(--color-surface-container);
   border-radius: var(--radius-md);
@@ -68,7 +69,8 @@
 
   // ─── Skeleton ───────────────────────────────────────────────────────────────
   &--skeleton {
-    min-width: calc(var(--space-8) * 2);
+    flex: 0 0 calc(var(--space-8) * 3);
+    width: calc(var(--space-8) * 3);
     min-height: calc(var(--space-8) * 2);
     background: linear-gradient(
       90deg,
