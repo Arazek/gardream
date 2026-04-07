@@ -6,7 +6,7 @@ import { addIcons } from 'ionicons';
 import { add, chevronBack, chevronForward } from 'ionicons/icons';
 import { Store } from '@ngrx/store';
 
-import { TopAppBarComponent, NavAction, TaskCardComponent, FilterChipComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
+import { TopAppBarComponent, NavAction, TaskCardComponent, FilterChipComponent, PageContentComponent } from '../../shared';
 import { BottomSheetService } from '../../shared/services/bottom-sheet.service';
 import { TasksActions } from '../tasks/store/tasks.actions';
 import { selectAllTasks, selectTasksLoading } from '../tasks/store/tasks.selectors';
@@ -63,89 +63,95 @@ function buildMonthGrid(year: number, month: number): CalDay[] {
   imports: [
     AsyncPipe,
     IonFab, IonFabButton, IonIcon,
-    TopAppBarComponent, TaskCardComponent, FilterChipComponent, PageContentComponent, PageBodyWrapperComponent,
+    TopAppBarComponent, TaskCardComponent, FilterChipComponent, PageContentComponent,
   ],
   styleUrl: './calendar.page.scss',
   template: `
     <app-top-app-bar title="Calendar" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
 
     <app-page-content class="calendar-content">
-      <app-page-body-wrapper>
+      <div class="cal-layout">
 
-        <!-- Month header -->
-        <div class="cal-month-header">
-        <button class="cal-month-header__arrow" type="button" (click)="shiftMonth(-1)" aria-label="Previous month">
-          <ion-icon name="chevron-back" />
-        </button>
-        <div class="cal-month-header__center">
-          <h2 class="cal-month-header__month">{{ monthLabel }}</h2>
-          <p class="cal-month-header__season">{{ seasonLabel }}</p>
-        </div>
-        <button class="cal-month-header__arrow" type="button" (click)="shiftMonth(1)" aria-label="Next month">
-          <ion-icon name="chevron-forward" />
-        </button>
-      </div>
+        <!-- LEFT: calendar picker -->
+        <div class="cal-layout__calendar">
+          <!-- Month header -->
+          <div class="cal-month-header">
+            <button class="cal-month-header__arrow" type="button" (click)="shiftMonth(-1)" aria-label="Previous month">
+              <ion-icon name="chevron-back" />
+            </button>
+            <div class="cal-month-header__center">
+              <h2 class="cal-month-header__month">{{ monthLabel }}</h2>
+              <p class="cal-month-header__season">{{ seasonLabel }}</p>
+            </div>
+            <button class="cal-month-header__arrow" type="button" (click)="shiftMonth(1)" aria-label="Next month">
+              <ion-icon name="chevron-forward" />
+            </button>
+          </div>
 
-      <!-- Day-of-week headers -->
-      <div class="cal-grid-header">
-        @for (d of dayLetters; track d + $index) {
-          <span class="cal-grid-header__cell">{{ d }}</span>
-        }
-      </div>
-
-      <!-- Month grid -->
-      <div class="cal-grid">
-        @for (day of monthGrid; track day.iso) {
-          <button
-            type="button"
-            class="cal-grid__cell"
-            [class.cal-grid__cell--other]="!day.inMonth"
-            [class.cal-grid__cell--today]="day.iso === today"
-            [class.cal-grid__cell--selected]="day.iso === selectedDate"
-            (click)="selectDate(day.iso)"
-          >
-            {{ day.date }}
-          </button>
-        }
-      </div>
-
-      <!-- Filter chips -->
-      <div class="cal-filters">
-        <app-filter-chip label="All"     [active]="filter === 'all'"     (toggled)="setFilter('all')" />
-        <app-filter-chip label="Pending" [active]="filter === 'pending'" (toggled)="setFilter('pending')" />
-        <app-filter-chip label="Done"    [active]="filter === 'done'"    (toggled)="setFilter('done')" />
-      </div>
-
-      <!-- Selected date label -->
-      <p class="cal-date-label">{{ selectedDateLabel }}</p>
-
-      <!-- Task list -->
-      <div class="cal-tasks">
-        @if (tasksLoading$ | async) {
-          <div class="cal-skeleton">
-            @for (i of [1, 2, 3]; track i) {
-              <div class="cal-skeleton__card"></div>
+          <!-- Day-of-week headers -->
+          <div class="cal-grid-header">
+            @for (d of dayLetters; track d + $index) {
+              <span class="cal-grid-header__cell">{{ d }}</span>
             }
           </div>
-        } @else if (filteredTasks.length === 0) {
-          <div class="cal-empty">
-            <span class="material-symbols-outlined cal-empty__icon">event_available</span>
-            <p class="cal-empty__text">No tasks for this day.</p>
-          </div>
-        } @else {
-          @for (task of filteredTasks; track task.id) {
-            <app-task-card
-              [icon]="taskIcon(task.type)"
-              [title]="task.title || task.type"
-              [description]="task.note ?? undefined"
-              [completed]="task.completed"
-              (completedChange)="onToggle(task, $event)"
-            />
-          }
-        }
-      </div>
 
-      </app-page-body-wrapper>
+          <!-- Month grid -->
+          <div class="cal-grid">
+            @for (day of monthGrid; track day.iso) {
+              <button
+                type="button"
+                class="cal-grid__cell"
+                [class.cal-grid__cell--other]="!day.inMonth"
+                [class.cal-grid__cell--today]="day.iso === today"
+                [class.cal-grid__cell--selected]="day.iso === selectedDate"
+                (click)="selectDate(day.iso)"
+              >
+                {{ day.date }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- RIGHT: filters + tasks -->
+        <div class="cal-layout__tasks">
+          <!-- Filter chips -->
+          <div class="cal-filters">
+            <app-filter-chip label="All"     [active]="filter === 'all'"     (toggled)="setFilter('all')" />
+            <app-filter-chip label="Pending" [active]="filter === 'pending'" (toggled)="setFilter('pending')" />
+            <app-filter-chip label="Done"    [active]="filter === 'done'"    (toggled)="setFilter('done')" />
+          </div>
+
+          <!-- Selected date label -->
+          <p class="cal-date-label">{{ selectedDateLabel }}</p>
+
+          <!-- Task list -->
+          <div class="cal-tasks">
+            @if (tasksLoading$ | async) {
+              <div class="cal-skeleton">
+                @for (i of [1, 2, 3]; track i) {
+                  <div class="cal-skeleton__card"></div>
+                }
+              </div>
+            } @else if (filteredTasks.length === 0) {
+              <div class="cal-empty">
+                <span class="material-symbols-outlined cal-empty__icon">event_available</span>
+                <p class="cal-empty__text">No tasks for this day.</p>
+              </div>
+            } @else {
+              @for (task of filteredTasks; track task.id) {
+                <app-task-card
+                  [icon]="taskIcon(task.type)"
+                  [title]="task.title || task.type"
+                  [description]="task.note ?? undefined"
+                  [completed]="task.completed"
+                  (completedChange)="onToggle(task, $event)"
+                />
+              }
+            }
+          </div>
+        </div>
+
+      </div>
 
       <!-- Add task FAB -->
       <ion-fab slot="fixed" vertical="bottom" horizontal="end">

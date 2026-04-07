@@ -1,5 +1,51 @@
 @use 'theme/mixins' as *;
 
+// ─── Two-column desktop layout ────────────────────────────────────────────────
+.cal-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.cal-layout__tasks {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 64rem) {
+  .cal-layout {
+    display: grid;
+    grid-template-columns: minmax(20rem, 26rem) 1fr;
+    gap: var(--space-6);
+    align-items: start;
+    padding: var(--space-4) var(--space-6);
+  }
+
+  .cal-layout__calendar {
+    position: sticky;
+    top: 0;
+    background: var(--color-surface);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+
+  .cal-layout__tasks {
+    overflow-y: auto;
+    max-height: calc(100dvh - var(--top-app-bar-height) - var(--space-8));
+    padding-bottom: var(--space-6);
+  }
+
+  // On desktop no bottom nav padding needed
+  .cal-tasks {
+    padding-bottom: var(--space-4);
+  }
+
+  .cal-empty {
+    padding-bottom: var(--space-8);
+  }
+}
+
 // ─── Month header ─────────────────────────────────────────────────────────────
 .cal-month-header {
   display: flex;

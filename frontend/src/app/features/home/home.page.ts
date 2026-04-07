@@ -27,7 +27,7 @@ import { PlotsActions } from '../plots/store/plots.actions';
 import { TasksActions } from '../tasks/store/tasks.actions';
 import { WeatherActions } from '../../store/weather/weather.actions';
 import { selectAllPlots, selectPlotsLoading, selectCropsNearHarvest, selectNextHarvest, selectStageDistribution, selectAvgProgress } from '../plots/store/plots.selectors';
-import { selectTodayTasks, selectPendingTasks, selectTasksLoading, selectOverdueTasks } from '../tasks/store/tasks.selectors';
+import { selectTodayTasksHardcoded, selectPendingTasks, selectTasksLoading, selectOverdueTasks } from '../tasks/store/tasks.selectors';
 import { selectCurrentWeather, selectForecast, selectTomorrowRainExpected, selectTomorrowPrecipitation, selectWeatherLoading } from '../../store/weather/weather.selectors';
 import { Plot, PlotType, PlotSlot } from '../plots/store/plots.state';
 import { Task } from '../tasks/store/tasks.state';
@@ -275,7 +275,7 @@ export class HomePage implements OnInit {
 
   readonly plots$ = this.store.select(selectAllPlots);
   readonly plotsLoading$ = this.store.select(selectPlotsLoading);
-  readonly todayTasks$ = this.store.select(selectTodayTasks);
+  readonly todayTasks$ = this.store.select(selectTodayTasksHardcoded);
   readonly tasksLoading$ = this.store.select(selectTasksLoading);
   readonly pendingTasks$ = this.store.select(selectPendingTasks);
   readonly overdueTasks$ = this.store.select(selectOverdueTasks);
@@ -312,8 +312,6 @@ export class HomePage implements OnInit {
     this.heroSubtitle = this.formatDate(new Date());
 
     this.store.dispatch(PlotsActions.loadPlots());
-    // Set the selected date so selectTodayTasks can filter correctly
-    this.store.dispatch(TasksActions.setSelectedDate({ date: TODAY }));
     // Load all pending tasks — covers today's tasks + overdue calculation
     this.store.dispatch(TasksActions.loadTasks({ completed: false }));
     this.loadWeather();
