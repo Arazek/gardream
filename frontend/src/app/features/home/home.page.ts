@@ -89,6 +89,7 @@ const GARDEN_STATEMENTS = [
     StageDistributionBarComponent,
     NotificationCentreComponent,
   ],
+  providers: [NotificationService],
   styleUrl: './home.page.scss',
   template: `
     <app-top-app-bar title="My Garden" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
