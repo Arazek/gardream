@@ -17,3 +17,25 @@ export const selectTodayRainExpected = createSelector(
   selectRainDays,
   rainDays => rainDays.includes(new Date().toISOString().slice(0, 10)),
 );
+
+export const selectTomorrowRainExpected = createSelector(
+  selectRainDays,
+  rainDays => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return rainDays.includes(tomorrow.toISOString().slice(0, 10));
+  },
+);
+
+export const selectTomorrowPrecipitation = createSelector(
+  selectForecast,
+  forecast => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowDateStr = tomorrow.toISOString().slice(0, 10);
+    const tomorrowForecast = forecast.find(d => d.date === tomorrowDateStr);
+    return tomorrowForecast
+      ? { mm: tomorrowForecast.precipitation_mm, probability: tomorrowForecast.precipitation_probability }
+      : null;
+  },
+);

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, effect } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { IonRippleEffect } from '@ionic/angular/standalone';
@@ -6,6 +6,8 @@ import { Store } from '@ngrx/store';
 import { combineLatest } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { NotificationService } from '../../core/notifications/notification.service';
+import { NotificationCentreComponent } from './components/notification-centre/notification-centre.component';
 import {
   TopAppBarComponent, NavAction,
   HeroSectionComponent,
@@ -26,7 +28,7 @@ import { TasksActions } from '../tasks/store/tasks.actions';
 import { WeatherActions } from '../../store/weather/weather.actions';
 import { selectAllPlots, selectPlotsLoading, selectCropsNearHarvest, selectNextHarvest, selectStageDistribution, selectAvgProgress } from '../plots/store/plots.selectors';
 import { selectTodayTasks, selectPendingTasks, selectTasksLoading, selectOverdueTasks } from '../tasks/store/tasks.selectors';
-import { selectCurrentWeather, selectForecast, selectTodayRainExpected, selectWeatherLoading } from '../../store/weather/weather.selectors';
+import { selectCurrentWeather, selectForecast, selectTomorrowRainExpected, selectTomorrowPrecipitation, selectWeatherLoading } from '../../store/weather/weather.selectors';
 import { Plot, PlotType, PlotSlot } from '../plots/store/plots.state';
 import { Task } from '../tasks/store/tasks.state';
 import { DayForecast } from '../../store/weather/weather.state';
@@ -85,10 +87,19 @@ const GARDEN_STATEMENTS = [
     PageBodyWrapperComponent,
     GardenKpiRowComponent,
     StageDistributionBarComponent,
+    NotificationCentreComponent,
   ],
   styleUrl: './home.page.scss',
   template: `
     <app-top-app-bar title="My Garden" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
+
+    <app-notification-centre
+      [open]="notificationCentreOpen"
+      [notifications]="notifications"
+      (closed)="notificationCentreOpen = false"
+      (markAllRead)="notificationService.markAllRead()"
+      (dismiss)="notificationService.dismiss($event)"
+    />
 
     <app-page-content class="home-content">
 
@@ -108,12 +119,20 @@ const GARDEN_STATEMENTS = [
         @if (widgetCurrent) {
           <section class="home-section home-section--weather">
             <app-weather-widget [current]="widgetCurrent" [forecast]="widgetForecast" />
-            @if (todayRainExpected$ | async) {
-              <app-inline-alert
-                variant="info"
-                title="Rain expected today"
-                message="You may want to skip watering your outdoor plots today."
-              />
+            @if (tomorrowRainExpected$ | async; as rainExpected) {
+              @if (rainExpected && (tomorrowPrecipitation$ | async); as precip) {
+                <app-inline-alert
+                  variant="info"
+                  title="Rain expected tomorrow"
+                  [message]="'Consider watering your outdoor plots today — rain is forecast for tomorrow (' + (precip?.mm ?? 0) + 'mm, ' + (precip?.probability ?? 0) + '% chance).'"
+                />
+              } @else if (rainExpected) {
+                <app-inline-alert
+                  variant="info"
+                  title="Rain expected tomorrow"
+                  message="Consider watering your outdoor plots today — rain is forecast for tomorrow."
+                />
+              }
             }
           </section>
         }
@@ -235,6 +254,10 @@ export class HomePage implements OnInit {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+  readonly notificationService = inject(NotificationService);
+
+  notificationCentreOpen = false;
+  notifications: any[] = [];
 
   readonly topBarActions: NavAction[] = [
     { id: 'notifications', icon: 'notifications', label: 'Notifications' },
@@ -242,7 +265,11 @@ export class HomePage implements OnInit {
   ];
 
   onTopBarAction(id: string): void {
-    if (id === 'profile') this.goToSettings();
+    if (id === 'notifications') {
+      this.notificationCentreOpen = true;
+    } else if (id === 'profile') {
+      this.goToSettings();
+    }
   }
 
   readonly plots$ = this.store.select(selectAllPlots);
@@ -251,7 +278,8 @@ export class HomePage implements OnInit {
   readonly tasksLoading$ = this.store.select(selectTasksLoading);
   readonly pendingTasks$ = this.store.select(selectPendingTasks);
   readonly overdueTasks$ = this.store.select(selectOverdueTasks);
-  readonly todayRainExpected$ = this.store.select(selectTodayRainExpected);
+  readonly tomorrowRainExpected$ = this.store.select(selectTomorrowRainExpected);
+  readonly tomorrowPrecipitation$ = this.store.select(selectTomorrowPrecipitation);
   readonly nearHarvest$ = this.store.select(selectCropsNearHarvest);
   readonly nextHarvest$ = this.store.select(selectNextHarvest);
   readonly stageDistribution$ = this.store.select(selectStageDistribution);
@@ -288,6 +316,12 @@ export class HomePage implements OnInit {
     // Load all pending tasks — covers today's tasks + overdue calculation
     this.store.dispatch(TasksActions.loadTasks({ completed: false }));
     this.loadWeather();
+
+    // Notifications - use effect to reactively update
+    effect(() => {
+      this.notifications = this.notificationService.notifications();
+      this.updateTopBarBadge();
+    });
 
     // Hero chip subscriptions
     this.todayTasks$.subscribe(tasks => (this.todayCount = tasks.length));
@@ -348,6 +382,13 @@ export class HomePage implements OnInit {
       this.insight = `Your garden is thriving — ${this.avgProgress}% average lifecycle progress.`;
     } else {
       this.insight = GARDEN_STATEMENTS[new Date().getDay() % GARDEN_STATEMENTS.length];
+    }
+  }
+
+  private updateTopBarBadge(): void {
+    const notifAction = this.topBarActions.find(a => a.id === 'notifications');
+    if (notifAction) {
+      notifAction.badge = this.notificationService.unreadCount();
     }
   }
 

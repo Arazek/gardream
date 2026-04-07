@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { BadgeComponent } from '../badge/badge.component';
 
 export interface NavAction {
   /** Stable identifier — emitted by (actionClick). Must be unique within a bar. */
@@ -11,11 +12,14 @@ export interface NavAction {
   hidden?: boolean;
   /** When true aria-disabled is set and pointer-events are suppressed. Default: false. */
   disabled?: boolean;
+  /** Optional badge count shown on the icon. Only shown if > 0. */
+  badge?: number;
 }
 
 @Component({
   selector: 'app-top-app-bar',
   standalone: true,
+  imports: [BadgeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './top-app-bar.component.scss',
   template: `
@@ -38,6 +42,9 @@ export interface NavAction {
               (click)="!action.disabled && actionClick.emit(action.id)"
             >
               <span class="material-symbols-outlined">{{ action.icon }}</span>
+              @if (action.badge && action.badge > 0) {
+                <app-badge variant="primary">{{ action.badge }}</app-badge>
+              }
             </button>
           }
         }
