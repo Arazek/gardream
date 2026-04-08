@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, effect } from '@angular/core';
+import { Component, OnInit, inject, effect, DestroyRef } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { IonRippleEffect } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
 import { combineLatest } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { NotificationService } from '../../core/notifications/notification.service';
@@ -255,6 +256,7 @@ export class HomePage implements OnInit {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   readonly notificationService = inject(NotificationService);
+  private readonly destroy = inject(DestroyRef);
 
   notificationCentreOpen = false;
   notifications: any[] = [];
@@ -322,34 +324,52 @@ export class HomePage implements OnInit {
     });
 
     // Hero chip subscriptions
-    this.todayTasks$.subscribe(tasks => (this.todayCount = tasks.length));
-    this.plots$.subscribe(plots => {
-      this.plotCount = plots.length;
-      this.totalCrops = plots.reduce((a, p) => a + p.crop_count, 0);
-      // Load slots for each plot to power KPI cards
-      plots.forEach(p => this.store.dispatch(PlotsActions.loadSlots({ plotId: p.id })));
-    });
-    this.overdueTasks$.subscribe(tasks => {
-      this.overdueCount = tasks.length;
-      this.updateInsight();
-    });
+    this.todayTasks$
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe(tasks => (this.todayCount = tasks.length));
+    this.plots$
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe(plots => {
+        this.plotCount = plots.length;
+        this.totalCrops = plots.reduce((a, p) => a + p.crop_count, 0);
+        // Load slots for each plot to power KPI cards
+        plots.forEach(p => this.store.dispatch(PlotsActions.loadSlots({ plotId: p.id })));
+      });
+    this.overdueTasks$
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe(tasks => {
+        this.overdueCount = tasks.length;
+        this.updateInsight();
+      });
 
     // KPI row subscriptions
-    this.nearHarvest$.subscribe(slots => {
-      this.nearHarvestCount = slots.length;
-      this.updateInsight();
-    });
-    this.nextHarvest$.subscribe(nh => (this.nextHarvest = nh));
-    this.avgProgress$.subscribe(p => (this.avgProgress = p));
-    this.stageDistribution$.subscribe(d => (this.stageDistribution = d));
+    this.nearHarvest$
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe(slots => {
+        this.nearHarvestCount = slots.length;
+        this.updateInsight();
+      });
+    this.nextHarvest$
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe(nh => (this.nextHarvest = nh));
+    this.avgProgress$
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe(p => (this.avgProgress = p));
+    this.stageDistribution$
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe(d => (this.stageDistribution = d));
 
-    this.store.select(selectCurrentWeather).subscribe(c => {
-      if (!c) return;
-      this.widgetCurrent = { temperature: c.temperature, condition: c.condition, icon: c.icon, humidity: c.humidity, windSpeed: c.wind_speed };
-    });
-    this.store.select(selectForecast).subscribe(fc => {
-      this.widgetForecast = fc.map(d => this.mapForecastDay(d));
-    });
+    this.store.select(selectCurrentWeather)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe(c => {
+        if (!c) return;
+        this.widgetCurrent = { temperature: c.temperature, condition: c.condition, icon: c.icon, humidity: c.humidity, windSpeed: c.wind_speed };
+      });
+    this.store.select(selectForecast)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe(fc => {
+        this.widgetForecast = fc.map(d => this.mapForecastDay(d));
+      });
 
     const profile = await this.auth.getProfile();
     if (profile?.firstName) {
