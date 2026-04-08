@@ -1,10 +1,12 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, effect } from '@angular/core';
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { combineLatest, map, Observable } from 'rxjs';
 
-import { TopAppBarComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
+import { TopAppBarComponent, NavAction, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
+import { NotificationService } from '../../core/notifications/notification.service';
+import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import { SpecimensActions } from './store/specimens.actions';
 import { selectSpecimenBySlotId, selectSpecimensLoading, selectSpecimensError } from './store/specimens.selectors';
 import { selectSelectedPlot, selectSelectedPlotSlots } from './store/plots.selectors';
@@ -26,14 +28,23 @@ import { SpecimenMilestonesComponent } from './specimen-milestones.component';
     PageBodyWrapperComponent,
     SpecimenPhotoLogComponent,
     SpecimenMilestonesComponent,
+    NotificationCentreComponent,
   ],
   styleUrl: './specimen-detail.page.scss',
   template: `
-    <app-top-app-bar [title]="(title$ | async) ?? 'Specimen'">
+    <app-top-app-bar [title]="(title$ | async) ?? 'Specimen'" [actions]="topBarActions" (actionClick)="onTopBarAction($event)">
       <button leading class="icon-btn" aria-label="Back" (click)="goBack()">
         <span class="material-symbols-outlined">arrow_back</span>
       </button>
     </app-top-app-bar>
+
+    <app-notification-centre
+      [open]="notificationCentreOpen"
+      [notifications]="notifications"
+      (closed)="notificationCentreOpen = false"
+      (markAllRead)="notificationService.markAllRead()"
+      (dismiss)="notificationService.dismiss($event)"
+    />
 
     <app-page-content class="specimen-detail-content">
       <app-page-body-wrapper>
@@ -162,6 +173,20 @@ export class SpecimenDetailPage implements OnInit {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  readonly notificationService = inject(NotificationService);
+
+  notificationCentreOpen = false;
+  notifications: any[] = [];
+
+  readonly topBarActions: NavAction[] = [
+    { id: 'notifications', icon: 'notifications', label: 'Notifications' },
+  ];
+
+  onTopBarAction(id: string): void {
+    if (id === 'notifications') {
+      this.notificationCentreOpen = true;
+    }
+  }
 
   readonly SYSTEM_STAGES = SYSTEM_STAGES;
 
@@ -205,6 +230,12 @@ export class SpecimenDetailPage implements OnInit {
       this.store.dispatch(PlotsActions.selectPlot({ id: plotId }));
       this.store.dispatch(PlotsActions.loadSlots({ plotId }));
     }
+
+    // Notifications - use effect to reactively update
+    effect(() => {
+      this.notifications = this.notificationService.notifications();
+      this.updateTopBarBadge();
+    });
   }
 
   onSowDateChange(event: Event): void {
@@ -254,6 +285,13 @@ export class SpecimenDetailPage implements OnInit {
     return new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', {
       day: 'numeric', month: 'short', year: 'numeric',
     });
+  }
+
+  private updateTopBarBadge(): void {
+    const notifAction = this.topBarActions.find(a => a.id === 'notifications');
+    if (notifAction) {
+      notifAction.badge = this.notificationService.unreadCount();
+    }
   }
 
   onPhotoAdded(specimen: Specimen, file: File): void {

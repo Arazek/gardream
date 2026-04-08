@@ -1,10 +1,12 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, effect } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonContent, AlertController } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
 
 import { TopAppBarComponent, NavAction, GardenGridSlotComponent, GridCropInfo } from '../../shared';
+import { NotificationService } from '../../core/notifications/notification.service';
+import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import { BottomSheetService } from '../../shared/services/bottom-sheet.service';
 import { PlotsActions } from './store/plots.actions';
 import { selectSelectedPlot, selectSelectedPlotSlots, selectSlotsLoading } from './store/plots.selectors';
@@ -23,7 +25,7 @@ interface GridCell {
 @Component({
   selector: 'app-plot-detail',
   standalone: true,
-  imports: [AsyncPipe, IonContent, TopAppBarComponent, GardenGridSlotComponent],
+  imports: [AsyncPipe, IonContent, TopAppBarComponent, GardenGridSlotComponent, NotificationCentreComponent],
   styleUrl: './plot-detail.page.scss',
   template: `
     <app-top-app-bar [title]="(plot$ | async)?.name ?? 'Plot'" [actions]="topBarActions" (actionClick)="onTopBarAction($event)">
@@ -31,6 +33,14 @@ interface GridCell {
         <span class="material-symbols-outlined">arrow_back</span>
       </button>
     </app-top-app-bar>
+
+    <app-notification-centre
+      [open]="notificationCentreOpen"
+      [notifications]="notifications"
+      (closed)="notificationCentreOpen = false"
+      (markAllRead)="notificationService.markAllRead()"
+      (dismiss)="notificationService.dismiss($event)"
+    />
 
     <ion-content class="plot-detail-content">
 
@@ -69,13 +79,22 @@ export class PlotDetailPage implements OnInit {
   private readonly router = inject(Router);
   private readonly sheet = inject(BottomSheetService);
   private readonly alert = inject(AlertController);
+  readonly notificationService = inject(NotificationService);
+
+  notificationCentreOpen = false;
+  notifications: any[] = [];
 
   readonly topBarActions: NavAction[] = [
+    { id: 'notifications', icon: 'notifications', label: 'Notifications' },
     { id: 'profile', icon: 'person', label: 'Profile' },
   ];
 
   onTopBarAction(id: string): void {
-    if (id === 'profile') this.goToSettings();
+    if (id === 'notifications') {
+      this.notificationCentreOpen = true;
+    } else if (id === 'profile') {
+      this.goToSettings();
+    }
   }
 
   readonly plot$ = this.store.select(selectSelectedPlot);
@@ -88,6 +107,12 @@ export class PlotDetailPage implements OnInit {
       this.store.dispatch(PlotsActions.selectPlot({ id }));
       this.store.dispatch(PlotsActions.loadSlots({ plotId: id }));
     }
+
+    // Notifications - use effect to reactively update
+    effect(() => {
+      this.notifications = this.notificationService.notifications();
+      this.updateTopBarBadge();
+    });
   }
 
   buildGrid(plot: Plot, slots: PlotSlot[]): GridCell[] {
@@ -169,6 +194,13 @@ export class PlotDetailPage implements OnInit {
       ],
     });
     await alert.present();
+  }
+
+  private updateTopBarBadge(): void {
+    const notifAction = this.topBarActions.find(a => a.id === 'notifications');
+    if (notifAction) {
+      notifAction.badge = this.notificationService.unreadCount();
+    }
   }
 
   goBack(): void {

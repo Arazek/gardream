@@ -18,7 +18,7 @@ export interface AppNotification {
   read: boolean;
 }
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class NotificationService {
   private store = inject(Store);
 

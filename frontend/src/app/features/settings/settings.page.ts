@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, effect } from '@angular/core';
 import {
   IonList, IonItem, IonLabel,
   IonSegment, IonSegmentButton, IonIcon, IonToggle,
@@ -11,8 +11,10 @@ import { Store } from '@ngrx/store';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { ThemeService, ColorScheme } from '../../core/theme/theme.service';
+import { NotificationService } from '../../core/notifications/notification.service';
+import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import {
-  TopAppBarComponent, SectionComponent, DividerComponent, AvatarComponent, PageContentComponent, PageBodyWrapperComponent,
+  TopAppBarComponent, NavAction, SectionComponent, DividerComponent, AvatarComponent, PageContentComponent, PageBodyWrapperComponent,
 } from '../../shared';
 import { NotificationsActions } from '../../store/notifications/notifications.actions';
 import {
@@ -26,11 +28,19 @@ import {
     AsyncPipe,
     IonList, IonItem, IonLabel,
     IonSegment, IonSegmentButton, IonIcon, IonToggle,
-    TopAppBarComponent, SectionComponent, DividerComponent, AvatarComponent, PageContentComponent, PageBodyWrapperComponent,
+    TopAppBarComponent, SectionComponent, DividerComponent, AvatarComponent, PageContentComponent, PageBodyWrapperComponent, NotificationCentreComponent,
   ],
   styleUrl: './settings.page.scss',
   template: `
-    <app-top-app-bar title="Settings" />
+    <app-top-app-bar title="Settings" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
+
+    <app-notification-centre
+      [open]="notificationCentreOpen"
+      [notifications]="notifications"
+      (closed)="notificationCentreOpen = false"
+      (markAllRead)="notificationService.markAllRead()"
+      (dismiss)="notificationService.dismiss($event)"
+    />
 
     <app-page-content class="settings-content">
       <app-page-body-wrapper class="settings-body">
@@ -140,6 +150,20 @@ import {
 export class SettingsPage implements OnInit {
   private readonly store = inject(Store);
   readonly theme = inject(ThemeService);
+  readonly notificationService = inject(NotificationService);
+
+  notificationCentreOpen = false;
+  notifications: any[] = [];
+
+  readonly topBarActions: NavAction[] = [
+    { id: 'notifications', icon: 'notifications', label: 'Notifications' },
+  ];
+
+  onTopBarAction(id: string): void {
+    if (id === 'notifications') {
+      this.notificationCentreOpen = true;
+    }
+  }
 
   readonly morningReminder$ = this.store.select(selectMorningReminder);
   readonly eveningReminder$ = this.store.select(selectEveningReminder);
@@ -155,6 +179,12 @@ export class SettingsPage implements OnInit {
 
   constructor(private auth: AuthService) {
     addIcons({ logOutOutline, chevronForward });
+
+    // Notifications - use effect to reactively update
+    effect(() => {
+      this.notifications = this.notificationService.notifications();
+      this.updateTopBarBadge();
+    });
   }
 
   async ngOnInit(): Promise<void> {
@@ -168,6 +198,13 @@ export class SettingsPage implements OnInit {
 
   onToggle(field: 'morning_reminder' | 'evening_reminder' | 'in_app_alerts', event: CustomEvent): void {
     this.store.dispatch(NotificationsActions.updateSettings({ payload: { [field]: event.detail.checked } }));
+  }
+
+  private updateTopBarBadge(): void {
+    const notifAction = this.topBarActions.find(a => a.id === 'notifications');
+    if (notifAction) {
+      notifAction.badge = this.notificationService.unreadCount();
+    }
   }
 
   logout(): void {

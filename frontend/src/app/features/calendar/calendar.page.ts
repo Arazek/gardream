@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, effect } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { IonFab, IonFabButton, IonIcon } from '@ionic/angular/standalone';
@@ -7,6 +7,8 @@ import { add, chevronBack, chevronForward } from 'ionicons/icons';
 import { Store } from '@ngrx/store';
 
 import { TopAppBarComponent, NavAction, TaskCardComponent, FilterChipComponent, PageContentComponent } from '../../shared';
+import { NotificationService } from '../../core/notifications/notification.service';
+import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import { BottomSheetService } from '../../shared/services/bottom-sheet.service';
 import { TasksActions } from '../tasks/store/tasks.actions';
 import { selectAllTasks, selectTasksLoading } from '../tasks/store/tasks.selectors';
@@ -63,11 +65,19 @@ function buildMonthGrid(year: number, month: number): CalDay[] {
   imports: [
     AsyncPipe,
     IonFab, IonFabButton, IonIcon,
-    TopAppBarComponent, TaskCardComponent, FilterChipComponent, PageContentComponent,
+    TopAppBarComponent, TaskCardComponent, FilterChipComponent, PageContentComponent, NotificationCentreComponent,
   ],
   styleUrl: './calendar.page.scss',
   template: `
     <app-top-app-bar title="Calendar" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
+
+    <app-notification-centre
+      [open]="notificationCentreOpen"
+      [notifications]="notifications"
+      (closed)="notificationCentreOpen = false"
+      (markAllRead)="notificationService.markAllRead()"
+      (dismiss)="notificationService.dismiss($event)"
+    />
 
     <app-page-content class="calendar-content">
       <div class="cal-layout">
@@ -167,13 +177,22 @@ export class CalendarPage implements OnInit {
   private readonly store = inject(Store);
   private readonly sheet = inject(BottomSheetService);
   private readonly router = inject(Router);
+  readonly notificationService = inject(NotificationService);
+
+  notificationCentreOpen = false;
+  notifications: any[] = [];
 
   readonly topBarActions: NavAction[] = [
+    { id: 'notifications', icon: 'notifications', label: 'Notifications' },
     { id: 'profile', icon: 'person', label: 'Profile' },
   ];
 
   onTopBarAction(id: string): void {
-    if (id === 'profile') this.goToSettings();
+    if (id === 'notifications') {
+      this.notificationCentreOpen = true;
+    } else if (id === 'profile') {
+      this.goToSettings();
+    }
   }
 
   readonly tasksLoading$ = this.store.select(selectTasksLoading);
@@ -215,6 +234,12 @@ export class CalendarPage implements OnInit {
     this.store.select(selectAllTasks).subscribe(tasks => {
       this.allTasks = tasks.filter(t => t.due_date === this.selectedDate);
       this.applyFilter();
+    });
+
+    // Notifications - use effect to reactively update
+    effect(() => {
+      this.notifications = this.notificationService.notifications();
+      this.updateTopBarBadge();
     });
   }
 
@@ -264,6 +289,13 @@ export class CalendarPage implements OnInit {
       case 'pending': this.filteredTasks = this.allTasks.filter(t => !t.completed); break;
       case 'done':    this.filteredTasks = this.allTasks.filter(t => t.completed);  break;
       default:        this.filteredTasks = [...this.allTasks];
+    }
+  }
+
+  private updateTopBarBadge(): void {
+    const notifAction = this.topBarActions.find(a => a.id === 'notifications');
+    if (notifAction) {
+      notifAction.badge = this.notificationService.unreadCount();
     }
   }
 

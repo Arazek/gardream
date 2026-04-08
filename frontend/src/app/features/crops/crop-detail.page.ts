@@ -1,24 +1,34 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, effect } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
 
-import { TopAppBarComponent, SpecimenCardComponent, StatChipComponent } from '../../shared';
+import { TopAppBarComponent, NavAction, SpecimenCardComponent, StatChipComponent } from '../../shared';
+import { NotificationService } from '../../core/notifications/notification.service';
+import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import { CropsActions } from './store/crops.actions';
 import { selectSelectedCrop, selectCropsLoading } from './store/crops.selectors';
 
 @Component({
   selector: 'app-crop-detail',
   standalone: true,
-  imports: [AsyncPipe, IonContent, TopAppBarComponent, SpecimenCardComponent, StatChipComponent],
+  imports: [AsyncPipe, IonContent, TopAppBarComponent, SpecimenCardComponent, StatChipComponent, NotificationCentreComponent],
   styleUrl: './crop-detail.page.scss',
   template: `
-    <app-top-app-bar [title]="(crop$ | async)?.name ?? 'Crop'">
+    <app-top-app-bar [title]="(crop$ | async)?.name ?? 'Crop'" [actions]="topBarActions" (actionClick)="onTopBarAction($event)">
       <button leading class="icon-btn" aria-label="Back" (click)="goBack()">
         <span class="material-symbols-outlined">arrow_back</span>
       </button>
     </app-top-app-bar>
+
+    <app-notification-centre
+      [open]="notificationCentreOpen"
+      [notifications]="notifications"
+      (closed)="notificationCentreOpen = false"
+      (markAllRead)="notificationService.markAllRead()"
+      (dismiss)="notificationService.dismiss($event)"
+    />
 
     <ion-content class="crop-detail-content">
       <div class="crop-detail-wrapper">
@@ -93,6 +103,20 @@ export class CropDetailPage implements OnInit {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  readonly notificationService = inject(NotificationService);
+
+  notificationCentreOpen = false;
+  notifications: any[] = [];
+
+  readonly topBarActions: NavAction[] = [
+    { id: 'notifications', icon: 'notifications', label: 'Notifications' },
+  ];
+
+  onTopBarAction(id: string): void {
+    if (id === 'notifications') {
+      this.notificationCentreOpen = true;
+    }
+  }
 
   readonly crop$ = this.store.select(selectSelectedCrop);
   readonly loading$ = this.store.select(selectCropsLoading);
@@ -102,6 +126,19 @@ export class CropDetailPage implements OnInit {
     if (id) {
       this.store.dispatch(CropsActions.selectCrop({ id }));
       this.store.dispatch(CropsActions.loadCrop({ id }));
+    }
+
+    // Notifications - use effect to reactively update
+    effect(() => {
+      this.notifications = this.notificationService.notifications();
+      this.updateTopBarBadge();
+    });
+  }
+
+  private updateTopBarBadge(): void {
+    const notifAction = this.topBarActions.find(a => a.id === 'notifications');
+    if (notifAction) {
+      notifAction.badge = this.notificationService.unreadCount();
     }
   }
 

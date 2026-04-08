@@ -1,10 +1,12 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, effect } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { IonRippleEffect } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
 
 import { TopAppBarComponent, NavAction, IconContainerComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
+import { NotificationService } from '../../core/notifications/notification.service';
+import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import { PlotsActions } from './store/plots.actions';
 import { selectAllPlots, selectPlotsLoading } from './store/plots.selectors';
 import { Plot, PlotType } from './store/plots.state';
@@ -28,10 +30,18 @@ const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 @Component({
   selector: 'app-plots',
   standalone: true,
-  imports: [AsyncPipe, IonRippleEffect, TopAppBarComponent, IconContainerComponent, PageContentComponent, PageBodyWrapperComponent],
+  imports: [AsyncPipe, IonRippleEffect, TopAppBarComponent, IconContainerComponent, PageContentComponent, PageBodyWrapperComponent, NotificationCentreComponent],
   styleUrl: './plots.page.scss',
   template: `
     <app-top-app-bar title="My Plots" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
+
+    <app-notification-centre
+      [open]="notificationCentreOpen"
+      [notifications]="notifications"
+      (closed)="notificationCentreOpen = false"
+      (markAllRead)="notificationService.markAllRead()"
+      (dismiss)="notificationService.dismiss($event)"
+    />
 
     <app-page-content class="plots-content">
       <app-page-body-wrapper>
@@ -97,15 +107,25 @@ const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 export class PlotsPage implements OnInit {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
+  readonly notificationService = inject(NotificationService);
+
+  notificationCentreOpen = false;
+  notifications: any[] = [];
 
   readonly topBarActions: NavAction[] = [
+    { id: 'notifications', icon: 'notifications', label: 'Notifications' },
     { id: 'add-plot', icon: 'add',    label: 'Add plot' },
     { id: 'profile',  icon: 'person', label: 'Profile' },
   ];
 
   onTopBarAction(id: string): void {
-    if (id === 'add-plot') this.addPlot();
-    if (id === 'profile')  this.goToSettings();
+    if (id === 'notifications') {
+      this.notificationCentreOpen = true;
+    } else if (id === 'add-plot') {
+      this.addPlot();
+    } else if (id === 'profile') {
+      this.goToSettings();
+    }
   }
 
   readonly plots$ = this.store.select(selectAllPlots);
@@ -113,6 +133,12 @@ export class PlotsPage implements OnInit {
 
   ngOnInit(): void {
     this.store.dispatch(PlotsActions.loadPlots());
+
+    // Notifications - use effect to reactively update
+    effect(() => {
+      this.notifications = this.notificationService.notifications();
+      this.updateTopBarBadge();
+    });
   }
 
   plotIcon(type: PlotType): string { return PLOT_TYPE_ICON[type] ?? 'yard'; }
@@ -129,6 +155,13 @@ export class PlotsPage implements OnInit {
 
   addPlot(): void {
     this.router.navigate(['/tabs/plots/new']);
+  }
+
+  private updateTopBarBadge(): void {
+    const notifAction = this.topBarActions.find(a => a.id === 'notifications');
+    if (notifAction) {
+      notifAction.badge = this.notificationService.unreadCount();
+    }
   }
 
   goToSettings(): void {

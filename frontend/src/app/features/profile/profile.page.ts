@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, effect } from '@angular/core';
 import {
   IonList, IonItem, IonLabel, IonIcon,
 } from '@ionic/angular/standalone';
@@ -9,18 +9,28 @@ import {
 import { KeycloakProfile } from 'keycloak-js';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { TopAppBarComponent, SectionComponent, AvatarComponent, DividerComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
+import { NotificationService } from '../../core/notifications/notification.service';
+import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
+import { TopAppBarComponent, NavAction, SectionComponent, AvatarComponent, DividerComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
   imports: [
     IonList, IonItem, IonLabel, IonIcon,
-    TopAppBarComponent, SectionComponent, AvatarComponent, DividerComponent, PageContentComponent, PageBodyWrapperComponent,
+    TopAppBarComponent, SectionComponent, AvatarComponent, DividerComponent, PageContentComponent, PageBodyWrapperComponent, NotificationCentreComponent,
   ],
   styleUrl: './profile.page.scss',
   template: `
-    <app-top-app-bar title="Profile" />
+    <app-top-app-bar title="Profile" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
+
+    <app-notification-centre
+      [open]="notificationCentreOpen"
+      [notifications]="notifications"
+      (closed)="notificationCentreOpen = false"
+      (markAllRead)="notificationService.markAllRead()"
+      (dismiss)="notificationService.dismiss($event)"
+    />
 
     <app-page-content class="profile-content">
       <app-page-body-wrapper>
@@ -101,6 +111,20 @@ import { TopAppBarComponent, SectionComponent, AvatarComponent, DividerComponent
 })
 export class ProfilePage implements OnInit {
   private auth = inject(AuthService);
+  readonly notificationService = inject(NotificationService);
+
+  notificationCentreOpen = false;
+  notifications: any[] = [];
+
+  readonly topBarActions: NavAction[] = [
+    { id: 'notifications', icon: 'notifications', label: 'Notifications' },
+  ];
+
+  onTopBarAction(id: string): void {
+    if (id === 'notifications') {
+      this.notificationCentreOpen = true;
+    }
+  }
 
   profile: KeycloakProfile | null = null;
 
@@ -111,10 +135,23 @@ export class ProfilePage implements OnInit {
 
   constructor() {
     addIcons({ personOutline, mailOutline, idCardOutline, logOutOutline, shieldCheckmarkOutline });
+
+    // Notifications - use effect to reactively update
+    effect(() => {
+      this.notifications = this.notificationService.notifications();
+      this.updateTopBarBadge();
+    });
   }
 
   async ngOnInit(): Promise<void> {
     this.profile = await this.auth.getProfile();
+  }
+
+  private updateTopBarBadge(): void {
+    const notifAction = this.topBarActions.find(a => a.id === 'notifications');
+    if (notifAction) {
+      notifAction.badge = this.notificationService.unreadCount();
+    }
   }
 
   logout(): void {
