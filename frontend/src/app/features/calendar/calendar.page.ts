@@ -1,13 +1,13 @@
-import { Component, OnInit, inject, effect } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
+import { Component, OnInit, inject, effect, Injector, runInInjectionContext, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonFab, IonFabButton, IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { add, chevronBack, chevronForward } from 'ionicons/icons';
 import { Store } from '@ngrx/store';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { TopAppBarComponent, NavAction, TaskCardComponent, FilterChipComponent, PageContentComponent } from '../../shared';
-import { NotificationService } from '../../core/notifications/notification.service';
+import { NotificationService, AppNotification } from '../../core/notifications/notification.service';
 import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import { BottomSheetService } from '../../shared/services/bottom-sheet.service';
 import { TasksActions } from '../tasks/store/tasks.actions';
@@ -63,7 +63,6 @@ function buildMonthGrid(year: number, month: number): CalDay[] {
   selector: 'app-calendar',
   standalone: true,
   imports: [
-    AsyncPipe,
     IonFab, IonFabButton, IonIcon,
     TopAppBarComponent, TaskCardComponent, FilterChipComponent, PageContentComponent, NotificationCentreComponent,
   ],
@@ -136,7 +135,7 @@ function buildMonthGrid(year: number, month: number): CalDay[] {
 
           <!-- Task list -->
           <div class="cal-tasks">
-            @if (tasksLoading$ | async) {
+            @if (tasksLoading()) {
               <div class="cal-skeleton">
                 @for (i of [1, 2, 3]; track i) {
                   <div class="cal-skeleton__card"></div>
@@ -177,25 +176,17 @@ export class CalendarPage implements OnInit {
   private readonly store = inject(Store);
   private readonly sheet = inject(BottomSheetService);
   private readonly router = inject(Router);
+  private readonly injector = inject(Injector);
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
-  notifications: any[] = [];
+  notifications: AppNotification[] = [];
 
   readonly topBarActions: NavAction[] = [
     { id: 'notifications', icon: 'notifications', label: 'Notifications' },
     { id: 'profile', icon: 'person', label: 'Profile' },
   ];
 
-  onTopBarAction(id: string): void {
-    if (id === 'notifications') {
-      this.notificationCentreOpen = true;
-    } else if (id === 'profile') {
-      this.goToSettings();
-    }
-  }
-
-  readonly tasksLoading$ = this.store.select(selectTasksLoading);
   readonly dayLetters = DAYS_LETTER;
 
   today = toISO(new Date());
@@ -205,8 +196,31 @@ export class CalendarPage implements OnInit {
   monthGrid: CalDay[] = buildMonthGrid(this.anchorYear, this.anchorMonth);
 
   filter: 'all' | 'pending' | 'done' = 'all';
-  allTasks: Task[] = [];
   filteredTasks: Task[] = [];
+
+  // Signals
+  readonly tasksLoading = toSignal(this.store.select(selectTasksLoading), { initialValue: true });
+  readonly allTasksStore = toSignal(this.store.select(selectAllTasks), { initialValue: [] });
+
+  // Computed filtered tasks based on selectedDate
+  readonly allTasks = computed(() => {
+    const tasks = this.allTasksStore();
+    return tasks.filter(t => t.due_date === this.selectedDate);
+  });
+
+  constructor() {
+    addIcons({ add, chevronBack, chevronForward });
+    runInInjectionContext(this.injector, () => {
+      effect(() => {
+        this.notifications = this.notificationService.notifications();
+        this.updateTopBarBadge();
+      });
+      // Update filteredTasks when allTasks or filter changes
+      effect(() => {
+        this.applyFilter();
+      });
+    });
+  }
 
   get monthLabel(): string {
     return `${MONTHS_LONG[this.anchorMonth]} ${this.anchorYear}`;
@@ -224,23 +238,17 @@ export class CalendarPage implements OnInit {
     return `${DAYS_SHORT[d.getDay()]}, ${d.getDate()} ${MONTHS_LONG[d.getMonth()]}`;
   }
 
-  constructor() {
-    addIcons({ add, chevronBack, chevronForward });
-  }
-
   ngOnInit(): void {
     this.store.dispatch(TasksActions.setSelectedDate({ date: this.today }));
     this.store.dispatch(TasksActions.loadTasks({ due_date: this.today }));
-    this.store.select(selectAllTasks).subscribe(tasks => {
-      this.allTasks = tasks.filter(t => t.due_date === this.selectedDate);
-      this.applyFilter();
-    });
+  }
 
-    // Notifications - use effect to reactively update
-    effect(() => {
-      this.notifications = this.notificationService.notifications();
-      this.updateTopBarBadge();
-    });
+  onTopBarAction(id: string): void {
+    if (id === 'notifications') {
+      this.notificationCentreOpen = true;
+    } else if (id === 'profile') {
+      this.goToSettings();
+    }
   }
 
   selectDate(iso: string): void {
@@ -285,10 +293,11 @@ export class CalendarPage implements OnInit {
   }
 
   applyFilter(): void {
+    const allTasks = this.allTasks();
     switch (this.filter) {
-      case 'pending': this.filteredTasks = this.allTasks.filter(t => !t.completed); break;
-      case 'done':    this.filteredTasks = this.allTasks.filter(t => t.completed);  break;
-      default:        this.filteredTasks = [...this.allTasks];
+      case 'pending': this.filteredTasks = allTasks.filter(t => !t.completed); break;
+      case 'done':    this.filteredTasks = allTasks.filter(t => t.completed);  break;
+      default:        this.filteredTasks = [...allTasks];
     }
   }
 
