@@ -1,17 +1,17 @@
-import { Component, OnInit, inject, effect } from '@angular/core';
+import { Component, OnInit, inject, effect, Injector, runInInjectionContext } from '@angular/core';
 import {
   IonList, IonItem, IonLabel,
   IonSegment, IonSegmentButton, IonIcon, IonToggle,
 } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 import { addIcons } from 'ionicons';
 import { logOutOutline, chevronForward } from 'ionicons/icons';
 import { KeycloakProfile } from 'keycloak-js';
 import { Store } from '@ngrx/store';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { ThemeService, ColorScheme } from '../../core/theme/theme.service';
-import { NotificationService } from '../../core/notifications/notification.service';
+import { NotificationService, AppNotification } from '../../core/notifications/notification.service';
 import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import {
   TopAppBarComponent, NavAction, SectionComponent, DividerComponent, AvatarComponent, PageContentComponent, PageBodyWrapperComponent,
@@ -25,7 +25,6 @@ import {
   selector: 'app-settings',
   standalone: true,
   imports: [
-    AsyncPipe,
     IonList, IonItem, IonLabel,
     IonSegment, IonSegmentButton, IonIcon, IonToggle,
     TopAppBarComponent, SectionComponent, DividerComponent, AvatarComponent, PageContentComponent, PageBodyWrapperComponent, NotificationCentreComponent,
@@ -73,8 +72,6 @@ import {
               </ion-segment>
             </ion-item>
 
-
-
           </ion-list>
         </app-section>
 
@@ -91,8 +88,8 @@ import {
               </ion-label>
               <ion-toggle
                 slot="end"
-                [checked]="morningReminder$ | async"
-                [disabled]="saving$ | async"
+                [checked]="morningReminder()"
+                [disabled]="saving()"
                 (ionChange)="onToggle('morning_reminder', $event)"
               />
             </ion-item>
@@ -104,8 +101,8 @@ import {
               </ion-label>
               <ion-toggle
                 slot="end"
-                [checked]="eveningReminder$ | async"
-                [disabled]="saving$ | async"
+                [checked]="eveningReminder()"
+                [disabled]="saving()"
                 (ionChange)="onToggle('evening_reminder', $event)"
               />
             </ion-item>
@@ -117,8 +114,8 @@ import {
               </ion-label>
               <ion-toggle
                 slot="end"
-                [checked]="inAppAlerts$ | async"
-                [disabled]="saving$ | async"
+                [checked]="inAppAlerts()"
+                [disabled]="saving()"
                 (ionChange)="onToggle('in_app_alerts', $event)"
               />
             </ion-item>
@@ -149,26 +146,22 @@ import {
 })
 export class SettingsPage implements OnInit {
   private readonly store = inject(Store);
+  private readonly injector = inject(Injector);
   readonly theme = inject(ThemeService);
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
-  notifications: any[] = [];
+  notifications: AppNotification[] = [];
 
   readonly topBarActions: NavAction[] = [
     { id: 'notifications', icon: 'notifications', label: 'Notifications' },
   ];
 
-  onTopBarAction(id: string): void {
-    if (id === 'notifications') {
-      this.notificationCentreOpen = true;
-    }
-  }
-
-  readonly morningReminder$ = this.store.select(selectMorningReminder);
-  readonly eveningReminder$ = this.store.select(selectEveningReminder);
-  readonly inAppAlerts$ = this.store.select(selectInAppAlerts);
-  readonly saving$ = this.store.select(selectNotificationsSaving);
+  // Signals
+  readonly morningReminder = toSignal(this.store.select(selectMorningReminder), { initialValue: false });
+  readonly eveningReminder = toSignal(this.store.select(selectEveningReminder), { initialValue: false });
+  readonly inAppAlerts = toSignal(this.store.select(selectInAppAlerts), { initialValue: false });
+  readonly saving = toSignal(this.store.select(selectNotificationsSaving), { initialValue: false });
 
   profile: KeycloakProfile | null = null;
 
@@ -179,17 +172,23 @@ export class SettingsPage implements OnInit {
 
   constructor(private auth: AuthService) {
     addIcons({ logOutOutline, chevronForward });
-
-    // Notifications - use effect to reactively update
-    effect(() => {
-      this.notifications = this.notificationService.notifications();
-      this.updateTopBarBadge();
+    runInInjectionContext(this.injector, () => {
+      effect(() => {
+        this.notifications = this.notificationService.notifications();
+        this.updateTopBarBadge();
+      });
     });
   }
 
   async ngOnInit(): Promise<void> {
     this.profile = await this.auth.getProfile();
     this.store.dispatch(NotificationsActions.loadSettings());
+  }
+
+  onTopBarAction(id: string): void {
+    if (id === 'notifications') {
+      this.notificationCentreOpen = true;
+    }
   }
 
   onSchemeChange(event: CustomEvent): void {
