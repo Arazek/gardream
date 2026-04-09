@@ -1,11 +1,11 @@
-import { Component, OnInit, inject, effect } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
+import { Component, OnInit, inject, effect, Injector, runInInjectionContext } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonContent, AlertController } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { TopAppBarComponent, NavAction, GardenGridSlotComponent, GridCropInfo } from '../../shared';
-import { NotificationService } from '../../core/notifications/notification.service';
+import { NotificationService, AppNotification } from '../../core/notifications/notification.service';
 import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import { BottomSheetService } from '../../shared/services/bottom-sheet.service';
 import { PlotsActions } from './store/plots.actions';
@@ -25,10 +25,10 @@ interface GridCell {
 @Component({
   selector: 'app-plot-detail',
   standalone: true,
-  imports: [AsyncPipe, IonContent, TopAppBarComponent, GardenGridSlotComponent, NotificationCentreComponent],
+  imports: [IonContent, TopAppBarComponent, GardenGridSlotComponent, NotificationCentreComponent],
   styleUrl: './plot-detail.page.scss',
   template: `
-    <app-top-app-bar [title]="(plot$ | async)?.name ?? 'Plot'" [actions]="topBarActions" (actionClick)="onTopBarAction($event)">
+    <app-top-app-bar [title]="plot()?.name ?? 'Plot'" [actions]="topBarActions" (actionClick)="onTopBarAction($event)">
       <button leading class="icon-btn" aria-label="Back" (click)="goBack()">
         <span class="material-symbols-outlined">arrow_back</span>
       </button>
@@ -44,7 +44,7 @@ interface GridCell {
 
     <ion-content class="plot-detail-content">
 
-      @if (plot$ | async; as plot) {
+      @if (plot(); as plot) {
         <div class="plot-info">
           <span class="plot-info__chip">{{ plot.rows }}×{{ plot.cols }} grid</span>
           @if (plot.substrate) {
@@ -52,12 +52,12 @@ interface GridCell {
           }
         </div>
 
-        @if (slotsLoading$ | async) {
+        @if (slotsLoading()) {
           <div class="plot-grid-skeleton">Loading grid…</div>
         } @else {
           <div class="plot-grid-scroll">
             <div class="plot-grid" [style.--grid-cols]="plot.cols">
-              @for (cell of buildGrid(plot, (slots$ | async) ?? []); track cell.key) {
+              @for (cell of buildGrid(plot, slots()); track cell.key) {
                 <app-garden-grid-slot
                   [crop]="cell.crop"
                   [empty]="!cell.crop"
@@ -79,27 +79,29 @@ export class PlotDetailPage implements OnInit {
   private readonly router = inject(Router);
   private readonly sheet = inject(BottomSheetService);
   private readonly alert = inject(AlertController);
+  private readonly injector = inject(Injector);
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
-  notifications: any[] = [];
+  notifications: AppNotification[] = [];
 
   readonly topBarActions: NavAction[] = [
     { id: 'notifications', icon: 'notifications', label: 'Notifications' },
     { id: 'profile', icon: 'person', label: 'Profile' },
   ];
 
-  onTopBarAction(id: string): void {
-    if (id === 'notifications') {
-      this.notificationCentreOpen = true;
-    } else if (id === 'profile') {
-      this.goToSettings();
-    }
-  }
+  readonly plot = toSignal(this.store.select(selectSelectedPlot), { initialValue: null });
+  readonly slots = toSignal(this.store.select(selectSelectedPlotSlots), { initialValue: [] });
+  readonly slotsLoading = toSignal(this.store.select(selectSlotsLoading), { initialValue: true });
 
-  readonly plot$ = this.store.select(selectSelectedPlot);
-  readonly slots$ = this.store.select(selectSelectedPlotSlots);
-  readonly slotsLoading$ = this.store.select(selectSlotsLoading);
+  constructor() {
+    runInInjectionContext(this.injector, () => {
+      effect(() => {
+        this.notifications = this.notificationService.notifications();
+        this.updateTopBarBadge();
+      });
+    });
+  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -107,12 +109,14 @@ export class PlotDetailPage implements OnInit {
       this.store.dispatch(PlotsActions.selectPlot({ id }));
       this.store.dispatch(PlotsActions.loadSlots({ plotId: id }));
     }
+  }
 
-    // Notifications - use effect to reactively update
-    effect(() => {
-      this.notifications = this.notificationService.notifications();
-      this.updateTopBarBadge();
-    });
+  onTopBarAction(id: string): void {
+    if (id === 'notifications') {
+      this.notificationCentreOpen = true;
+    } else if (id === 'profile') {
+      this.goToSettings();
+    }
   }
 
   buildGrid(plot: Plot, slots: PlotSlot[]): GridCell[] {
