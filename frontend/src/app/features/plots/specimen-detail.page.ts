@@ -1,11 +1,11 @@
-import { Component, OnInit, inject, effect } from '@angular/core';
-import { AsyncPipe, CommonModule } from '@angular/common';
+import { Component, OnInit, inject, effect, Injector, runInInjectionContext, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { combineLatest, map, Observable } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { TopAppBarComponent, NavAction, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
-import { NotificationService } from '../../core/notifications/notification.service';
+import { NotificationService, AppNotification } from '../../core/notifications/notification.service';
 import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import { SpecimensActions } from './store/specimens.actions';
 import { selectSpecimenBySlotId, selectSpecimensLoading, selectSpecimensError } from './store/specimens.selectors';
@@ -21,7 +21,6 @@ import { SpecimenMilestonesComponent } from './specimen-milestones.component';
   selector: 'app-specimen-detail',
   standalone: true,
   imports: [
-    AsyncPipe,
     CommonModule,
     TopAppBarComponent,
     PageContentComponent,
@@ -32,7 +31,7 @@ import { SpecimenMilestonesComponent } from './specimen-milestones.component';
   ],
   styleUrl: './specimen-detail.page.scss',
   template: `
-    <app-top-app-bar [title]="(title$ | async) ?? 'Specimen'" [actions]="topBarActions" (actionClick)="onTopBarAction($event)">
+    <app-top-app-bar [title]="title() ?? 'Specimen'" [actions]="topBarActions" (actionClick)="onTopBarAction($event)">
       <button leading class="icon-btn" aria-label="Back" (click)="goBack()">
         <span class="material-symbols-outlined">arrow_back</span>
       </button>
@@ -48,7 +47,7 @@ import { SpecimenMilestonesComponent } from './specimen-milestones.component';
 
     <app-page-content class="specimen-detail-content">
       <app-page-body-wrapper>
-        @if (specimen$ | async; as specimen) {
+        @if (specimen(); as specimen) {
           <div class="specimen-container">
 
             <!-- Progress Section -->
@@ -66,7 +65,7 @@ import { SpecimenMilestonesComponent } from './specimen-milestones.component';
               <input
                 type="date"
                 class="sow-input"
-                [value]="(slot$ | async)?.sow_date ?? ''"
+                [value]="slot()?.sow_date ?? ''"
                 (change)="onSowDateChange($event)"
                 aria-label="Sow date"
               />
@@ -149,9 +148,9 @@ import { SpecimenMilestonesComponent } from './specimen-milestones.component';
               <app-specimen-milestones
                 [milestones]="specimen.milestones"
                 [currentStage]="specimen.current_stage"
-                [sowDate]="(slot$ | async)?.sow_date ?? ''"
-                [cropDaysToGermination]="(slot$ | async)?.crop?.days_to_germination ?? 0"
-                [cropDaysToHarvest]="(slot$ | async)?.crop?.days_to_harvest ?? 0"
+                [sowDate]="slot()?.sow_date ?? ''"
+                [cropDaysToGermination]="slot()?.crop?.days_to_germination ?? 0"
+                [cropDaysToHarvest]="slot()?.crop?.days_to_harvest ?? 0"
                 (milestoneAdded)="onMilestoneAdded(specimen, $event)"
                 (milestoneReached)="onMilestoneReached(specimen, $event)"
               />
@@ -159,10 +158,10 @@ import { SpecimenMilestonesComponent } from './specimen-milestones.component';
 
           </div>
         } @else {
-          @if (loading$ | async) {
+          @if (loading()) {
             <div class="loading">Loading specimen...</div>
           } @else {
-            <div class="error">{{ error$ | async }}</div>
+            <div class="error">{{ error() }}</div>
           }
         }
       </app-page-body-wrapper>
@@ -173,20 +172,15 @@ export class SpecimenDetailPage implements OnInit {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly injector = inject(Injector);
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
-  notifications: any[] = [];
+  notifications: AppNotification[] = [];
 
   readonly topBarActions: NavAction[] = [
     { id: 'notifications', icon: 'notifications', label: 'Notifications' },
   ];
-
-  onTopBarAction(id: string): void {
-    if (id === 'notifications') {
-      this.notificationCentreOpen = true;
-    }
-  }
 
   readonly SYSTEM_STAGES = SYSTEM_STAGES;
 
@@ -194,48 +188,56 @@ export class SpecimenDetailPage implements OnInit {
   noteText = '';
   noteDate = new Date().toISOString().slice(0, 10);
 
-  specimen$: Observable<Specimen | undefined> = new Observable();
-  loading$ = this.store.select(selectSpecimensLoading);
-  error$ = this.store.select(selectSpecimensError);
+  // Signals
+  readonly plot = toSignal(this.store.select(selectSelectedPlot), { initialValue: null });
+  readonly slots = toSignal(this.store.select(selectSelectedPlotSlots), { initialValue: [] });
+  readonly specimen = toSignal(this.store.select(selectSpecimenBySlotId(this.route.snapshot.paramMap.get('slotId') ?? '')), { initialValue: undefined });
+  readonly loading = toSignal(this.store.select(selectSpecimensLoading), { initialValue: true });
+  readonly error = toSignal(this.store.select(selectSpecimensError), { initialValue: null });
 
-  readonly title$ = combineLatest([
-    this.store.select(selectSelectedPlot),
-    this.store.select(selectSelectedPlotSlots),
-  ]).pipe(
-    map(([plot, slots]) => {
-      const slotId = this.route.snapshot.paramMap.get('slotId');
-      const slot = slots.find(s => s.id === slotId);
-      if (!plot || !slot) return 'Specimen';
-      const coords = `${slot.row + 1},${slot.col + 1}`;
-      const cropName = slot.crop?.name ?? '';
-      return `${plot.name} (${coords}) - ${cropName}`;
-    }),
-  );
+  // Computed properties
+  readonly title = computed(() => {
+    const plot = this.plot();
+    const slots = this.slots();
+    const slotId = this.route.snapshot.paramMap.get('slotId');
+    const slot = slots.find(s => s.id === slotId);
+    if (!plot || !slot) return 'Specimen';
+    const coords = `${slot.row + 1},${slot.col + 1}`;
+    const cropName = slot.crop?.name ?? '';
+    return `${plot.name} (${coords}) - ${cropName}`;
+  });
 
-  readonly slot$ = this.store.select(selectSelectedPlotSlots).pipe(
-    map(slots => {
-      const slotId = this.route.snapshot.paramMap.get('slotId');
-      return slots.find(s => s.id === slotId) ?? null;
-    }),
-  );
+  readonly slot = computed(() => {
+    const slots = this.slots();
+    const slotId = this.route.snapshot.paramMap.get('slotId');
+    return slots.find(s => s.id === slotId) ?? null;
+  });
+
+  constructor() {
+    runInInjectionContext(this.injector, () => {
+      effect(() => {
+        this.notifications = this.notificationService.notifications();
+        this.updateTopBarBadge();
+      });
+    });
+  }
 
   ngOnInit(): void {
     const plotId = this.route.snapshot.paramMap.get('id');
     const slotId = this.route.snapshot.paramMap.get('slotId');
     if (plotId && slotId) {
-      this.specimen$ = this.store.select(selectSpecimenBySlotId(slotId));
       this.store.dispatch(SpecimensActions.loadSpecimen({ plotId, slotId }));
       // Ensure plot + slots are in store for title and sow date (needed on direct reload)
       this.store.dispatch(PlotsActions.loadPlots());
       this.store.dispatch(PlotsActions.selectPlot({ id: plotId }));
       this.store.dispatch(PlotsActions.loadSlots({ plotId }));
     }
+  }
 
-    // Notifications - use effect to reactively update
-    effect(() => {
-      this.notifications = this.notificationService.notifications();
-      this.updateTopBarBadge();
-    });
+  onTopBarAction(id: string): void {
+    if (id === 'notifications') {
+      this.notificationCentreOpen = true;
+    }
   }
 
   onSowDateChange(event: Event): void {
