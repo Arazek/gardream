@@ -5,10 +5,10 @@ import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { TopAppBarComponent, NavAction, IconContainerComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
-import { NotificationService } from '../../core/notifications/notification.service';
+import { NotificationService, AppNotification } from '../../core/notifications/notification.service';
 import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import { PlotsActions } from './store/plots.actions';
-import { selectAllPlots, selectPlotsLoading } from './store/plots.selectors';
+import { selectAllPlots, selectPlotsLoading, selectPlotsError } from './store/plots.selectors';
 import { Plot, PlotType } from './store/plots.state';
 
 const PLOT_TYPE_ICON: Record<PlotType, string> = {
@@ -110,7 +110,7 @@ export class PlotsPage implements OnInit {
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
-  notifications: any[] = [];
+  notifications: AppNotification[] = [];
 
   readonly topBarActions: NavAction[] = [
     { id: 'notifications', icon: 'notifications', label: 'Notifications' },
@@ -130,16 +130,16 @@ export class PlotsPage implements OnInit {
 
   // Signals from observables
   readonly plots = toSignal(this.store.select(selectAllPlots), { initialValue: [] });
-  readonly loading = toSignal(this.store.select(selectPlotsLoading), { initialValue: false });
+  readonly loading = toSignal(this.store.select(selectPlotsLoading), { initialValue: true });
+  readonly error = toSignal(this.store.select(selectPlotsError), { initialValue: null });
+
+  updateBadgeEffect = effect(() => {
+    this.notifications = this.notificationService.notifications();
+    this.updateTopBarBadge();
+  });
 
   ngOnInit(): void {
     this.store.dispatch(PlotsActions.loadPlots());
-
-    // Notifications - use effect to reactively update
-    effect(() => {
-      this.notifications = this.notificationService.notifications();
-      this.updateTopBarBadge();
-    });
   }
 
   plotIcon(type: PlotType): string { return PLOT_TYPE_ICON[type] ?? 'yard'; }
