@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, effect } from '@angular/core';
+import { Component, OnInit, inject, effect, Injector, runInInjectionContext } from '@angular/core';
 import {
   IonList, IonItem, IonLabel, IonIcon,
 } from '@ionic/angular/standalone';
@@ -9,7 +9,7 @@ import {
 import { KeycloakProfile } from 'keycloak-js';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { NotificationService } from '../../core/notifications/notification.service';
+import { NotificationService, AppNotification } from '../../core/notifications/notification.service';
 import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import { TopAppBarComponent, NavAction, SectionComponent, AvatarComponent, DividerComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
 
@@ -110,21 +110,16 @@ import { TopAppBarComponent, NavAction, SectionComponent, AvatarComponent, Divid
   `,
 })
 export class ProfilePage implements OnInit {
-  private auth = inject(AuthService);
+  private readonly auth = inject(AuthService);
+  private readonly injector = inject(Injector);
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
-  notifications: any[] = [];
+  notifications: AppNotification[] = [];
 
   readonly topBarActions: NavAction[] = [
     { id: 'notifications', icon: 'notifications', label: 'Notifications' },
   ];
-
-  onTopBarAction(id: string): void {
-    if (id === 'notifications') {
-      this.notificationCentreOpen = true;
-    }
-  }
 
   profile: KeycloakProfile | null = null;
 
@@ -135,16 +130,24 @@ export class ProfilePage implements OnInit {
 
   constructor() {
     addIcons({ personOutline, mailOutline, idCardOutline, logOutOutline, shieldCheckmarkOutline });
-
-    // Notifications - use effect to reactively update
-    effect(() => {
-      this.notifications = this.notificationService.notifications();
-      this.updateTopBarBadge();
+    runInInjectionContext(this.injector, () => {
+      effect(() => {
+        this.notifications = this.notificationService.notifications();
+        this.updateTopBarBadge();
+      });
     });
   }
 
-  async ngOnInit(): Promise<void> {
-    this.profile = await this.auth.getProfile();
+  ngOnInit(): Promise<void> {
+    return this.auth.getProfile().then(profile => {
+      this.profile = profile;
+    });
+  }
+
+  onTopBarAction(id: string): void {
+    if (id === 'notifications') {
+      this.notificationCentreOpen = true;
+    }
   }
 
   private updateTopBarBadge(): void {
