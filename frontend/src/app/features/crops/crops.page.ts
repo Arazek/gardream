@@ -1,10 +1,10 @@
-import { Component, OnInit, inject, effect } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
+import { Component, OnInit, inject, effect, Injector, runInInjectionContext, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { TopAppBarComponent, NavAction, SearchBarComponent, FilterChipComponent, SpecimenCardComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
-import { NotificationService } from '../../core/notifications/notification.service';
+import { NotificationService, AppNotification } from '../../core/notifications/notification.service';
 import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import { CropsActions } from './store/crops.actions';
 import { selectFilteredCrops, selectCropsLoading, selectCategoryFilter } from './store/crops.selectors';
@@ -23,7 +23,7 @@ const CATEGORIES: CategoryOption[] = [
 @Component({
   selector: 'app-crops',
   standalone: true,
-  imports: [AsyncPipe, TopAppBarComponent, SearchBarComponent, FilterChipComponent, SpecimenCardComponent, PageContentComponent, PageBodyWrapperComponent, NotificationCentreComponent],
+  imports: [TopAppBarComponent, SearchBarComponent, FilterChipComponent, SpecimenCardComponent, PageContentComponent, PageBodyWrapperComponent, NotificationCentreComponent],
   styleUrl: './crops.page.scss',
   template: `
     <app-top-app-bar title="Crop Library" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
@@ -48,7 +48,7 @@ const CATEGORIES: CategoryOption[] = [
         @for (cat of categories; track cat.label) {
           <app-filter-chip
             [label]="cat.label"
-            [active]="(categoryFilter$ | async) === cat.value"
+            [active]="categoryFilter() === cat.value"
             (toggled)="setCategory(cat.value)"
           />
         }
@@ -56,7 +56,7 @@ const CATEGORIES: CategoryOption[] = [
 
       <!-- Results -->
       <div class="crops-grid">
-        @if (loading$ | async) {
+        @if (loading()) {
           @for (i of [1,2,3,4,5,6]; track i) {
             <div class="crops-skeleton"></div>
           }
@@ -79,15 +79,42 @@ const CATEGORIES: CategoryOption[] = [
 export class CropsPage implements OnInit {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
+  private readonly injector = inject(Injector);
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
-  notifications: any[] = [];
+  notifications: AppNotification[] = [];
 
   readonly topBarActions: NavAction[] = [
     { id: 'notifications', icon: 'notifications', label: 'Notifications' },
     { id: 'profile', icon: 'person', label: 'Profile' },
   ];
+
+  readonly categories = CATEGORIES;
+  searchQuery = '';
+  displayCrops: Crop[] = [];
+
+  // Signals
+  readonly loading = toSignal(this.store.select(selectCropsLoading), { initialValue: true });
+  readonly categoryFilter = toSignal(this.store.select(selectCategoryFilter), { initialValue: null });
+  readonly allFiltered = toSignal(this.store.select(selectFilteredCrops), { initialValue: [] });
+
+  constructor() {
+    runInInjectionContext(this.injector, () => {
+      effect(() => {
+        this.notifications = this.notificationService.notifications();
+        this.updateTopBarBadge();
+      });
+      // Update displayCrops when allFiltered changes or searchQuery changes
+      effect(() => {
+        this.applySearch();
+      });
+    });
+  }
+
+  ngOnInit(): void {
+    this.store.dispatch(CropsActions.loadCrops({}));
+  }
 
   onTopBarAction(id: string): void {
     if (id === 'notifications') {
@@ -95,28 +122,6 @@ export class CropsPage implements OnInit {
     } else if (id === 'profile') {
       this.goToSettings();
     }
-  }
-
-  readonly loading$ = this.store.select(selectCropsLoading);
-  readonly categoryFilter$ = this.store.select(selectCategoryFilter);
-
-  readonly categories = CATEGORIES;
-  searchQuery = '';
-  allFiltered: Crop[] = [];
-  displayCrops: Crop[] = [];
-
-  ngOnInit(): void {
-    this.store.dispatch(CropsActions.loadCrops({}));
-    this.store.select(selectFilteredCrops).subscribe(crops => {
-      this.allFiltered = crops;
-      this.applySearch();
-    });
-
-    // Notifications - use effect to reactively update
-    effect(() => {
-      this.notifications = this.notificationService.notifications();
-      this.updateTopBarBadge();
-    });
   }
 
   onSearch(q: string): void {
@@ -134,11 +139,12 @@ export class CropsPage implements OnInit {
   }
 
   private applySearch(): void {
+    const allFiltered = this.allFiltered();
     if (!this.searchQuery) {
-      this.displayCrops = this.allFiltered;
+      this.displayCrops = allFiltered;
       return;
     }
-    this.displayCrops = this.allFiltered.filter(c =>
+    this.displayCrops = allFiltered.filter(c =>
       c.name.toLowerCase().includes(this.searchQuery) ||
       c.latin_name.toLowerCase().includes(this.searchQuery),
     );
