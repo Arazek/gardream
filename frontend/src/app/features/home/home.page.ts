@@ -308,7 +308,8 @@ export class HomePage implements OnInit {
 
   readonly widgetCurrent = computed(() => {
     const c = this.currentWeather();
-    return c ? { temperature: c.temperature, condition: c.condition, icon: c.icon, humidity: c.humidity, windSpeed: c.wind_speed } : null;
+    if (!c) return null;
+    return { temperature: c.temperature, condition: c.condition, icon: c.icon, humidity: c.humidity, windSpeed: c.wind_speed } as any;
   });
 
   readonly widgetForecast = computed(() => {
