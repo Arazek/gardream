@@ -1,8 +1,8 @@
-import { Component, OnInit, inject, effect } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
+import { Component, OnInit, inject, effect, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonRippleEffect } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { TopAppBarComponent, NavAction, IconContainerComponent, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
 import { NotificationService } from '../../core/notifications/notification.service';
@@ -30,7 +30,7 @@ const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 @Component({
   selector: 'app-plots',
   standalone: true,
-  imports: [AsyncPipe, IonRippleEffect, TopAppBarComponent, IconContainerComponent, PageContentComponent, PageBodyWrapperComponent, NotificationCentreComponent],
+  imports: [IonRippleEffect, TopAppBarComponent, IconContainerComponent, PageContentComponent, PageBodyWrapperComponent, NotificationCentreComponent],
   styleUrl: './plots.page.scss',
   template: `
     <app-top-app-bar title="My Plots" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
@@ -46,13 +46,13 @@ const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     <app-page-content class="plots-content">
       <app-page-body-wrapper>
 
-        @if (loading$ | async) {
+        @if (loading()) {
           <div class="plots-list">
             @for (i of [1, 2, 3]; track i) {
               <div class="plots-card plots-card--skeleton"></div>
             }
           </div>
-        } @else if ((plots$ | async)?.length === 0) {
+        } @else if (plots().length === 0) {
           <div class="plots-empty">
             <app-icon-container icon="yard" size="2xl" variant="surface" />
             <h2 class="plots-empty__title">No plots yet</h2>
@@ -64,7 +64,7 @@ const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
           </div>
         } @else {
           <div class="plots-list">
-            @for (plot of plots$ | async; track plot.id) {
+            @for (plot of plots(); track plot.id) {
               <button
                 type="button"
                 class="plots-card ion-activatable"
@@ -128,8 +128,9 @@ export class PlotsPage implements OnInit {
     }
   }
 
-  readonly plots$ = this.store.select(selectAllPlots);
-  readonly loading$ = this.store.select(selectPlotsLoading);
+  // Signals from observables
+  readonly plots = toSignal(this.store.select(selectAllPlots), { initialValue: [] });
+  readonly loading = toSignal(this.store.select(selectPlotsLoading), { initialValue: false });
 
   ngOnInit(): void {
     this.store.dispatch(PlotsActions.loadPlots());
