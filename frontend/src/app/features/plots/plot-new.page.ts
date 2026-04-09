@@ -1,4 +1,4 @@
-import { Component, inject, effect } from '@angular/core';
+import { Component, inject, effect, Injector, runInInjectionContext } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
@@ -10,7 +10,7 @@ import {
   DayPickerComponent,
   FormFieldComponent,
 } from '../../shared';
-import { NotificationService } from '../../core/notifications/notification.service';
+import { NotificationService, AppNotification } from '../../core/notifications/notification.service';
 import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import { PlotsActions } from './store/plots.actions';
 import { PlotType } from './store/plots.state';
@@ -135,15 +135,25 @@ export class PlotNewPage {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly injector = inject(Injector);
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
-  notifications: any[] = [];
+  notifications: AppNotification[] = [];
 
   readonly topBarActions: NavAction[] = [
     { id: 'notifications', icon: 'notifications', label: 'Notifications' },
     { id: 'profile', icon: 'person', label: 'Profile' },
   ];
+
+  constructor() {
+    runInInjectionContext(this.injector, () => {
+      effect(() => {
+        this.notifications = this.notificationService.notifications();
+        this.updateTopBarBadge();
+      });
+    });
+  }
 
   onTopBarAction(id: string): void {
     if (id === 'notifications') {
@@ -151,14 +161,6 @@ export class PlotNewPage {
     } else if (id === 'profile') {
       this.goToSettings();
     }
-  }
-
-  constructor() {
-    // Notifications - use effect to reactively update
-    effect(() => {
-      this.notifications = this.notificationService.notifications();
-      this.updateTopBarBadge();
-    });
   }
 
   readonly plotTypeOptions = PLOT_TYPE_OPTIONS;
