@@ -34,6 +34,9 @@ class Plot(Base):
     watering_days: Mapped[list[int]] = mapped_column(
         ARRAY(Integer), nullable=False, server_default="{}"
     )
+    fertilise_days: Mapped[list[int]] = mapped_column(
+        ARRAY(Integer), nullable=False, default=list, server_default="{}"
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

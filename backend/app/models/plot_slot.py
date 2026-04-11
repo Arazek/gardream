@@ -2,6 +2,7 @@ import uuid
 from datetime import date, datetime
 
 from sqlalchemy import String, Integer, Date, DateTime, ForeignKey, UniqueConstraint, func
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -25,6 +26,18 @@ class PlotSlot(Base):
     row: Mapped[int] = mapped_column(Integer, nullable=False)
     col: Mapped[int] = mapped_column(Integer, nullable=False)
     sow_date: Mapped[date] = mapped_column(Date, nullable=False)
+    watering_days_override: Mapped[list[int] | None] = mapped_column(
+        ARRAY(Integer), nullable=True, default=None
+    )
+    watering_interval_weeks: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1, server_default="1"
+    )
+    fertilise_days_override: Mapped[list[int] | None] = mapped_column(
+        ARRAY(Integer), nullable=True, default=None
+    )
+    fertilise_interval_weeks: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1, server_default="1"
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
