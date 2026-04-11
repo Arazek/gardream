@@ -2,8 +2,8 @@
 Task generation logic — called when a crop is assigned to a plot slot.
 
 Generates a 90-day window of tasks:
-  - water: on plot's watering_days (0=Mon … 6=Sun via Python's weekday())
-  - fertilise: every N days from sow_date
+  - water: on effective watering_days (slot override or plot default), with optional weekly cadence
+  - fertilise: on effective fertilise_days (slot override or plot default), with optional weekly cadence
   - prune: every N days from (sow_date + prune_start_day), if crop has prune data
   - harvest: single task at sow_date + days_to_harvest
 """
@@ -25,38 +25,65 @@ async def generate_tasks_for_slot(
     crop: Crop,
     plot: Plot,
     user_id: str,
+    start_date: date | None = None,
+    task_types: list[str] | None = None,
 ) -> list[Task]:
-    """Generate and persist tasks for a newly assigned slot. Returns created tasks."""
+    """Generate and persist tasks for a slot. Returns created tasks."""
+    if task_types is None:
+        task_types = ['water', 'fertilise']
+
     sow_date = slot.sow_date if isinstance(slot.sow_date, date) else date.fromisoformat(str(slot.sow_date))
+    window_start = start_date if start_date is not None else sow_date
     end_date = sow_date + timedelta(days=WINDOW_DAYS)
     tasks: list[Task] = []
 
     # ── Watering ──────────────────────────────────────────────────────────────
-    # plot.watering_days is a list of weekday ints (0=Mon, 6=Sun).
-    # Python's date.weekday() also uses 0=Mon convention.
-    if plot.watering_days:
-        current = sow_date
-        while current <= end_date:
-            if current.weekday() in plot.watering_days:
+    if 'water' in task_types:
+        effective_watering_days = slot.watering_days_override if slot.watering_days_override is not None else plot.watering_days
+        effective_watering_interval = slot.watering_interval_weeks  # int, default 1
+
+        if effective_watering_days:
+            current = max(sow_date, window_start)
+            while current <= end_date:
+                candidate_weekday = current.weekday()
+                weeks_since_sow = (current - sow_date).days // 7
+                if candidate_weekday not in effective_watering_days:
+                    current += timedelta(days=1)
+                    continue
+                if effective_watering_interval > 1 and weeks_since_sow % effective_watering_interval != 0:
+                    current += timedelta(days=1)
+                    continue
                 tasks.append(Task(
                     user_id=user_id,
                     plot_slot_id=slot.id,
                     type=TaskType.water,
                     due_date=current,
                 ))
-            current += timedelta(days=1)
+                current += timedelta(days=1)
 
     # ── Fertilise ─────────────────────────────────────────────────────────────
-    if crop.fertilise_frequency_days and crop.fertilise_frequency_days > 0:
-        offset = crop.fertilise_frequency_days
-        while sow_date + timedelta(days=offset) <= end_date:
-            tasks.append(Task(
-                user_id=user_id,
-                plot_slot_id=slot.id,
-                type=TaskType.fertilise,
-                due_date=sow_date + timedelta(days=offset),
-            ))
-            offset += crop.fertilise_frequency_days
+    if 'fertilise' in task_types:
+        effective_fertilise_days = slot.fertilise_days_override if slot.fertilise_days_override is not None else plot.fertilise_days
+        effective_fertilise_interval = slot.fertilise_interval_weeks  # int, default 1
+
+        if effective_fertilise_days:
+            current = max(sow_date, window_start)
+            while current <= end_date:
+                candidate_weekday = current.weekday()
+                weeks_since_sow = (current - sow_date).days // 7
+                if candidate_weekday not in effective_fertilise_days:
+                    current += timedelta(days=1)
+                    continue
+                if effective_fertilise_interval > 1 and weeks_since_sow % effective_fertilise_interval != 0:
+                    current += timedelta(days=1)
+                    continue
+                tasks.append(Task(
+                    user_id=user_id,
+                    plot_slot_id=slot.id,
+                    type=TaskType.fertilise,
+                    due_date=current,
+                ))
+                current += timedelta(days=1)
 
     # ── Prune ─────────────────────────────────────────────────────────────────
     if crop.prune_frequency_days and crop.prune_start_day:
