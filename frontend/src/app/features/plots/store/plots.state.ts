@@ -11,6 +11,7 @@ export interface Plot {
   cols: number;
   substrate: string | null;
   watering_days: number[];
+  fertilise_days: number[];
   crop_count: number;
   created_at: string;
   updated_at: string;
@@ -41,6 +42,10 @@ export interface PlotSlot {
   created_at: string;
   updated_at: string;
   crop?: Crop;
+  watering_days_override: number[] | null;
+  watering_interval_weeks: number;
+  fertilise_days_override: number[] | null;
+  fertilise_interval_weeks: number;
 }
 
 export interface PlotSlotCreate {

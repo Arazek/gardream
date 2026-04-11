@@ -45,4 +45,17 @@ export class PlotsApiService {
   deleteSlot(plotId: string, slotId: string): Observable<void> {
     return this.http.delete<void>(`${this.url}/${plotId}/slots/${slotId}`);
   }
+
+  updateSlotSchedule(
+    plotId: string,
+    slotId: string,
+    payload: {
+      watering_days_override: number[] | null;
+      watering_interval_weeks: number;
+      fertilise_days_override: number[] | null;
+      fertilise_interval_weeks: number;
+    }
+  ): Observable<PlotSlot> {
+    return this.http.patch<PlotSlot>(`${this.url}/${plotId}/slots/${slotId}`, payload);
+  }
 }
