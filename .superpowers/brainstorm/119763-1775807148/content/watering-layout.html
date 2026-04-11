@@ -1,0 +1,87 @@
+<h2>Watering Schedule — Where & How?</h2>
+<p class="subtitle">3 approaches for the per-crop watering controls in Specimen Detail (also applies to planting flow)</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a1a;border-radius:8px;padding:16px;font-family:sans-serif;color:#ccc;font-size:13px">
+        <div style="color:#8aad8a;font-size:11px;letter-spacing:1px;margin-bottom:10px">WATERING</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:12px;color:#aaa">Use plot default</span>
+          <div style="width:32px;height:18px;background:#4a7c59;border-radius:9px;position:relative">
+            <div style="width:14px;height:14px;background:#fff;border-radius:50%;position:absolute;right:2px;top:2px"></div>
+          </div>
+        </div>
+        <div style="opacity:0.4;pointer-events:none">
+          <div style="display:flex;gap:6px;margin-bottom:10px">
+            <div style="width:28px;height:28px;border-radius:50%;background:#2a3a2a;border:1px solid #3a3a3a;display:flex;align-items:center;justify-content:center;font-size:11px">M</div>
+            <div style="width:28px;height:28px;border-radius:50%;background:#4a7c59;border:1px solid #4a7c59;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff">T</div>
+            <div style="width:28px;height:28px;border-radius:50%;background:#2a3a2a;border:1px solid #3a3a3a;display:flex;align-items:center;justify-content:center;font-size:11px">W</div>
+            <div style="width:28px;height:28px;border-radius:50%;background:#4a7c59;border:1px solid #4a7c59;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff">T</div>
+            <div style="width:28px;height:28px;border-radius:50%;background:#2a3a2a;border:1px solid #3a3a3a;display:flex;align-items:center;justify-content:center;font-size:11px">F</div>
+            <div style="width:28px;height:28px;border-radius:50%;background:#2a3a2a;border:1px solid #3a3a3a;display:flex;align-items:center;justify-content:center;font-size:11px">S</div>
+            <div style="width:28px;height:28px;border-radius:50%;background:#2a3a2a;border:1px solid #3a3a3a;display:flex;align-items:center;justify-content:center;font-size:11px">S</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:12px;color:#aaa">Every</span>
+            <div style="background:#2a3a2a;border:1px solid #3a3a3a;border-radius:6px;padding:4px 10px;font-size:12px">1 week ▾</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Toggle + Inline</h3>
+      <p>"Use plot default" toggle on. When off, day-picker + frequency selector appear inline. Compact, always visible.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a1a;border-radius:8px;padding:16px;font-family:sans-serif;color:#ccc;font-size:13px">
+        <div style="color:#8aad8a;font-size:11px;letter-spacing:1px;margin-bottom:10px">WATERING</div>
+        <div style="background:#2a3a2a;border-radius:8px;padding:12px;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:13px;margin-bottom:2px">Tue, Thu · every week</div>
+            <div style="font-size:11px;color:#6a8a6a">Next: Tomorrow</div>
+          </div>
+          <div style="color:#8aad8a;font-size:18px">›</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Summary Row → Bottom Sheet</h3>
+      <p>Shows current schedule as a compact row ("Tue, Thu · every week"). Tap to open a bottom sheet with full controls. Cleaner surface, more room to edit.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a1a;border-radius:8px;padding:16px;font-family:sans-serif;color:#ccc;font-size:13px">
+        <div style="color:#8aad8a;font-size:11px;letter-spacing:1px;margin-bottom:8px">WATERING SCHEDULE</div>
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <div style="padding:4px 10px;border-radius:16px;background:#2a3a2a;border:1px solid #3a3a3a;font-size:11px">Plot default</div>
+          <div style="padding:4px 10px;border-radius:16px;background:#4a7c59;font-size:11px;color:#fff">Custom</div>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <div style="width:28px;height:28px;border-radius:50%;background:#2a3a2a;border:1px solid #3a3a3a;display:flex;align-items:center;justify-content:center;font-size:11px">M</div>
+          <div style="width:28px;height:28px;border-radius:50%;background:#4a7c59;border:1px solid #4a7c59;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff">T</div>
+          <div style="width:28px;height:28px;border-radius:50%;background:#2a3a2a;border:1px solid #3a3a3a;display:flex;align-items:center;justify-content:center;font-size:11px">W</div>
+          <div style="width:28px;height:28px;border-radius:50%;background:#4a7c59;border:1px solid #4a7c59;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff">T</div>
+          <div style="width:28px;height:28px;border-radius:50%;background:#2a3a2a;border:1px solid #3a3a3a;display:flex;align-items:center;justify-content:center;font-size:11px">F</div>
+          <div style="width:28px;height:28px;border-radius:50%;background:#2a3a2a;border:1px solid #3a3a3a;display:flex;align-items:center;justify-content:center;font-size:11px">S</div>
+          <div style="width:28px;height:28px;border-radius:50%;background:#2a3a2a;border:1px solid #3a3a3a;display:flex;align-items:center;justify-content:center;font-size:11px">S</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;color:#aaa">Repeat every</span>
+          <div style="background:#2a3a2a;border:1px solid #3a3a3a;border-radius:6px;padding:4px 10px;font-size:12px">1 week ▾</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Segmented + Always Expanded</h3>
+      <p>"Plot default / Custom" segment at the top. Custom always shows full controls expanded below — no toggle hunting. Most explicit.</p>
+    </div>
+  </div>
+
+</div>

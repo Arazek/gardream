@@ -36,6 +36,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       target: development
+    environment:
+      NODE_OPTIONS: "--max-http-header-size=65536"
     ports:
       - "4200:4200"
     volumes:
@@ -46,7 +48,7 @@ services:
     labels:
       - "traefik.enable=true"
       # HTTP routing
-      - "traefik.http.routers.frontend-http.rule=Host(`${DOMAIN:-localhost}`)"
+      - "traefik.http.routers.frontend-http.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/`)"
       - "traefik.http.routers.frontend-http.entrypoints=web"
       - "traefik.http.routers.frontend-http.service=frontend"
       # HTTPS routing

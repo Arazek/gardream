@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, effect, Injector, runInInjectionContext } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import {
   IonList, IonItem, IonLabel, IonIcon,
 } from '@ionic/angular/standalone';
@@ -22,11 +22,11 @@ import { TopAppBarComponent, NavAction, SectionComponent, AvatarComponent, Divid
   ],
   styleUrl: './profile.page.scss',
   template: `
-    <app-top-app-bar title="Profile" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
+    <app-top-app-bar title="Profile" [actions]="topBarActions()" (actionClick)="onTopBarAction($event)" />
 
     <app-notification-centre
       [open]="notificationCentreOpen"
-      [notifications]="notifications"
+      [notifications]="notificationService.notifications()"
       (closed)="notificationCentreOpen = false"
       (markAllRead)="notificationService.markAllRead()"
       (dismiss)="notificationService.dismiss($event)"
@@ -111,15 +111,14 @@ import { TopAppBarComponent, NavAction, SectionComponent, AvatarComponent, Divid
 })
 export class ProfilePage implements OnInit {
   private readonly auth = inject(AuthService);
-  private readonly injector = inject(Injector);
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
-  notifications: AppNotification[] = [];
 
-  readonly topBarActions: NavAction[] = [
-    { id: 'notifications', icon: 'notifications', label: 'Notifications' },
-  ];
+  readonly topBarActions = computed<NavAction[]>(() => [
+    { id: 'notifications', icon: 'notifications', label: 'Notifications',
+      badge: this.notificationService.unreadCount() },
+  ]);
 
   profile: KeycloakProfile | null = null;
 
@@ -130,12 +129,6 @@ export class ProfilePage implements OnInit {
 
   constructor() {
     addIcons({ personOutline, mailOutline, idCardOutline, logOutOutline, shieldCheckmarkOutline });
-    runInInjectionContext(this.injector, () => {
-      effect(() => {
-        this.notifications = this.notificationService.notifications();
-        this.updateTopBarBadge();
-      });
-    });
   }
 
   ngOnInit(): Promise<void> {
@@ -147,13 +140,6 @@ export class ProfilePage implements OnInit {
   onTopBarAction(id: string): void {
     if (id === 'notifications') {
       this.notificationCentreOpen = true;
-    }
-  }
-
-  private updateTopBarBadge(): void {
-    const notifAction = this.topBarActions.find(a => a.id === 'notifications');
-    if (notifAction) {
-      notifAction.badge = this.notificationService.unreadCount();
     }
   }
 

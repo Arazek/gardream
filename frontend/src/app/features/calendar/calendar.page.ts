@@ -68,11 +68,11 @@ function buildMonthGrid(year: number, month: number): CalDay[] {
   ],
   styleUrl: './calendar.page.scss',
   template: `
-    <app-top-app-bar title="Calendar" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
+    <app-top-app-bar title="Calendar" [actions]="topBarActions()" (actionClick)="onTopBarAction($event)" />
 
     <app-notification-centre
       [open]="notificationCentreOpen"
-      [notifications]="notifications"
+      [notifications]="notificationService.notifications()"
       (closed)="notificationCentreOpen = false"
       (markAllRead)="notificationService.markAllRead()"
       (dismiss)="notificationService.dismiss($event)"
@@ -180,12 +180,12 @@ export class CalendarPage implements OnInit {
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
-  notifications: AppNotification[] = [];
 
-  readonly topBarActions: NavAction[] = [
-    { id: 'notifications', icon: 'notifications', label: 'Notifications' },
+  readonly topBarActions = computed<NavAction[]>(() => [
+    { id: 'notifications', icon: 'notifications', label: 'Notifications',
+      badge: this.notificationService.unreadCount() },
     { id: 'profile', icon: 'person', label: 'Profile' },
-  ];
+  ]);
 
   readonly dayLetters = DAYS_LETTER;
 
@@ -211,10 +211,6 @@ export class CalendarPage implements OnInit {
   constructor() {
     addIcons({ add, chevronBack, chevronForward });
     runInInjectionContext(this.injector, () => {
-      effect(() => {
-        this.notifications = this.notificationService.notifications();
-        this.updateTopBarBadge();
-      });
       // Update filteredTasks when allTasks or filter changes
       effect(() => {
         this.applyFilter();
@@ -298,13 +294,6 @@ export class CalendarPage implements OnInit {
       case 'pending': this.filteredTasks = allTasks.filter(t => !t.completed); break;
       case 'done':    this.filteredTasks = allTasks.filter(t => t.completed);  break;
       default:        this.filteredTasks = [...allTasks];
-    }
-  }
-
-  private updateTopBarBadge(): void {
-    const notifAction = this.topBarActions.find(a => a.id === 'notifications');
-    if (notifAction) {
-      notifAction.badge = this.notificationService.unreadCount();
     }
   }
 

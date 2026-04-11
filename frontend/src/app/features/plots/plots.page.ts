@@ -33,11 +33,11 @@ const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   imports: [IonRippleEffect, TopAppBarComponent, IconContainerComponent, PageContentComponent, PageBodyWrapperComponent, NotificationCentreComponent],
   styleUrl: './plots.page.scss',
   template: `
-    <app-top-app-bar title="My Plots" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
+    <app-top-app-bar title="My Plots" [actions]="topBarActions()" (actionClick)="onTopBarAction($event)" />
 
     <app-notification-centre
       [open]="notificationCentreOpen"
-      [notifications]="notifications"
+      [notifications]="notificationService.notifications()"
       (closed)="notificationCentreOpen = false"
       (markAllRead)="notificationService.markAllRead()"
       (dismiss)="notificationService.dismiss($event)"
@@ -110,13 +110,13 @@ export class PlotsPage implements OnInit {
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
-  notifications: AppNotification[] = [];
 
-  readonly topBarActions: NavAction[] = [
-    { id: 'notifications', icon: 'notifications', label: 'Notifications' },
+  readonly topBarActions = computed<NavAction[]>(() => [
+    { id: 'notifications', icon: 'notifications', label: 'Notifications',
+      badge: this.notificationService.unreadCount() },
     { id: 'add-plot', icon: 'add',    label: 'Add plot' },
     { id: 'profile',  icon: 'person', label: 'Profile' },
-  ];
+  ]);
 
   onTopBarAction(id: string): void {
     if (id === 'notifications') {
@@ -132,11 +132,6 @@ export class PlotsPage implements OnInit {
   readonly plots = toSignal(this.store.select(selectAllPlots), { initialValue: [] });
   readonly loading = toSignal(this.store.select(selectPlotsLoading), { initialValue: true });
   readonly error = toSignal(this.store.select(selectPlotsError), { initialValue: null });
-
-  updateBadgeEffect = effect(() => {
-    this.notifications = this.notificationService.notifications();
-    this.updateTopBarBadge();
-  });
 
   ngOnInit(): void {
     this.store.dispatch(PlotsActions.loadPlots());
@@ -156,13 +151,6 @@ export class PlotsPage implements OnInit {
 
   addPlot(): void {
     this.router.navigate(['/tabs/plots/new']);
-  }
-
-  private updateTopBarBadge(): void {
-    const notifAction = this.topBarActions.find(a => a.id === 'notifications');
-    if (notifAction) {
-      notifAction.badge = this.notificationService.unreadCount();
-    }
   }
 
   goToSettings(): void {

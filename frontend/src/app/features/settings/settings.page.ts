@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, effect, Injector, runInInjectionContext } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import {
   IonList, IonItem, IonLabel,
   IonSegment, IonSegmentButton, IonIcon, IonToggle,
@@ -31,11 +31,11 @@ import {
   ],
   styleUrl: './settings.page.scss',
   template: `
-    <app-top-app-bar title="Settings" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
+    <app-top-app-bar title="Settings" [actions]="topBarActions()" (actionClick)="onTopBarAction($event)" />
 
     <app-notification-centre
       [open]="notificationCentreOpen"
-      [notifications]="notifications"
+      [notifications]="notificationService.notifications()"
       (closed)="notificationCentreOpen = false"
       (markAllRead)="notificationService.markAllRead()"
       (dismiss)="notificationService.dismiss($event)"
@@ -146,16 +146,15 @@ import {
 })
 export class SettingsPage implements OnInit {
   private readonly store = inject(Store);
-  private readonly injector = inject(Injector);
   readonly theme = inject(ThemeService);
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
-  notifications: AppNotification[] = [];
 
-  readonly topBarActions: NavAction[] = [
-    { id: 'notifications', icon: 'notifications', label: 'Notifications' },
-  ];
+  readonly topBarActions = computed<NavAction[]>(() => [
+    { id: 'notifications', icon: 'notifications', label: 'Notifications',
+      badge: this.notificationService.unreadCount() },
+  ]);
 
   // Signals
   readonly morningReminder = toSignal(this.store.select(selectMorningReminder), { initialValue: false });
@@ -172,12 +171,6 @@ export class SettingsPage implements OnInit {
 
   constructor(private auth: AuthService) {
     addIcons({ logOutOutline, chevronForward });
-    runInInjectionContext(this.injector, () => {
-      effect(() => {
-        this.notifications = this.notificationService.notifications();
-        this.updateTopBarBadge();
-      });
-    });
   }
 
   async ngOnInit(): Promise<void> {
@@ -197,13 +190,6 @@ export class SettingsPage implements OnInit {
 
   onToggle(field: 'morning_reminder' | 'evening_reminder' | 'in_app_alerts', event: CustomEvent): void {
     this.store.dispatch(NotificationsActions.updateSettings({ payload: { [field]: event.detail.checked } }));
-  }
-
-  private updateTopBarBadge(): void {
-    const notifAction = this.topBarActions.find(a => a.id === 'notifications');
-    if (notifAction) {
-      notifAction.badge = this.notificationService.unreadCount();
-    }
   }
 
   logout(): void {

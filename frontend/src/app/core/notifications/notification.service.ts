@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, computed, effect } from '@angular/core';
+import { Injectable, inject, signal, computed, effect, runInInjectionContext, Injector } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { selectTomorrowRainExpected, selectTomorrowPrecipitation } from '../../store/weather/weather.selectors';
 import { selectOverdueTasks } from '../../features/tasks/store/tasks.selectors';
@@ -21,12 +21,15 @@ export interface AppNotification {
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   private store = inject(Store);
+  private injector = inject(Injector);
 
   notifications = signal<AppNotification[]>([]);
   unreadCount = computed(() => this.notifications().filter(n => !n.read).length);
 
   constructor() {
-    this.initNotificationWatchers();
+    runInInjectionContext(this.injector, () => {
+      this.initNotificationWatchers();
+    });
   }
 
   private initNotificationWatchers(): void {

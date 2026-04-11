@@ -88,12 +88,12 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      # HTTP routing — path-based under gateway.localhost/keycloak
-      - "traefik.http.routers.keycloak-http.rule=Host(`${GATEWAY_HOSTNAME}`) && PathPrefix(`/keycloak`)"
+      # HTTP routing — path-based under localhost/keycloak
+      - "traefik.http.routers.keycloak-http.rule=Host(`localhost`) && PathPrefix(`/keycloak`)"
       - "traefik.http.routers.keycloak-http.entrypoints=web"
       - "traefik.http.routers.keycloak-http.service=keycloak"
-      # HTTPS routing — path-based under gateway.localhost/keycloak
-      - "traefik.http.routers.keycloak.rule=Host(`${GATEWAY_HOSTNAME}`) && PathPrefix(`/keycloak`)"
+      # HTTPS routing — path-based under localhost/keycloak
+      - "traefik.http.routers.keycloak.rule=Host(`localhost`) && PathPrefix(`/keycloak`)"
       - "traefik.http.routers.keycloak.entrypoints=websecure"
       - "traefik.http.routers.keycloak.tls=true"
       - "traefik.http.services.keycloak.loadbalancer.server.port=8080"

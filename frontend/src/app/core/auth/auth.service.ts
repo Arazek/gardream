@@ -1,26 +1,21 @@
-import { Injectable } from '@angular/core';
-import { KeycloakService } from 'keycloak-angular';
+import { Injectable, inject } from '@angular/core';
 import { KeycloakProfile } from 'keycloak-js';
+import Keycloak from 'keycloak-js';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  constructor(private keycloak: KeycloakService) {}
+  private readonly keycloak = inject(Keycloak);
 
-  async isLoggedIn(): Promise<boolean> {
-    return this.keycloak.isLoggedIn();
+  isLoggedIn(): boolean {
+    return !!this.keycloak.authenticated;
   }
 
   async getProfile(): Promise<KeycloakProfile> {
-    // Extract profile from JWT token claims instead of calling the account endpoint
     try {
-      const token = await this.keycloak.getToken();
-      if (!token) {
-        return {};
-      }
+      const token = this.keycloak.token;
+      if (!token) return {};
 
-      // Decode JWT payload (format: header.payload.signature)
       const payload = JSON.parse(atob(token.split('.')[1]));
-
       return {
         id: payload.sub,
         username: payload.preferred_username,
@@ -35,30 +30,19 @@ export class AuthService {
     }
   }
 
-  async getToken(): Promise<string> {
-    return this.keycloak.getToken();
+  getToken(): string {
+    return this.keycloak.token ?? '';
   }
 
   login(): Promise<void> {
-    return this.keycloak.login({ redirectUri: window.location.origin });
+    return this.keycloak.login({ redirectUri: window.location.origin + '/tabs/home' });
   }
 
   async logout(): Promise<void> {
-    // Clear all local auth-related storage
-    localStorage.removeItem('auth_token');
-
-    // Clear any Keycloak callback data stored in localStorage
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('kc-')) {
-        localStorage.removeItem(key);
-      }
-    });
-
-    // Logout from Keycloak (will redirect to /login)
-    return this.keycloak.logout(window.location.origin + '/login');
+    return this.keycloak.logout({ redirectUri: window.location.origin + '/login' });
   }
 
   hasRole(role: string): boolean {
-    return this.keycloak.isUserInRole(role);
+    return this.keycloak.hasRealmRole(role);
   }
 }

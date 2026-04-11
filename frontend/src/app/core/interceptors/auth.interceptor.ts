@@ -1,10 +1,10 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { from, of, switchMap, catchError, timeout } from 'rxjs';
-import { KeycloakService } from 'keycloak-angular';
+import Keycloak from 'keycloak-js';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const keycloak = inject(KeycloakService);
+  const keycloak = inject(Keycloak);
 
   if (!req.url.includes('/api/')) {
     return next(req);
@@ -14,7 +14,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   // ensuring we never send a stale token to the API.
   return from(keycloak.updateToken(30)).pipe(
     timeout(5000),
-    switchMap(() => from(keycloak.getToken())),
+    switchMap(() => of(keycloak.token ?? '')),
     catchError((err) => {
       console.error('[authInterceptor] Failed to refresh/get token:', err);
       return of('');

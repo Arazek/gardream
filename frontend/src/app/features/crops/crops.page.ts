@@ -26,11 +26,11 @@ const CATEGORIES: CategoryOption[] = [
   imports: [TopAppBarComponent, SearchBarComponent, FilterChipComponent, SpecimenCardComponent, PageContentComponent, PageBodyWrapperComponent, NotificationCentreComponent],
   styleUrl: './crops.page.scss',
   template: `
-    <app-top-app-bar title="Crop Library" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
+    <app-top-app-bar title="Crop Library" [actions]="topBarActions()" (actionClick)="onTopBarAction($event)" />
 
     <app-notification-centre
       [open]="notificationCentreOpen"
-      [notifications]="notifications"
+      [notifications]="notificationService.notifications()"
       (closed)="notificationCentreOpen = false"
       (markAllRead)="notificationService.markAllRead()"
       (dismiss)="notificationService.dismiss($event)"
@@ -83,12 +83,12 @@ export class CropsPage implements OnInit {
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
-  notifications: AppNotification[] = [];
 
-  readonly topBarActions: NavAction[] = [
-    { id: 'notifications', icon: 'notifications', label: 'Notifications' },
+  readonly topBarActions = computed<NavAction[]>(() => [
+    { id: 'notifications', icon: 'notifications', label: 'Notifications',
+      badge: this.notificationService.unreadCount() },
     { id: 'profile', icon: 'person', label: 'Profile' },
-  ];
+  ]);
 
   readonly categories = CATEGORIES;
   searchQuery = '';
@@ -101,10 +101,6 @@ export class CropsPage implements OnInit {
 
   constructor() {
     runInInjectionContext(this.injector, () => {
-      effect(() => {
-        this.notifications = this.notificationService.notifications();
-        this.updateTopBarBadge();
-      });
       // Update displayCrops when allFiltered changes or searchQuery changes
       effect(() => {
         this.applySearch();
@@ -148,13 +144,6 @@ export class CropsPage implements OnInit {
       c.name.toLowerCase().includes(this.searchQuery) ||
       c.latin_name.toLowerCase().includes(this.searchQuery),
     );
-  }
-
-  private updateTopBarBadge(): void {
-    const notifAction = this.topBarActions.find(a => a.id === 'notifications');
-    if (notifAction) {
-      notifAction.badge = this.notificationService.unreadCount();
-    }
   }
 
   goToSettings(): void {

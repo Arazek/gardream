@@ -3,7 +3,7 @@ export const environment = {
   apiUrl: 'http://localhost/api/v1',
   wsUrl: 'ws://localhost/api/v1/ws',
   keycloak: {
-    url: 'http://localhost/auth',
+    url: 'http://localhost/keycloak',
     realm: 'gardream',
     clientId: 'pwa-frontend',
   },

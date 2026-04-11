@@ -91,11 +91,11 @@ const GARDEN_STATEMENTS = [
   ],
   styleUrl: './home.page.scss',
   template: `
-    <app-top-app-bar title="My Garden" [actions]="topBarActions" (actionClick)="onTopBarAction($event)" />
+    <app-top-app-bar title="My Garden" [actions]="topBarActions()" (actionClick)="onTopBarAction($event)" />
 
     <app-notification-centre
       [open]="notificationCentreOpen"
-      [notifications]="notifications"
+      [notifications]="notificationService.notifications()"
       (closed)="notificationCentreOpen = false"
       (markAllRead)="notificationService.markAllRead()"
       (dismiss)="notificationService.dismiss($event)"
@@ -257,12 +257,11 @@ export class HomePage implements OnInit {
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
-  notifications: any[] = [];
 
-  readonly topBarActions: NavAction[] = [
-    { id: 'notifications', icon: 'notifications', label: 'Notifications' },
-    { id: 'profile',       icon: 'person',        label: 'Profile' },
-  ];
+  readonly topBarActions = computed<NavAction[]>(() => [
+    { id: 'notifications', icon: 'notifications', label: 'Notifications', badge: this.notificationService.unreadCount() },
+    { id: 'profile', icon: 'person', label: 'Profile' },
+  ]);
 
   onTopBarAction(id: string): void {
     if (id === 'notifications') {
@@ -332,6 +331,12 @@ export class HomePage implements OnInit {
     }
   });
 
+  // Effects moved from ngOnInit to proper injection context
+  private readonly _slotsEffect = effect(() => {
+    const plots = this.plots();
+    plots.forEach(p => this.store.dispatch(PlotsActions.loadSlots({ plotId: p.id })));
+  });
+
   async ngOnInit(): Promise<void> {
     this.greeting = this.getTimeGreeting();
     this.heroSubtitle = this.formatDate(new Date());
@@ -340,18 +345,6 @@ export class HomePage implements OnInit {
     // Load all pending tasks — covers today's tasks + overdue calculation
     this.store.dispatch(TasksActions.loadTasks({ completed: false }));
     this.loadWeather();
-
-    // Notifications - use effect to reactively update
-    effect(() => {
-      this.notifications = this.notificationService.notifications();
-      this.updateTopBarBadge();
-    });
-
-    // Load slots for each plot when plots change
-    effect(() => {
-      const plots = this.plots();
-      plots.forEach(p => this.store.dispatch(PlotsActions.loadSlots({ plotId: p.id })));
-    });
 
     const profile = await this.auth.getProfile();
     if (profile?.firstName) {
@@ -371,13 +364,6 @@ export class HomePage implements OnInit {
 
   onTaskToggle(task: Task, completed: boolean): void {
     this.store.dispatch(TasksActions.updateTask({ id: task.id, payload: { completed } }));
-  }
-
-  private updateTopBarBadge(): void {
-    const notifAction = this.topBarActions.find(a => a.id === 'notifications');
-    if (notifAction) {
-      notifAction.badge = this.notificationService.unreadCount();
-    }
   }
 
   private loadWeather(): void {
