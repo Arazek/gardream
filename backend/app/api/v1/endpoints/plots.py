@@ -4,7 +4,7 @@ import os
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -13,6 +13,7 @@ from app.models.crop import Crop
 from app.models.plot import Plot
 from app.models.plot_slot import PlotSlot
 from app.models.specimen import Specimen
+from app.models.task import Task
 from app.schemas.plot import PlotCreate, PlotResponse, PlotUpdate
 from app.schemas.plot_slot import PlotSlotCreate, PlotSlotDetailResponse, PlotSlotResponse, PlotSlotUpdate
 from app.schemas.specimen import SpecimenResponse, SpecimenUpdate
@@ -21,6 +22,28 @@ from app.api.v1.endpoints.specimens import compute_specimen_stage, populate_spec
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+async def regenerate_future_tasks(
+    db: AsyncSession,
+    slot,
+    plot,
+    crop,
+    task_types: list[str],
+) -> None:
+    from datetime import date as date_type
+    today = date_type.today()
+    await db.execute(
+        delete(Task).where(
+            Task.plot_slot_id == slot.id,
+            Task.type.in_(task_types),
+            Task.completed == False,
+            Task.due_date >= today,
+        )
+    )
+    await db.flush()
+    await generate_tasks_for_slot(db, slot, crop, plot, user_id=plot.user_id, start_date=today, task_types=task_types)
+    await db.commit()
 
 
 # ── Plots ──────────────────────────────────────────────────────────────────────
@@ -188,10 +211,21 @@ async def update_slot(
     slot = await db.get(PlotSlot, slot_id)
     if not slot or slot.plot_id != plot_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Slot not found")
-    for field, value in payload.model_dump(exclude_unset=True).items():
+
+    SCHEDULE_FIELDS = {'watering_days_override', 'watering_interval_weeks', 'fertilise_days_override', 'fertilise_interval_weeks'}
+    update_data = payload.model_dump(exclude_unset=True)
+    schedule_changed = bool(update_data.keys() & SCHEDULE_FIELDS)
+
+    for field, value in update_data.items():
         setattr(slot, field, value)
     await db.commit()
     await db.refresh(slot)
+
+    if schedule_changed:
+        crop = await db.get(Crop, slot.crop_id)
+        await regenerate_future_tasks(db, slot, plot, crop, task_types=['water', 'fertilise'])
+        await db.refresh(slot)
+
     return slot
 
 
