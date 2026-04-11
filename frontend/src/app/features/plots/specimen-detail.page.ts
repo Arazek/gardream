@@ -16,6 +16,7 @@ import { PlotsActions } from './store/plots.actions';
 import { PlotSlot } from './store/plots.state';
 import { SpecimenPhotoLogComponent } from './specimen-photo-log.component';
 import { SpecimenMilestonesComponent } from './specimen-milestones.component';
+import { ScheduleSectionComponent } from '../../shared/components/schedule-section/schedule-section.component';
 
 @Component({
   selector: 'app-specimen-detail',
@@ -28,10 +29,11 @@ import { SpecimenMilestonesComponent } from './specimen-milestones.component';
     SpecimenPhotoLogComponent,
     SpecimenMilestonesComponent,
     NotificationCentreComponent,
+    ScheduleSectionComponent,
   ],
   styleUrl: './specimen-detail.page.scss',
   template: `
-    <app-top-app-bar [title]="title() ?? 'Specimen'" [actions]="topBarActions" (actionClick)="onTopBarAction($event)">
+    <app-top-app-bar [title]="title() ?? 'Specimen'" [actions]="topBarActions()" (actionClick)="onTopBarAction($event)">
       <button leading class="icon-btn" aria-label="Back" (click)="goBack()">
         <span class="material-symbols-outlined">arrow_back</span>
       </button>
@@ -39,7 +41,7 @@ import { SpecimenMilestonesComponent } from './specimen-milestones.component';
 
     <app-notification-centre
       [open]="notificationCentreOpen"
-      [notifications]="notifications"
+      [notifications]="notificationService.notifications()"
       (closed)="notificationCentreOpen = false"
       (markAllRead)="notificationService.markAllRead()"
       (dismiss)="notificationService.dismiss($event)"
@@ -88,6 +90,30 @@ import { SpecimenMilestonesComponent } from './specimen-milestones.component';
                   Clear override
                 </button>
               }
+            </div>
+
+            <!-- Watering Schedule Section -->
+            <div class="schedule-section">
+              <app-schedule-section
+                label="WATERING"
+                toggleLabel="Use plot default"
+                [defaultDays]="plotWateringDays()"
+                [days]="wateringDays()"
+                [intervalWeeks]="wateringInterval()"
+                (scheduleChange)="onWateringScheduleChange($event)"
+              />
+            </div>
+
+            <!-- Fertilisation Schedule Section -->
+            <div class="schedule-section">
+              <app-schedule-section
+                label="FERTILISATION"
+                toggleLabel="Use plot default"
+                [defaultDays]="plotFertiliseDays()"
+                [days]="fertiliseDays()"
+                [intervalWeeks]="fertiliseInterval()"
+                (scheduleChange)="onFertiliseScheduleChange($event)"
+              />
             </div>
 
             <!-- Notes Section -->
@@ -176,11 +202,11 @@ export class SpecimenDetailPage implements OnInit {
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
-  notifications: AppNotification[] = [];
 
-  readonly topBarActions: NavAction[] = [
-    { id: 'notifications', icon: 'notifications', label: 'Notifications' },
-  ];
+  readonly topBarActions = computed<NavAction[]>(() => [
+    { id: 'notifications', icon: 'notifications', label: 'Notifications',
+      badge: this.notificationService.unreadCount() },
+  ]);
 
   readonly SYSTEM_STAGES = SYSTEM_STAGES;
 
@@ -213,13 +239,14 @@ export class SpecimenDetailPage implements OnInit {
     return slots.find(s => s.id === slotId) ?? null;
   });
 
+  readonly wateringDays = computed(() => this.slot()?.watering_days_override ?? null);
+  readonly wateringInterval = computed(() => this.slot()?.watering_interval_weeks ?? 1);
+  readonly fertiliseDays = computed(() => this.slot()?.fertilise_days_override ?? null);
+  readonly fertiliseInterval = computed(() => this.slot()?.fertilise_interval_weeks ?? 1);
+  readonly plotWateringDays = computed(() => this.plot()?.watering_days ?? []);
+  readonly plotFertiliseDays = computed(() => this.plot()?.fertilise_days ?? []);
+
   constructor() {
-    runInInjectionContext(this.injector, () => {
-      effect(() => {
-        this.notifications = this.notificationService.notifications();
-        this.updateTopBarBadge();
-      });
-    });
   }
 
   ngOnInit(): void {
@@ -289,13 +316,6 @@ export class SpecimenDetailPage implements OnInit {
     });
   }
 
-  private updateTopBarBadge(): void {
-    const notifAction = this.topBarActions.find(a => a.id === 'notifications');
-    if (notifAction) {
-      notifAction.badge = this.notificationService.unreadCount();
-    }
-  }
-
   onPhotoAdded(specimen: Specimen, file: File): void {
     const plotId = this.route.snapshot.paramMap.get('id')!;
     const slotId = this.route.snapshot.paramMap.get('slotId')!;
@@ -317,6 +337,34 @@ export class SpecimenDetailPage implements OnInit {
       ? specimen.milestones.map(m => m.stage_name === reached.stage_name ? reached : m)
       : [...specimen.milestones, reached];
     this.store.dispatch(SpecimensActions.updateSpecimen({ plotId, slotId, payload: { milestones } }));
+  }
+
+  onWateringScheduleChange(value: { days: number[] | null; intervalWeeks: number }): void {
+    const slot = this.slot();
+    const plot = this.plot();
+    if (!slot || !plot) return;
+    this.store.dispatch(PlotsActions.updateSlotSchedule({
+      plotId: plot.id,
+      slotId: slot.id,
+      watering_days_override: value.days,
+      watering_interval_weeks: value.intervalWeeks,
+      fertilise_days_override: slot.fertilise_days_override,
+      fertilise_interval_weeks: slot.fertilise_interval_weeks,
+    }));
+  }
+
+  onFertiliseScheduleChange(value: { days: number[] | null; intervalWeeks: number }): void {
+    const slot = this.slot();
+    const plot = this.plot();
+    if (!slot || !plot) return;
+    this.store.dispatch(PlotsActions.updateSlotSchedule({
+      plotId: plot.id,
+      slotId: slot.id,
+      watering_days_override: slot.watering_days_override,
+      watering_interval_weeks: slot.watering_interval_weeks,
+      fertilise_days_override: value.days,
+      fertilise_interval_weeks: value.intervalWeeks,
+    }));
   }
 
   goBack(): void {
