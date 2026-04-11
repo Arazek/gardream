@@ -59,7 +59,7 @@ export class PlotsEffects {
   loadSlots$ = createEffect(() =>
     this.actions$.pipe(
       ofType(PlotsActions.loadSlots),
-      switchMap(({ plotId }) =>
+      mergeMap(({ plotId }) =>
         this.api.getSlots(plotId).pipe(
           map(slots => PlotsActions.loadSlotsSuccess({ plotId, slots })),
           catchError(err => of(PlotsActions.loadSlotsFailure({ error: err.message }))),
@@ -102,6 +102,23 @@ export class PlotsEffects {
         this.api.deleteSlot(plotId, slotId).pipe(
           map(() => PlotsActions.deleteSlotSuccess({ plotId, slotId })),
           catchError(err => of(PlotsActions.deleteSlotFailure({ error: err.message }))),
+        ),
+      ),
+    ),
+  );
+
+  updateSlotSchedule$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(PlotsActions.updateSlotSchedule),
+      mergeMap(({ plotId, slotId, watering_days_override, watering_interval_weeks, fertilise_days_override, fertilise_interval_weeks }) =>
+        this.api.updateSlotSchedule(plotId, slotId, {
+          watering_days_override,
+          watering_interval_weeks,
+          fertilise_days_override,
+          fertilise_interval_weeks,
+        }).pipe(
+          map(slot => PlotsActions.updateSlotScheduleSuccess({ plotId, slot })),
+          catchError(err => of(PlotsActions.updateSlotScheduleFailure({ error: err.message }))),
         ),
       ),
     ),

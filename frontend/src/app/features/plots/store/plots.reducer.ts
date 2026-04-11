@@ -53,4 +53,13 @@ export const plotsReducer = createReducer(
       [plotId]: (state.slotsById[plotId] ?? []).filter(s => s.id !== slotId),
     },
   })),
+  on(PlotsActions.updateSlotScheduleSuccess, (state, { plotId, slot }) => ({
+    ...state,
+    slotsById: {
+      ...state.slotsById,
+      [plotId]: (state.slotsById[plotId] ?? []).map(s =>
+        s.id === slot.id ? { ...slot, crop: slot.crop ?? s.crop } : s
+      ),
+    },
+  })),
 );

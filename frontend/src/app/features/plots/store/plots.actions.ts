@@ -37,5 +37,9 @@ export const PlotsActions = createActionGroup({
     'Delete Slot': props<{ plotId: string; slotId: string }>(),
     'Delete Slot Success': props<{ plotId: string; slotId: string }>(),
     'Delete Slot Failure': props<{ error: string }>(),
+
+    'Update Slot Schedule': props<{ plotId: string; slotId: string; watering_days_override: number[] | null; watering_interval_weeks: number; fertilise_days_override: number[] | null; fertilise_interval_weeks: number }>(),
+    'Update Slot Schedule Success': props<{ plotId: string; slot: PlotSlot }>(),
+    'Update Slot Schedule Failure': props<{ error: string }>(),
   },
 });
