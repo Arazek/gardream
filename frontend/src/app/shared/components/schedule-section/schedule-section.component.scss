@@ -1,0 +1,74 @@
+@use '../../../../theme/variables.scss' as *;
+
+.schedule-card {
+  background: var(--color-surface-container);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-card);
+  margin-bottom: var(--space-6);
+}
+
+.section-label {
+  @include type-label;
+  color: var(--color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-4);
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.toggle-text {
+  @include type-body-sm;
+  color: var(--color-on-surface);
+}
+
+.custom-controls {
+  margin-top: var(--space-4);
+}
+
+.sub-label {
+  @include type-label;
+  color: var(--color-on-surface-variant);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-2);
+}
+
+.cadence-label {
+  margin-top: var(--space-4);
+}
+
+.cadence-chips {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.chip {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-outline-variant);
+  background: transparent;
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  @include type-body-sm;
+  transition: background var(--duration-quick) var(--ease-standard),
+              color var(--duration-quick) var(--ease-standard);
+
+  &--active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+
+  &:hover:not(.chip--active) {
+    background: var(--color-surface-container-high);
+  }
+}

@@ -1,0 +1,28 @@
+<div class="schedule-card">
+  <div class="section-label">{{ label }}</div>
+
+  <div class="toggle-row">
+    <span class="toggle-text">{{ toggleLabel }}</span>
+    <ion-toggle [checked]="useDefault" (ionChange)="onToggle($event.detail.checked)" />
+  </div>
+
+  @if (!useDefault) {
+    <div class="custom-controls">
+      <div class="sub-label">Days</div>
+      <app-day-picker [selected]="localDays" (selectedChange)="onDaysChange($event)" />
+
+      <div class="sub-label cadence-label">Cadence</div>
+      <div class="cadence-chips">
+        @for (opt of cadenceOptions; track opt.value) {
+          <button
+            class="chip"
+            [class.chip--active]="localInterval === opt.value"
+            (click)="onCadenceSelect(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+</div>
