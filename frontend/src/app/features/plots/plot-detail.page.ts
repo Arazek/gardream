@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, effect, Injector, runInInjectionContext } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonContent, AlertController } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
@@ -13,6 +13,7 @@ import { selectSelectedPlot, selectSelectedPlotSlots, selectSlotsLoading } from 
 import { Plot, PlotSlot } from './store/plots.state';
 import { CropPickerComponent } from './crop-picker.component';
 import { Crop } from '../crops/store/crops.state';
+import { ScheduleValue } from '../../shared/components/schedule-section/schedule-section.component';
 
 interface GridCell {
   key: string;
@@ -28,7 +29,7 @@ interface GridCell {
   imports: [IonContent, TopAppBarComponent, GardenGridSlotComponent, NotificationCentreComponent],
   styleUrl: './plot-detail.page.scss',
   template: `
-    <app-top-app-bar [title]="plot()?.name ?? 'Plot'" [actions]="topBarActions" (actionClick)="onTopBarAction($event)">
+    <app-top-app-bar [title]="plot()?.name ?? 'Plot'" [actions]="topBarActions()" (actionClick)="onTopBarAction($event)">
       <button leading class="icon-btn" aria-label="Back" (click)="goBack()">
         <span class="material-symbols-outlined">arrow_back</span>
       </button>
@@ -36,7 +37,7 @@ interface GridCell {
 
     <app-notification-centre
       [open]="notificationCentreOpen"
-      [notifications]="notifications"
+      [notifications]="notificationService.notifications()"
       (closed)="notificationCentreOpen = false"
       (markAllRead)="notificationService.markAllRead()"
       (dismiss)="notificationService.dismiss($event)"
@@ -79,28 +80,21 @@ export class PlotDetailPage implements OnInit {
   private readonly router = inject(Router);
   private readonly sheet = inject(BottomSheetService);
   private readonly alert = inject(AlertController);
-  private readonly injector = inject(Injector);
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
-  notifications: AppNotification[] = [];
 
-  readonly topBarActions: NavAction[] = [
-    { id: 'notifications', icon: 'notifications', label: 'Notifications' },
+  readonly topBarActions = computed<NavAction[]>(() => [
+    { id: 'notifications', icon: 'notifications', label: 'Notifications',
+      badge: this.notificationService.unreadCount() },
     { id: 'profile', icon: 'person', label: 'Profile' },
-  ];
+  ]);
 
   readonly plot = toSignal(this.store.select(selectSelectedPlot), { initialValue: null });
   readonly slots = toSignal(this.store.select(selectSelectedPlotSlots), { initialValue: [] });
   readonly slotsLoading = toSignal(this.store.select(selectSlotsLoading), { initialValue: true });
 
   constructor() {
-    runInInjectionContext(this.injector, () => {
-      effect(() => {
-        this.notifications = this.notificationService.notifications();
-        this.updateTopBarBadge();
-      });
-    });
   }
 
   ngOnInit(): void {
@@ -166,7 +160,13 @@ export class PlotDetailPage implements OnInit {
 
     if (!result) return;
 
-    const { crop, row: r, col: c } = result as { crop: Crop; row: number; col: number };
+    const { crop, row: r, col: c, wateringSchedule, fertiliseSchedule } = result as {
+      crop: Crop;
+      row: number;
+      col: number;
+      wateringSchedule: ScheduleValue;
+      fertiliseSchedule: ScheduleValue;
+    };
     const today = new Date().toISOString().slice(0, 10);
 
     this.store.dispatch(PlotsActions.createSlot({
@@ -176,6 +176,10 @@ export class PlotDetailPage implements OnInit {
         row: r,
         col: c,
         sow_date: today,
+        watering_days_override: wateringSchedule.days,
+        watering_interval_weeks: wateringSchedule.intervalWeeks,
+        fertilise_days_override: fertiliseSchedule.days,
+        fertilise_interval_weeks: fertiliseSchedule.intervalWeeks,
       },
     }));
   }
@@ -198,13 +202,6 @@ export class PlotDetailPage implements OnInit {
       ],
     });
     await alert.present();
-  }
-
-  private updateTopBarBadge(): void {
-    const notifAction = this.topBarActions.find(a => a.id === 'notifications');
-    if (notifAction) {
-      notifAction.badge = this.notificationService.unreadCount();
-    }
   }
 
   goBack(): void {

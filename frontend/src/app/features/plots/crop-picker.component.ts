@@ -1,12 +1,15 @@
 import { Component, OnInit, Input, inject } from '@angular/core';
 import { IonContent, IonHeader, IonToolbar, IonTitle, IonButton } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { SearchBarComponent, FilterChipComponent, SpecimenCardComponent } from '../../shared';
+import { ScheduleSectionComponent, ScheduleValue } from '../../shared/components/schedule-section/schedule-section.component';
 import { CropsActions } from '../crops/store/crops.actions';
 import { selectFilteredCrops, selectCropsLoading } from '../crops/store/crops.selectors';
 import { Crop, CropCategory } from '../crops/store/crops.state';
 import { BottomSheetService } from '../../shared/services/bottom-sheet.service';
+import { selectSelectedPlot } from './store/plots.selectors';
 import { AsyncPipe } from '@angular/common';
 
 interface CategoryOption { value: CropCategory | null; label: string; }
@@ -26,46 +29,76 @@ const CATEGORIES: CategoryOption[] = [
     AsyncPipe,
     IonContent, IonHeader, IonToolbar, IonTitle, IonButton,
     SearchBarComponent, FilterChipComponent, SpecimenCardComponent,
+    ScheduleSectionComponent,
   ],
   styleUrl: './crop-picker.component.scss',
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>Choose a Crop</ion-title>
-        <ion-button slot="end" fill="clear" (click)="dismiss()">Cancel</ion-button>
+        @if (selectedCrop) {
+          <ion-button slot="start" fill="clear" (click)="clearSelection()">Back</ion-button>
+          <ion-title>Schedule</ion-title>
+          <ion-button slot="end" fill="clear" (click)="confirm()">Plant</ion-button>
+        } @else {
+          <ion-title>Choose a Crop</ion-title>
+          <ion-button slot="end" fill="clear" (click)="dismiss()">Cancel</ion-button>
+        }
       </ion-toolbar>
     </ion-header>
 
     <ion-content class="crop-picker-content">
-      <div class="crop-picker-search">
-        <app-search-bar placeholder="Search crops…" (search)="onSearch($event)" />
-      </div>
 
-      <div class="crop-picker-filters">
-        @for (cat of categories; track cat.label) {
-          <app-filter-chip
-            [label]="cat.label"
-            [active]="activeCategory === cat.value"
-            (toggled)="setCategory(cat.value)"
-          />
-        }
-      </div>
+      @if (!selectedCrop) {
+        <div class="crop-picker-search">
+          <app-search-bar placeholder="Search crops…" (search)="onSearch($event)" />
+        </div>
 
-      <div class="crop-picker-grid">
-        @if (loading$ | async) {
-          @for (i of [1,2,3,4,5,6]; track i) {
-            <div class="crop-picker-skeleton"></div>
-          }
-        } @else {
-          @for (crop of displayCrops; track crop.id) {
-            <app-specimen-card
-              [crop]="crop"
-              size="compact"
-              (click)="selectCrop(crop)"
+        <div class="crop-picker-filters">
+          @for (cat of categories; track cat.label) {
+            <app-filter-chip
+              [label]="cat.label"
+              [active]="activeCategory === cat.value"
+              (toggled)="setCategory(cat.value)"
             />
           }
-        }
-      </div>
+        </div>
+
+        <div class="crop-picker-grid">
+          @if (loading$ | async) {
+            @for (i of [1,2,3,4,5,6]; track i) {
+              <div class="crop-picker-skeleton"></div>
+            }
+          } @else {
+            @for (crop of displayCrops; track crop.id) {
+              <app-specimen-card
+                [crop]="crop"
+                size="compact"
+                (click)="selectCrop(crop)"
+              />
+            }
+          }
+        </div>
+      } @else {
+        <div class="crop-picker-schedule">
+          <app-schedule-section
+            label="WATERING"
+            toggleLabel="Use plot default"
+            [defaultDays]="plotWateringDays"
+            [days]="wateringSchedule.days"
+            [intervalWeeks]="wateringSchedule.intervalWeeks"
+            (scheduleChange)="onWateringChange($event)"
+          />
+          <app-schedule-section
+            label="FERTILISATION"
+            toggleLabel="Use plot default"
+            [defaultDays]="plotFertiliseDays"
+            [days]="fertiliseSchedule.days"
+            [intervalWeeks]="fertiliseSchedule.intervalWeeks"
+            (scheduleChange)="onFertiliseChange($event)"
+          />
+        </div>
+      }
+
     </ion-content>
   `,
 })
@@ -80,10 +113,25 @@ export class CropPickerComponent implements OnInit {
   readonly loading$ = this.store.select(selectCropsLoading);
   readonly categories = CATEGORIES;
 
+  readonly plot = toSignal(this.store.select(selectSelectedPlot), { initialValue: null });
+
   activeCategory: CropCategory | null = null;
   searchQuery = '';
   allCrops: Crop[] = [];
   displayCrops: Crop[] = [];
+
+  selectedCrop: Crop | null = null;
+
+  wateringSchedule: ScheduleValue = { days: null, intervalWeeks: 1 };
+  fertiliseSchedule: ScheduleValue = { days: null, intervalWeeks: 1 };
+
+  get plotWateringDays(): number[] {
+    return this.plot()?.watering_days ?? [];
+  }
+
+  get plotFertiliseDays(): number[] {
+    return this.plot()?.fertilise_days ?? [];
+  }
 
   ngOnInit(): void {
     this.store.dispatch(CropsActions.loadCrops({}));
@@ -104,7 +152,30 @@ export class CropPickerComponent implements OnInit {
   }
 
   selectCrop(crop: Crop): void {
-    this.sheet.dismiss({ crop, row: this.row, col: this.col });
+    this.selectedCrop = crop;
+  }
+
+  clearSelection(): void {
+    this.selectedCrop = null;
+  }
+
+  onWateringChange(v: ScheduleValue): void {
+    this.wateringSchedule = v;
+  }
+
+  onFertiliseChange(v: ScheduleValue): void {
+    this.fertiliseSchedule = v;
+  }
+
+  confirm(): void {
+    if (!this.selectedCrop) return;
+    this.sheet.dismiss({
+      crop: this.selectedCrop,
+      row: this.row,
+      col: this.col,
+      wateringSchedule: this.wateringSchedule,
+      fertiliseSchedule: this.fertiliseSchedule,
+    });
   }
 
   dismiss(): void {

@@ -1,4 +1,4 @@
-import { Component, inject, effect, Injector, runInInjectionContext } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
@@ -36,7 +36,7 @@ const PLOT_TYPE_OPTIONS: PlotTypeOption[] = [
   ],
   styleUrl: './plot-new.page.scss',
   template: `
-    <app-top-app-bar title="New Plot" [actions]="topBarActions" (actionClick)="onTopBarAction($event)">
+    <app-top-app-bar title="New Plot" [actions]="topBarActions()" (actionClick)="onTopBarAction($event)">
       <button leading class="icon-btn" aria-label="Cancel" (click)="cancel()">
         <span class="material-symbols-outlined">close</span>
       </button>
@@ -44,7 +44,7 @@ const PLOT_TYPE_OPTIONS: PlotTypeOption[] = [
 
     <app-notification-centre
       [open]="notificationCentreOpen"
-      [notifications]="notifications"
+      [notifications]="notificationService.notifications()"
       (closed)="notificationCentreOpen = false"
       (markAllRead)="notificationService.markAllRead()"
       (dismiss)="notificationService.dismiss($event)"
@@ -110,6 +110,16 @@ const PLOT_TYPE_OPTIONS: PlotTypeOption[] = [
           />
         </section>
 
+        <!-- Fertilisation days -->
+        <section class="plot-new-section">
+          <h2 class="plot-new-section__title">Fertilisation days</h2>
+          <p class="plot-new-section__hint">Which days of the week do you fertilise this plot?</p>
+          <app-day-picker
+            [selected]="form.value.fertilise_days"
+            (selectedChange)="form.patchValue({ fertilise_days: $event })"
+          />
+        </section>
+
         <!-- Submit -->
         <button
           type="submit"
@@ -135,24 +145,17 @@ export class PlotNewPage {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
-  private readonly injector = inject(Injector);
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
-  notifications: AppNotification[] = [];
 
-  readonly topBarActions: NavAction[] = [
-    { id: 'notifications', icon: 'notifications', label: 'Notifications' },
+  readonly topBarActions = computed<NavAction[]>(() => [
+    { id: 'notifications', icon: 'notifications', label: 'Notifications',
+      badge: this.notificationService.unreadCount() },
     { id: 'profile', icon: 'person', label: 'Profile' },
-  ];
+  ]);
 
   constructor() {
-    runInInjectionContext(this.injector, () => {
-      effect(() => {
-        this.notifications = this.notificationService.notifications();
-        this.updateTopBarBadge();
-      });
-    });
   }
 
   onTopBarAction(id: string): void {
@@ -166,11 +169,12 @@ export class PlotNewPage {
   readonly plotTypeOptions = PLOT_TYPE_OPTIONS;
 
   form: FormGroup = this.fb.group({
-    name:          ['', [Validators.required, Validators.minLength(2)]],
-    plot_type:     ['raised_bed', Validators.required],
-    rows:          [4, [Validators.required, Validators.min(1), Validators.max(20)]],
-    cols:          [4, [Validators.required, Validators.min(1), Validators.max(20)]],
-    watering_days: [[]],
+    name:            ['', [Validators.required, Validators.minLength(2)]],
+    plot_type:       ['raised_bed', Validators.required],
+    rows:            [4, [Validators.required, Validators.min(1), Validators.max(20)]],
+    cols:            [4, [Validators.required, Validators.min(1), Validators.max(20)]],
+    watering_days:   [[]],
+    fertilise_days:  [[]],
   });
 
   get nameControl() { return this.form.get('name') as any; }
@@ -198,17 +202,11 @@ export class PlotNewPage {
         rows: Number(v.rows),
         cols: Number(v.cols),
         watering_days: v.watering_days ?? [],
+        fertilise_days: v.fertilise_days ?? [],
       },
     }));
     // Navigate to plots list — effect will redirect after success
     this.router.navigate(['/tabs/plots']);
-  }
-
-  private updateTopBarBadge(): void {
-    const notifAction = this.topBarActions.find(a => a.id === 'notifications');
-    if (notifAction) {
-      notifAction.badge = this.notificationService.unreadCount();
-    }
   }
 
   cancel(): void {
