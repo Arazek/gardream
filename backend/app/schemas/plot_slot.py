@@ -10,11 +10,19 @@ class PlotSlotCreate(BaseModel):
     row: int
     col: int
     sow_date: date
+    watering_days_override: list[int] | None = None
+    watering_interval_weeks: int = 1
+    fertilise_days_override: list[int] | None = None
+    fertilise_interval_weeks: int = 1
 
 
 class PlotSlotUpdate(BaseModel):
     crop_id: str | None = None
     sow_date: date | None = None
+    watering_days_override: list[int] | None = None
+    watering_interval_weeks: int | None = None
+    fertilise_days_override: list[int] | None = None
+    fertilise_interval_weeks: int | None = None
 
 
 class PlotSlotResponse(BaseModel):
@@ -24,6 +32,10 @@ class PlotSlotResponse(BaseModel):
     row: int
     col: int
     sow_date: date
+    watering_days_override: list[int] | None = None
+    watering_interval_weeks: int = 1
+    fertilise_days_override: list[int] | None = None
+    fertilise_interval_weeks: int = 1
     created_at: datetime
     updated_at: datetime
 
