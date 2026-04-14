@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Network } from '@capacitor/network';
+import { Network, ConnectionStatus } from '@capacitor/network';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -16,7 +16,7 @@ export class NetworkService implements OnDestroy {
     const status = await Network.getStatus();
     this.onlineSubject.next(status.connected);
 
-    await Network.addListener('networkStatusChange', (status) => {
+    await Network.addListener('networkStatusChange', (status: ConnectionStatus) => {
       this.onlineSubject.next(status.connected);
     });
   }
