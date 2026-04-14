@@ -1,13 +1,13 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonButton, IonModal, IonDatetime } from '@ionic/angular/standalone';
+import { IonModal, IonDatetime } from '@ionic/angular/standalone';
 import { PhotoEntry } from './store/specimens.state';
 
 @Component({
   selector: 'app-specimen-photo-log',
   standalone: true,
-  imports: [CommonModule, FormsModule, IonButton, IonModal, IonDatetime],
+  imports: [CommonModule, FormsModule, IonModal, IonDatetime],
   styleUrl: './specimen-photo-log.component.scss',
   template: `
     <div class="photo-log">
