@@ -11,6 +11,12 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchShowDuration: 0,
     },
+    CapacitorSQLite: {
+      iosDatabaseLocation: 'Library/CapacitorDatabase',
+      iosIsEncryption: false,
+      androidIsEncryption: false,
+      electronWindowsLocation: 'C:\\ProgramData\\CapacitorDatabases',
+    },
   },
 };
 
