@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
 import {
   CapacitorSQLite,
   SQLiteConnection,
@@ -126,6 +127,9 @@ export class LocalDbService {
   private db: SQLiteDBConnection | null = null;
 
   async init(): Promise<void> {
+    if (Capacitor.getPlatform() === 'web') {
+      await this.sqlite.initWebStore();
+    }
     this.db = await this.sqlite.createConnection(
       'gardream',
       false,
