@@ -304,13 +304,50 @@ export class LocalDbService {
 
   async getSlotsByPlot(plotId: string): Promise<PlotSlot[]> {
     const rows = await this.query<Record<string, unknown>>(
-      `SELECT * FROM plot_slots WHERE plot_id = ? ORDER BY row ASC, col ASC`, [plotId]
+      `SELECT ps.*,
+         c.id as c_id, c.name as c_name, c.latin_name as c_latin_name, c.category as c_category,
+         c.description as c_description, c.thumbnail_url as c_thumbnail_url,
+         c.days_to_germination as c_days_to_germination, c.days_to_harvest as c_days_to_harvest,
+         c.watering_frequency_days as c_watering_frequency_days, c.fertilise_frequency_days as c_fertilise_frequency_days,
+         c.prune_frequency_days as c_prune_frequency_days, c.prune_start_day as c_prune_start_day,
+         c.sun_requirement as c_sun_requirement, c.spacing_cm as c_spacing_cm,
+         c.soil_mix as c_soil_mix, c.companion_crops as c_companion_crops, c.avoid_crops as c_avoid_crops,
+         c.created_at as c_created_at, c.updated_at as c_updated_at
+       FROM plot_slots ps
+       LEFT JOIN crops c ON c.id = ps.crop_id
+       WHERE ps.plot_id = ? ORDER BY ps.row ASC, ps.col ASC`, [plotId]
     );
-    return rows.map(r => ({
-      ...(r as any),
-      watering_days_override: r['watering_days_override'] ? JSON.parse(r['watering_days_override'] as string) : null,
-      fertilise_days_override: r['fertilise_days_override'] ? JSON.parse(r['fertilise_days_override'] as string) : null,
-    }));
+    return rows.map(r => {
+      const slot: PlotSlot = {
+        ...(r as any),
+        watering_days_override: r['watering_days_override'] ? JSON.parse(r['watering_days_override'] as string) : null,
+        fertilise_days_override: r['fertilise_days_override'] ? JSON.parse(r['fertilise_days_override'] as string) : null,
+      };
+      if (r['c_id']) {
+        slot.crop = {
+          id: r['c_id'] as string,
+          name: r['c_name'] as string,
+          latin_name: r['c_latin_name'] as string,
+          category: r['c_category'] as string,
+          description: r['c_description'] as string ?? null,
+          thumbnail_url: r['c_thumbnail_url'] as string ?? null,
+          days_to_germination: r['c_days_to_germination'] as number,
+          days_to_harvest: r['c_days_to_harvest'] as number,
+          watering_frequency_days: r['c_watering_frequency_days'] as number,
+          fertilise_frequency_days: r['c_fertilise_frequency_days'] as number,
+          prune_frequency_days: r['c_prune_frequency_days'] as number ?? null,
+          prune_start_day: r['c_prune_start_day'] as number ?? null,
+          sun_requirement: r['c_sun_requirement'] as string,
+          spacing_cm: r['c_spacing_cm'] as number,
+          soil_mix: r['c_soil_mix'] ? JSON.parse(r['c_soil_mix'] as string) : null,
+          companion_crops: JSON.parse(r['c_companion_crops'] as string),
+          avoid_crops: JSON.parse(r['c_avoid_crops'] as string),
+          created_at: r['c_created_at'] as string,
+          updated_at: r['c_updated_at'] as string,
+        };
+      }
+      return slot;
+    });
   }
 
   async updateSlotLocal(id: string, changes: Partial<PlotSlot>): Promise<void> {
