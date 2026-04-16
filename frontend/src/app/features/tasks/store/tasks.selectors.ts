@@ -1,5 +1,6 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { TasksState } from './tasks.state';
+import { selectAllSlots, selectAllPlots } from '../../plots/store/plots.selectors';
 
 export const selectTasksState = createFeatureSelector<TasksState>('tasks');
 
@@ -41,5 +42,25 @@ export const selectOverdueTasks = createSelector(
   tasks => {
     const today = new Date().toISOString().slice(0, 10);
     return tasks.filter(t => t.due_date < today);
+  },
+);
+
+// Overdue watering tasks joined with crop + plot label: "Carrot in Jordi Boix"
+export const selectOverdueWaterTasksWithLabels = createSelector(
+  selectOverdueTasks,
+  selectAllSlots,
+  selectAllPlots,
+  (tasks, slots, plots) => {
+    const slotMap = new Map(slots.map(s => [s.id, s]));
+    const plotMap = new Map(plots.map(p => [p.id, p]));
+    return tasks
+      .filter(t => t.type === 'water' && t.plot_slot_id)
+      .map(t => {
+        const slot = slotMap.get(t.plot_slot_id!);
+        const plot = slot ? plotMap.get(slot.plot_id) : undefined;
+        const cropName = slot?.crop?.name ?? 'crop';
+        const plotName = plot?.name ?? 'garden';
+        return { task: t, label: `${cropName} in ${plotName}` };
+      });
   },
 );

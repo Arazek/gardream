@@ -1,11 +1,11 @@
 import { Injectable, inject, signal, computed, effect, runInInjectionContext, Injector } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { selectTomorrowRainExpected, selectTomorrowPrecipitation } from '../../store/weather/weather.selectors';
-import { selectOverdueTasks } from '../../features/tasks/store/tasks.selectors';
+import { selectOverdueTasks, selectOverdueWaterTasksWithLabels } from '../../features/tasks/store/tasks.selectors';
 import { selectCropsNearHarvest } from '../../features/plots/store/plots.selectors';
 import { selectInAppAlerts } from '../../store/notifications/notifications.selectors';
 
-export type NotificationType = 'rain' | 'overdue' | 'harvest';
+export type NotificationType = 'rain' | 'overdue' | 'water' | 'harvest';
 export type AlertVariant = 'info' | 'warning' | 'error' | 'success';
 
 export interface AppNotification {
@@ -66,14 +66,15 @@ export class NotificationService {
       }
     });
 
-    // Watch overdue tasks
+    // Watch overdue non-water tasks (generic count)
     let overdueNotificationId: string | null = null;
     effect(() => {
       const inAppAlertsEnabled = this.store.selectSignal(selectInAppAlerts)();
       if (!inAppAlertsEnabled) return;
 
       const overdueTasks = this.store.selectSignal(selectOverdueTasks)();
-      const count = overdueTasks.length;
+      const nonWater = overdueTasks.filter(t => t.type !== 'water');
+      const count = nonWater.length;
 
       if (count > 0) {
         if (!overdueNotificationId) {
@@ -95,6 +96,42 @@ export class NotificationService {
           overdueNotificationId = null;
         }
       }
+    });
+
+    // Watch overdue watering tasks — one notification per crop
+    const waterNotifIds = new Map<string, string>(); // taskId → notifId
+    effect(() => {
+      const inAppAlertsEnabled = this.store.selectSignal(selectInAppAlerts)();
+      if (!inAppAlertsEnabled) {
+        waterNotifIds.forEach(id => this.dismiss(id));
+        waterNotifIds.clear();
+        return;
+      }
+
+      const waterTasks = this.store.selectSignal(selectOverdueWaterTasksWithLabels)();
+      const currentTaskIds = new Set(waterNotifIds.keys());
+
+      waterTasks.forEach(({ task, label }) => {
+        if (!waterNotifIds.has(task.id)) {
+          const id = this.generateId();
+          waterNotifIds.set(task.id, id);
+          this.add({
+            id,
+            type: 'water',
+            title: `Time to water`,
+            message: `${label} needs watering`,
+            variant: 'warning',
+            timestamp: new Date(),
+            read: false,
+          });
+        }
+        currentTaskIds.delete(task.id);
+      });
+
+      currentTaskIds.forEach(oldTaskId => {
+        const id = waterNotifIds.get(oldTaskId);
+        if (id) { this.dismiss(id); waterNotifIds.delete(oldTaskId); }
+      });
     });
 
     // Watch crops near harvest
