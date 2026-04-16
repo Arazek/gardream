@@ -24,6 +24,10 @@
   padding: 0 var(--space-4) var(--space-6);
 }
 
+.crop-picker-schedule {
+  padding: var(--space-4);
+}
+
 .crop-picker-skeleton {
   height: 9rem;
   border-radius: var(--radius-lg);
