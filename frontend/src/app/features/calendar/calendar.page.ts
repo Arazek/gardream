@@ -11,7 +11,7 @@ import { NotificationService, AppNotification } from '../../core/notifications/n
 import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import { BottomSheetService } from '../../shared/services/bottom-sheet.service';
 import { TasksActions } from '../tasks/store/tasks.actions';
-import { selectAllTasks, selectTasksLoading } from '../tasks/store/tasks.selectors';
+import { selectTasksWithLabels, selectTasksLoading } from '../tasks/store/tasks.selectors';
 import { Task, TaskCreate } from '../tasks/store/tasks.state';
 import { TaskCreateComponent } from './task-create.component';
 
@@ -33,7 +33,10 @@ const EQUINOX: Record<number, string> = {
 interface CalDay { iso: string; date: number; inMonth: boolean; }
 
 function toISO(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 function buildMonthGrid(year: number, month: number): CalDay[] {
@@ -78,7 +81,7 @@ function buildMonthGrid(year: number, month: number): CalDay[] {
       (dismiss)="notificationService.dismiss($event)"
     />
 
-    <app-page-content class="calendar-content">
+    <app-page-content class="calendar-content" [scrollY]="false">
       <div class="cal-layout">
 
         <!-- LEFT: calendar picker -->
@@ -123,15 +126,25 @@ function buildMonthGrid(year: number, month: number): CalDay[] {
 
         <!-- RIGHT: filters + tasks -->
         <div class="cal-layout__tasks">
-          <!-- Filter chips -->
-          <div class="cal-filters">
-            <app-filter-chip label="All"     [active]="filter === 'all'"     (toggled)="setFilter('all')" />
-            <app-filter-chip label="Pending" [active]="filter === 'pending'" (toggled)="setFilter('pending')" />
-            <app-filter-chip label="Done"    [active]="filter === 'done'"    (toggled)="setFilter('done')" />
+          <!-- Sticky header: filters + date label -->
+          <div class="cal-tasks-header">
+            <div class="cal-filters-row">
+              <div class="cal-filters">
+                <app-filter-chip label="All"     [active]="filter === 'all'"     (toggled)="setFilter('all')" />
+                <app-filter-chip label="Pending" [active]="filter === 'pending'" (toggled)="setFilter('pending')" />
+                <app-filter-chip label="Done"    [active]="filter === 'done'"    (toggled)="setFilter('done')" />
+              </div>
+              @if (allTasks().length > 0) {
+                <button class="cal-mark-all-btn" (click)="markAllDone()">Mark all done</button>
+              }
+            </div>
+
+            <!-- Selected date label -->
+            <p class="cal-date-label">{{ selectedDateLabel }}</p>
           </div>
 
-          <!-- Selected date label -->
-          <p class="cal-date-label">{{ selectedDateLabel }}</p>
+          <!-- Scrollable task list -->
+          <div class="cal-tasks-body">
 
           <!-- Task list -->
           <div class="cal-tasks">
@@ -150,7 +163,7 @@ function buildMonthGrid(year: number, month: number): CalDay[] {
               @for (task of filteredTasks; track task.id) {
                 <app-task-card
                   [icon]="taskIcon(task.type)"
-                  [title]="task.title || task.type"
+                  [title]="task.label || task.title || task.type"
                   [description]="task.note ?? undefined"
                   [completed]="task.completed"
                   (completedChange)="onToggle(task, $event)"
@@ -158,6 +171,7 @@ function buildMonthGrid(year: number, month: number): CalDay[] {
               }
             }
           </div>
+          </div><!-- end cal-tasks-body -->
         </div>
 
       </div>
@@ -196,11 +210,11 @@ export class CalendarPage implements OnInit {
   monthGrid: CalDay[] = buildMonthGrid(this.anchorYear, this.anchorMonth);
 
   filter: 'all' | 'pending' | 'done' = 'all';
-  filteredTasks: Task[] = [];
+  filteredTasks: (Task & { label: string })[] = [];
 
   // Signals
   readonly tasksLoading = toSignal(this.store.select(selectTasksLoading), { initialValue: true });
-  readonly allTasksStore = toSignal(this.store.select(selectAllTasks), { initialValue: [] });
+  readonly allTasksStore = toSignal(this.store.select(selectTasksWithLabels), { initialValue: [] });
 
   // Computed filtered tasks based on selectedDate
   readonly allTasks = computed(() => {
@@ -267,6 +281,15 @@ export class CalendarPage implements OnInit {
 
   onToggle(task: Task, completed: boolean): void {
     this.store.dispatch(TasksActions.updateTask({ id: task.id, payload: { completed } }));
+  }
+
+  markAllDone(): void {
+    const ids = this.allTasks()
+      .filter(t => !t.completed)
+      .map(t => t.id);
+    if (ids.length > 0) {
+      this.store.dispatch(TasksActions.markTasksCompleted({ ids }));
+    }
   }
 
   async openAddTask(): Promise<void> {

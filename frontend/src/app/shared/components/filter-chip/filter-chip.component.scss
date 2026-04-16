@@ -1,5 +1,9 @@
 @use 'theme/mixins' as *;
 
+:host {
+  display: contents;
+}
+
 .filter-chip {
   @include type-label;
   display: inline-flex;

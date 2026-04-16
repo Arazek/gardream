@@ -389,6 +389,54 @@ export class LocalDbService {
     await this.upsertTasks(tasks.map(t => ({ ...t, updated_at: now } as Task)));
   }
 
+  async hasAnyTasks(): Promise<boolean> {
+    const rows = await this.query<{ cnt: number }>(`SELECT COUNT(*) as cnt FROM tasks`, []);
+    return (rows[0]?.cnt ?? 0) > 0;
+  }
+
+  async getPendingTasks(): Promise<Task[]> {
+    const rows = await this.query<Record<string, unknown>>(
+      `SELECT * FROM tasks WHERE completed = 0 ORDER BY due_date ASC, type ASC`, []
+    );
+    return rows.map(r => ({ ...(r as any), completed: false }));
+  }
+
+  async deleteOverdueTasks(): Promise<string[]> {
+    const today = new Date().toISOString().slice(0, 10);
+    const rows = await this.query<{ id: string }>(
+      `SELECT id FROM tasks WHERE completed = 0 AND due_date < ?`, [today]
+    );
+    const ids = rows.map(r => r.id);
+    if (ids.length > 0) {
+      const placeholders = ids.map(() => '?').join(',');
+      await this.run(`DELETE FROM tasks WHERE id IN (${placeholders})`, ids);
+      for (const id of ids) {
+        await this.addToOutbox({ entity_type: 'task', entity_id: id, operation: 'delete', payload: JSON.stringify({ id }) });
+      }
+    }
+    return ids;
+  }
+
+  async markTasksCompleted(ids: string[]): Promise<void> {
+    for (const id of ids) {
+      await this.updateTaskLocal(id, { completed: true });
+      await this.addToOutbox({
+        entity_type: 'task',
+        entity_id: id,
+        operation: 'update',
+        payload: JSON.stringify({ completed: true }),
+      });
+    }
+  }
+
+  async getTaskById(id: string): Promise<Task> {
+    const rows = await this.query<Record<string, unknown>>(
+      `SELECT * FROM tasks WHERE id = ? LIMIT 1`, [id]
+    );
+    const r = rows[0] as any;
+    return { ...r, completed: r['completed'] === 1 };
+  }
+
   async getTasksByDate(dueDate: string): Promise<Task[]> {
     const rows = await this.query<Record<string, unknown>>(
       `SELECT * FROM tasks WHERE due_date = ? ORDER BY type ASC`, [dueDate]

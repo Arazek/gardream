@@ -9,6 +9,18 @@ export class TasksEffects {
   private actions$ = inject(Actions);
   private db = inject(LocalDbService);
 
+  loadAllPendingTasks$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TasksActions.loadAllPendingTasks),
+      switchMap(() =>
+        from(this.db.getPendingTasks()).pipe(
+          map(tasks => { console.log('[TasksEffect] getPendingTasks result:', tasks.length, tasks); return TasksActions.loadAllPendingTasksSuccess({ tasks }); }),
+          catchError(err => of(TasksActions.loadAllPendingTasksFailure({ error: err.message }))),
+        )
+      )
+    )
+  );
+
   loadTasks$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TasksActions.loadTasks),
@@ -38,11 +50,22 @@ export class TasksEffects {
               operation: 'update',
               payload: JSON.stringify(payload),
             }))
-            .then(() => this.db.getTasksByDate(new Date().toISOString().slice(0, 10)))
-            .then(tasks => tasks.find(t => t.id === id)!)
+            .then(() => this.db.getTaskById(id))
         ).pipe(
           map(task => TasksActions.updateTaskSuccess({ task })),
           catchError(err => of(TasksActions.updateTaskFailure({ error: err.message }))),
+        )
+      )
+    )
+  );
+
+  markTasksCompleted$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TasksActions.markTasksCompleted),
+      mergeMap(({ ids }) =>
+        from(this.db.markTasksCompleted(ids)).pipe(
+          map(() => TasksActions.markTasksCompletedSuccess({ ids })),
+          catchError(err => of(TasksActions.markTasksCompletedFailure({ error: err.message }))),
         )
       )
     )

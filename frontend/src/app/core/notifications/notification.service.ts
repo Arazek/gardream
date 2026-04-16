@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed, effect, runInInjectionContext, Injector } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { selectTomorrowRainExpected, selectTomorrowPrecipitation } from '../../store/weather/weather.selectors';
-import { selectOverdueTasks, selectOverdueWaterTasksWithLabels } from '../../features/tasks/store/tasks.selectors';
+import { selectAllPendingTasks, selectOverdueTasks, selectOverdueWaterTasksWithLabels } from '../../features/tasks/store/tasks.selectors';
 import { selectCropsNearHarvest } from '../../features/plots/store/plots.selectors';
 import { selectInAppAlerts } from '../../store/notifications/notifications.selectors';
 
@@ -108,7 +108,12 @@ export class NotificationService {
         return;
       }
 
+      const allTasksRaw = this.store.selectSignal(selectAllPendingTasks)();
+      const overdue = this.store.selectSignal(selectOverdueTasks)();
       const waterTasks = this.store.selectSignal(selectOverdueWaterTasksWithLabels)();
+      console.log('[NotifService] all tasks count:', allTasksRaw.length);
+      console.log('[NotifService] overdue tasks:', overdue);
+      console.log('[NotifService] water tasks:', waterTasks);
       const currentTaskIds = new Set(waterNotifIds.keys());
 
       waterTasks.forEach(({ task, label }) => {
