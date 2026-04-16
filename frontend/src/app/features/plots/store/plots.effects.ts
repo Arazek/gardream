@@ -152,9 +152,10 @@ export class PlotsEffects {
                 const tasks = this.taskGen.generate(slot, plot, crop, '');
                 await this.db.insertTasksBulk(tasks);
               }
+              return crop ?? undefined;
             })
         ).pipe(
-          map(() => PlotsActions.createSlotSuccess({ plotId, slot })),
+          map((crop) => PlotsActions.createSlotSuccess({ plotId, slot: { ...slot, crop: crop ?? undefined } })),
           catchError(err => of(PlotsActions.createSlotFailure({ error: err.message }))),
         );
       })
