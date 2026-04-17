@@ -44,8 +44,6 @@ services:
       KEYCLOAK_DB_USER: ${KEYCLOAK_DB_USER}
       KEYCLOAK_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
       KEYCLOAK_DB: ${KEYCLOAK_DB}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -77,6 +75,7 @@ services:
       KC_PROXY_HEADERS: xforwarded
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME: https://${GATEWAY_HOSTNAME}/keycloak
+      KC_HOSTNAME_STRICT: "false"
       KC_HTTP_RELATIVE_PATH: /keycloak
     volumes:
       - keycloak_data:/opt/keycloak/data
@@ -88,12 +87,12 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      # HTTP routing — path-based under localhost/keycloak
-      - "traefik.http.routers.keycloak-http.rule=Host(`localhost`) && PathPrefix(`/keycloak`)"
+      # HTTP routing — accessible on both localhost and gateway.localhost
+      - "traefik.http.routers.keycloak-http.rule=(Host(`localhost`) || Host(`${GATEWAY_HOSTNAME}`)) && PathPrefix(`/keycloak`)"
       - "traefik.http.routers.keycloak-http.entrypoints=web"
       - "traefik.http.routers.keycloak-http.service=keycloak"
-      # HTTPS routing — path-based under localhost/keycloak
-      - "traefik.http.routers.keycloak.rule=Host(`localhost`) && PathPrefix(`/keycloak`)"
+      # HTTPS routing — accessible on both localhost and gateway.localhost
+      - "traefik.http.routers.keycloak.rule=(Host(`localhost`) || Host(`${GATEWAY_HOSTNAME}`)) && PathPrefix(`/keycloak`)"
       - "traefik.http.routers.keycloak.entrypoints=websecure"
       - "traefik.http.routers.keycloak.tls=true"
       - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
