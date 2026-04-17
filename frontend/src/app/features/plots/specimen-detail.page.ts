@@ -33,7 +33,7 @@ import { ScheduleSectionComponent } from '../../shared/components/schedule-secti
   ],
   styleUrl: './specimen-detail.page.scss',
   template: `
-    <app-top-app-bar [title]="title() ?? 'Specimen'" [actions]="topBarActions()" (actionClick)="onTopBarAction($event)">
+    <app-top-app-bar [title]="title()" [actions]="topBarActions()" (actionClick)="onTopBarAction($event)">
       <button leading class="icon-btn" aria-label="Back" (click)="goBack()">
         <span class="material-symbols-outlined">arrow_back</span>
       </button>

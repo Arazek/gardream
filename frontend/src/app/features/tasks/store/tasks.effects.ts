@@ -1,58 +1,94 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { catchError, map, mergeMap, of, switchMap } from 'rxjs';
+import { catchError, from, map, mergeMap, of, switchMap } from 'rxjs';
 import { TasksActions } from './tasks.actions';
-import { TasksApiService } from '../../../core/api/tasks-api.service';
+import { LocalDbService } from '../../../core/db/local-db.service';
 
 @Injectable()
 export class TasksEffects {
-  constructor(private actions$: Actions, private api: TasksApiService) {}
+  private actions$ = inject(Actions);
+  private db = inject(LocalDbService);
+
+  loadAllPendingTasks$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TasksActions.loadAllPendingTasks),
+      switchMap(() =>
+        from(this.db.getPendingTasks()).pipe(
+          map(tasks => { console.log('[TasksEffect] getPendingTasks result:', tasks.length, tasks); return TasksActions.loadAllPendingTasksSuccess({ tasks }); }),
+          catchError(err => of(TasksActions.loadAllPendingTasksFailure({ error: err.message }))),
+        )
+      )
+    )
+  );
 
   loadTasks$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TasksActions.loadTasks),
       switchMap(({ due_date, completed }) =>
-        this.api.getAll({ due_date, completed }).pipe(
-          map(tasks => TasksActions.loadTasksSuccess({ tasks })),
+        from(this.db.getTasksByDate(due_date ?? new Date().toISOString().slice(0, 10))).pipe(
+          map(tasks => {
+            const filtered = completed !== undefined
+              ? tasks.filter(t => t.completed === completed)
+              : tasks;
+            return TasksActions.loadTasksSuccess({ tasks: filtered });
+          }),
           catchError(err => of(TasksActions.loadTasksFailure({ error: err.message }))),
-        ),
-      ),
-    ),
-  );
-
-  createTask$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(TasksActions.createTask),
-      mergeMap(({ payload }) =>
-        this.api.create(payload).pipe(
-          map(task => TasksActions.createTaskSuccess({ task })),
-          catchError(err => of(TasksActions.createTaskFailure({ error: err.message }))),
-        ),
-      ),
-    ),
+        )
+      )
+    )
   );
 
   updateTask$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TasksActions.updateTask),
       mergeMap(({ id, payload }) =>
-        this.api.update(id, payload).pipe(
+        from(
+          this.db.updateTaskLocal(id, payload)
+            .then(() => this.db.addToOutbox({
+              entity_type: 'task',
+              entity_id: id,
+              operation: 'update',
+              payload: JSON.stringify(payload),
+            }))
+            .then(() => this.db.getTaskById(id))
+        ).pipe(
           map(task => TasksActions.updateTaskSuccess({ task })),
           catchError(err => of(TasksActions.updateTaskFailure({ error: err.message }))),
-        ),
-      ),
-    ),
+        )
+      )
+    )
+  );
+
+  markTasksCompleted$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TasksActions.markTasksCompleted),
+      mergeMap(({ ids }) =>
+        from(this.db.markTasksCompleted(ids)).pipe(
+          map(() => TasksActions.markTasksCompletedSuccess({ ids })),
+          catchError(err => of(TasksActions.markTasksCompletedFailure({ error: err.message }))),
+        )
+      )
+    )
   );
 
   deleteTask$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TasksActions.deleteTask),
       mergeMap(({ id }) =>
-        this.api.delete(id).pipe(
+        from(
+          this.db.deleteTaskLocal(id).then(() =>
+            this.db.addToOutbox({
+              entity_type: 'task',
+              entity_id: id,
+              operation: 'delete',
+              payload: JSON.stringify({ id }),
+            })
+          )
+        ).pipe(
           map(() => TasksActions.deleteTaskSuccess({ id })),
           catchError(err => of(TasksActions.deleteTaskFailure({ error: err.message }))),
-        ),
-      ),
-    ),
+        )
+      )
+    )
   );
 }

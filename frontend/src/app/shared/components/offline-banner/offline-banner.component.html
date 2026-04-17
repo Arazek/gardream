@@ -1,0 +1,30 @@
+@if (visible()) {
+  <div class="offline-banner" [class]="bannerClass()" (click)="openFailedModal()">
+    <ion-icon
+      [name]="status() === 'offline' ? 'cloud-offline-outline' : status() === 'syncing' ? 'sync-outline' : 'alert-circle-outline'"
+      class="banner-icon"
+    />
+    <span class="banner-message">{{ message() }}</span>
+    <button class="banner-close" (click)="$event.stopPropagation(); dismiss()">
+      <ion-icon name="close-outline" />
+    </button>
+  </div>
+}
+
+@if (showFailedModal()) {
+  <div class="modal-backdrop" (click)="showFailedModal.set(false)">
+    <div class="failed-modal" (click)="$event.stopPropagation()">
+      <div class="modal-title">Changes that could not be saved</div>
+      @for (entry of failedEntries(); track entry.id) {
+        <div class="failed-entry">
+          <div class="entry-label">{{ entry.entity_type }} — {{ entry.operation }}</div>
+          <div class="entry-error">{{ entry.error }}</div>
+          <div class="entry-actions">
+            <button class="btn-discard" (click)="discard(entry.id!)">Discard</button>
+            <button class="btn-retry" (click)="retry(entry.id!)">Retry</button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}

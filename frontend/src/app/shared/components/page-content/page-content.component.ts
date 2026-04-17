@@ -35,14 +35,12 @@ import { IonContent } from '@ionic/angular/standalone';
   styleUrl: './page-content.component.scss',
   host: { class: 'page-content-host' },
   template: `
-    <ion-content class="page-content" [attr.data-component]="'page-content'">
+    <ion-content class="page-content" [attr.data-component]="'page-content'" [scrollY]="scrollY">
       <ng-content />
     </ion-content>
   `,
 })
 export class PageContentComponent {
-  /**
-   * Optional: Custom background color. Defaults to --color-surface
-   */
   @Input() background?: string;
+  @Input() scrollY = true;
 }

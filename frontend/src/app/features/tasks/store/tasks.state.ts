@@ -49,6 +49,7 @@ export interface NotificationSettingsUpdate {
 
 export interface TasksState {
   tasks: Task[];
+  pendingTasks: Task[]; // all pending tasks for notifications — not overwritten by page loads
   loading: boolean;
   error: string | null;
   selectedDate: string | null; // ISO date string YYYY-MM-DD
@@ -56,6 +57,7 @@ export interface TasksState {
 
 export const initialTasksState: TasksState = {
   tasks: [],
+  pendingTasks: [],
   loading: false,
   error: null,
   selectedDate: null,
