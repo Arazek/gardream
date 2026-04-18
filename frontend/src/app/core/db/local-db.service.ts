@@ -579,4 +579,14 @@ export class LocalDbService {
       milestones: JSON.parse(r['milestones'] as string),
     };
   }
+
+  async getAllSpecimens(): Promise<Specimen[]> {
+    const rows = await this.query<Record<string, unknown>>(`SELECT * FROM specimens`);
+    return rows.map(r => ({
+      ...(r as any),
+      note_entries: JSON.parse(r['note_entries'] as string),
+      photo_log: JSON.parse(r['photo_log'] as string),
+      milestones: JSON.parse(r['milestones'] as string),
+    }));
+  }
 }

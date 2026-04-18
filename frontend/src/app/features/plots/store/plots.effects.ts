@@ -147,20 +147,22 @@ export class PlotsEffects {
         };
         return from(
           this.db.insertSlot(slot)
-            .then(() => this.db.addToOutbox({
-              entity_type: 'plot_slot',
-              entity_id: slot.id,
-              operation: 'create',
-              payload: JSON.stringify({ plotId, ...payload }),
-            }))
             .then(async () => {
-              const plots = await this.db.getAllPlots();
-              const plot = plots.find(p => p.id === plotId);
+              const plot = (await this.db.getAllPlots()).find(p => p.id === plotId);
               const crop = await this.db.getCropById(payload.crop_id);
+              if (crop) {
+                await this.db.upsertCrops([crop]);
+              }
               if (plot && crop) {
                 const tasks = this.taskGen.generate(slot, plot, crop, '');
                 await this.db.insertTasksBulk(tasks);
               }
+              await this.db.addToOutbox({
+                entity_type: 'plot_slot',
+                entity_id: slot.id,
+                operation: 'create',
+                payload: JSON.stringify({ plotId, ...payload }),
+              });
               await this.sync.push();
               return crop ?? undefined;
             })
