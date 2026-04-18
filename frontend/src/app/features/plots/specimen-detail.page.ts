@@ -201,6 +201,8 @@ export class SpecimenDetailPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly injector = inject(Injector);
+  private readonly db = inject(LocalDbService);
+  private readonly sync = inject(SyncService);
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
@@ -267,22 +269,20 @@ export class SpecimenDetailPage implements OnInit {
   }
 
   private async handleTempSlot(plotId: string, tmpSlotId: string): Promise<void> {
-    const db = inject(LocalDbService);
-    const sync = inject(SyncService);
-
-    await sync.sync();
-
-    const slots = await db.getSlotsByPlot(plotId);
-    const slot = slots.find(s => s.id.endsWith(tmpSlotId.replace('tmp_', '')));
-
-    if (slot) {
-      this.router.navigate(['/tabs/plots', plotId, 'slots', slot.id, 'specimen'], {
-        replaceUrl: true,
-      });
-    } else {
-      console.error('[SpecimenDetail] Slot not found after sync, loading anyway');
-      this.loadSpecimenData(plotId, tmpSlotId);
+    try {
+      await this.sync.sync();
+      const slots = await this.db.getSlotsByPlot(plotId);
+      const slot = slots.find(s => s.id.endsWith(tmpSlotId.replace('tmp_', '')));
+      if (slot) {
+        this.router.navigate(['/tabs/plots', plotId, 'slots', slot.id, 'specimen'], {
+          replaceUrl: true,
+        });
+        return;
+      }
+    } catch {
+      // DB not ready or sync failed — fall through to load with tmp_ ID
     }
+    this.loadSpecimenData(plotId, tmpSlotId);
   }
 
   private loadSpecimenData(plotId: string, slotId: string): void {
