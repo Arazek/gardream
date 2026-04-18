@@ -102,6 +102,14 @@ export class SyncService implements OnDestroy {
           await this.plotsApi.updateSlot(payload.plotId, entry.entity_id, payload).toPromise();
         } else if (entry.operation === 'delete') {
           await this.plotsApi.deleteSlot(payload.plotId, entry.entity_id).toPromise();
+        } else if (entry.operation === 'transplant') {
+          const newSlot = await this.plotsApi.transplantSlot(
+            payload.plotId, entry.entity_id,
+            { target_plot_id: payload.targetPlotId, target_row: payload.targetRow, target_col: payload.targetCol }
+          ).toPromise();
+          if (newSlot && payload.newSlotId?.startsWith('tmp_')) {
+            await this.db.rewriteTmpId(payload.newSlotId, newSlot.id, 'plot_slot');
+          }
         }
         break;
       case 'task':
@@ -135,9 +143,10 @@ export class SyncService implements OnDestroy {
     await this.db.upsertTasks(tasks);
     this.store.dispatch(TasksActions.loadTasksSuccess({ tasks }));
 
-    // Crops — only pull if not cached
+    // Crops — pull if not cached OR if local DB is empty (e.g. after failed first boot)
     const cached = await this.db.getSyncMeta('crops_version');
-    if (!cached) {
+    const existingCrops = cached ? await this.db.getAllCrops() : [];
+    if (!cached || existingCrops.length === 0) {
       const crops = await this.cropsApi.getAll().toPromise() ?? [];
       await this.db.upsertCrops(crops);
       await this.db.setSyncMeta('crops_version', '1');

@@ -210,7 +210,12 @@ const GARDEN_STATEMENTS = [
         <section class="home-section">
           <div class="home-section__header">
             <h2 class="home-section__title">Today's Tasks</h2>
-            <button class="home-section__action" (click)="goToCalendar()">View all</button>
+            <div class="home-section__actions">
+              @if (overdueCount() > 0) {
+                <button class="home-section__action home-section__action--danger" (click)="deleteOverdue()">Clear overdue</button>
+              }
+              <button class="home-section__action" (click)="goToCalendar()">View all</button>
+            </div>
           </div>
 
           @if (tasksLoading$ | async) {
@@ -366,6 +371,10 @@ export class HomePage implements OnInit {
 
   onTaskToggle(task: Task, completed: boolean): void {
     this.store.dispatch(TasksActions.updateTask({ id: task.id, payload: { completed } }));
+  }
+
+  deleteOverdue(): void {
+    this.store.dispatch(TasksActions.deleteOverdueTasks());
   }
 
   private loadWeather(): void {

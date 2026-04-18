@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed } from '@angular/core';
+import { Component, OnInit, inject, computed, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonContent, AlertController, ActionSheetController } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
@@ -15,6 +15,9 @@ import { CropPickerComponent } from './crop-picker.component';
 import { SeedlingTransplantModalComponent } from './seedling-transplant-modal/seedling-transplant-modal.component';
 import { Crop } from '../crops/store/crops.state';
 import { ScheduleValue } from '../../shared/components/schedule-section/schedule-section.component';
+import { PlotPhotoOverlayComponent, PhotoRect } from './plot-photo-overlay.component';
+import { PlotsApiService } from '../../core/api/plots-api.service';
+import { environment } from '../../../environments/environment';
 
 interface GridCell {
   key: string;
@@ -28,9 +31,11 @@ interface GridCell {
 @Component({
   selector: 'app-plot-detail',
   standalone: true,
-  imports: [IonContent, TopAppBarComponent, GardenGridSlotComponent, NotificationCentreComponent],
+  imports: [IonContent, TopAppBarComponent, GardenGridSlotComponent, NotificationCentreComponent, PlotPhotoOverlayComponent],
   styleUrl: './plot-detail.page.scss',
   template: `
+    <input #photoInput type="file" accept="image/*" style="display:none" (change)="onPhotoFileSelected($event)" />
+
     <app-top-app-bar [title]="plot()?.name ?? 'Plot'" [actions]="topBarActions()" (actionClick)="onTopBarAction($event)">
       <button leading class="icon-btn" aria-label="Back" (click)="goBack()">
         <span class="material-symbols-outlined">arrow_back</span>
@@ -56,24 +61,38 @@ interface GridCell {
           @if (isSeedlingTray()) {
             <span class="plot-info__chip plot-info__chip--seedling">🌱 Seedling Tray</span>
           }
+          @if (isPhotoMode()) {
+            <span class="plot-info__chip">📷 Photo mode</span>
+          }
         </div>
 
-        @if (slotsLoading()) {
-          <div class="plot-grid-skeleton">Loading grid…</div>
+        @if (isPhotoMode()) {
+          <app-plot-photo-overlay
+            [photoUrl]="uploadsBase + plot.photo_url!"
+            [slots]="photoSlots()"
+            [isSeedlingTray]="isSeedlingTray()"
+            (slotClicked)="onPhotoSlotClick(plot.id, $event)"
+            (slotRemoveRequested)="onRemovePhotoSlot(plot.id, $event)"
+            (newRectDrawn)="onNewPhotoRect(plot.id, $event)"
+          />
         } @else {
-          <div class="plot-grid-scroll">
-            <div class="plot-grid" [style.--grid-cols]="plot.cols">
-              @for (cell of buildGrid(plot, slots()); track cell.key) {
-                <app-garden-grid-slot
-                  [crop]="cell.crop"
-                  [empty]="!cell.crop"
-                  [germinationDate]="isSeedlingTray() ? cell.germination_date : undefined"
-                  (slotClicked)="onSlotClick(plot.id, cell)"
-                  (slotRemoveRequested)="onRemoveSlot(plot.id, cell)"
-                />
-              }
+          @if (slotsLoading()) {
+            <div class="plot-grid-skeleton">Loading grid…</div>
+          } @else {
+            <div class="plot-grid-scroll">
+              <div class="plot-grid" [style.--grid-cols]="plot.cols">
+                @for (cell of buildGrid(plot, slots()); track cell.key) {
+                  <app-garden-grid-slot
+                    [crop]="cell.crop"
+                    [empty]="!cell.crop"
+                    [germinationDate]="isSeedlingTray() ? cell.germination_date : undefined"
+                    (slotClicked)="onSlotClick(plot.id, cell)"
+                    (slotRemoveRequested)="onRemoveSlot(plot.id, cell)"
+                  />
+                }
+              </div>
             </div>
-          </div>
+          }
         }
       }
 
@@ -87,11 +106,15 @@ export class PlotDetailPage implements OnInit {
   private readonly sheet = inject(BottomSheetService);
   private readonly alert = inject(AlertController);
   private readonly actionSheet = inject(ActionSheetController);
+  private readonly plotsApi = inject(PlotsApiService);
   readonly notificationService = inject(NotificationService);
+
+  @ViewChild('photoInput') photoInputRef!: ElementRef<HTMLInputElement>;
 
   notificationCentreOpen = false;
 
   readonly topBarActions = computed<NavAction[]>(() => [
+    { id: 'add_photo', icon: 'add_a_photo', label: 'Upload plot photo' },
     { id: 'notifications', icon: 'notifications', label: 'Notifications',
       badge: this.notificationService.unreadCount() },
     { id: 'profile', icon: 'person', label: 'Profile' },
@@ -101,6 +124,9 @@ export class PlotDetailPage implements OnInit {
   readonly slots = toSignal(this.store.select(selectSelectedPlotSlots), { initialValue: [] });
   readonly slotsLoading = toSignal(this.store.select(selectSlotsLoading), { initialValue: true });
   readonly isSeedlingTray = computed(() => this.plot()?.plot_type === 'seedling_tray');
+  readonly isPhotoMode = computed(() => !!this.plot()?.photo_url);
+  readonly uploadsBase = environment.uploadsUrl;
+  readonly photoSlots = computed(() => this.slots().filter(s => s.x_pct != null));
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -115,7 +141,19 @@ export class PlotDetailPage implements OnInit {
       this.notificationCentreOpen = true;
     } else if (id === 'profile') {
       this.goToSettings();
+    } else if (id === 'add_photo') {
+      this.photoInputRef.nativeElement.click();
     }
+  }
+
+  onPhotoFileSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    const plotId = this.plot()?.id;
+    if (!file || !plotId) return;
+    this.plotsApi.uploadPlotPhoto(plotId, file).subscribe(updatedPlot => {
+      this.store.dispatch(PlotsActions.updatePlotSuccess({ plot: updatedPlot }));
+    });
+    (event.target as HTMLInputElement).value = '';
   }
 
   buildGrid(plot: Plot, slots: PlotSlot[]): GridCell[] {
@@ -151,7 +189,6 @@ export class PlotDetailPage implements OnInit {
   async onSlotClick(plotId: string, cell: GridCell): Promise<void> {
     if (this.isSeedlingTray()) {
       if (!cell.crop || !cell.slotId) {
-        // Empty seedling tray cell — pick a crop (no schedule needed for seedling tray)
         await this.openCropPickerForSeedlingTray(plotId, cell);
       } else {
         await this.openSeedlingActions(plotId, cell);
@@ -182,7 +219,7 @@ export class PlotDetailPage implements OnInit {
       wateringSchedule: ScheduleValue;
       fertiliseSchedule: ScheduleValue;
     };
-    const today = new Date().toISOString().slice(0, 10);
+    const sow_date = (result as any).sowDate ?? new Date().toISOString().slice(0, 10);
 
     this.store.dispatch(PlotsActions.createSlot({
       plotId,
@@ -190,13 +227,71 @@ export class PlotDetailPage implements OnInit {
         crop_id: crop.id,
         row: r,
         col: c,
-        sow_date: today,
+        sow_date,
         watering_days_override: wateringSchedule.days,
         watering_interval_weeks: wateringSchedule.intervalWeeks,
         fertilise_days_override: fertiliseSchedule.days,
         fertilise_interval_weeks: fertiliseSchedule.intervalWeeks,
       },
     }));
+  }
+
+  async onPhotoSlotClick(plotId: string, slot: PlotSlot): Promise<void> {
+    if (!slot.crop) return;
+    if (slot.id) {
+      this.router.navigate(['/tabs/plots', plotId, 'slots', slot.id, 'specimen']);
+    }
+  }
+
+  async onNewPhotoRect(plotId: string, rect: PhotoRect): Promise<void> {
+    const result = await this.sheet.open({
+      component: CropPickerComponent,
+      componentProps: { plotId, row: null, col: null },
+      breakpoints: [0, 0.6, 1],
+      initialBreakpoint: 0.9,
+    });
+    if (!result) return;
+    const { crop, wateringSchedule, fertiliseSchedule } = result as {
+      crop: Crop;
+      wateringSchedule: ScheduleValue;
+      fertiliseSchedule: ScheduleValue;
+    };
+    const sow_date = (result as any).sowDate ?? new Date().toISOString().slice(0, 10);
+    this.store.dispatch(PlotsActions.createSlot({
+      plotId,
+      payload: {
+        crop_id: crop.id,
+        sow_date,
+        x_pct: rect.x_pct,
+        y_pct: rect.y_pct,
+        w_pct: rect.w_pct,
+        h_pct: rect.h_pct,
+        watering_days_override: wateringSchedule?.days,
+        watering_interval_weeks: wateringSchedule?.intervalWeeks,
+        fertilise_days_override: fertiliseSchedule?.days,
+        fertilise_interval_weeks: fertiliseSchedule?.intervalWeeks,
+      },
+    }));
+  }
+
+  async onRemovePhotoSlot(plotId: string, slot: PlotSlot): Promise<void> {
+    if (!slot.id) return;
+    const cropName = slot.crop?.name ?? 'this slot';
+    const alertEl = await this.alert.create({
+      header: 'Remove slot?',
+      message: `Remove ${cropName} from this position?`,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Remove',
+          role: 'destructive',
+          handler: () => {
+            this.store.dispatch(PlotsActions.deleteSlot({ plotId, slotId: slot.id }));
+          },
+        },
+      ],
+    });
+    await alertEl.present();
   }
 
   private async openCropPickerForSeedlingTray(plotId: string, cell: GridCell): Promise<void> {
@@ -207,11 +302,11 @@ export class PlotDetailPage implements OnInit {
       initialBreakpoint: 0.9,
     });
     if (!result) return;
-    const { crop, row: r, col: c } = result as { crop: Crop; row: number; col: number; wateringSchedule: ScheduleValue; fertiliseSchedule: ScheduleValue };
-    const today = new Date().toISOString().slice(0, 10);
+    const { crop, row: r, col: c } = result as { crop: Crop; row: number; col: number; sowDate?: string };
+    const sow_date = (result as any).sowDate ?? new Date().toISOString().slice(0, 10);
     this.store.dispatch(PlotsActions.createSlot({
       plotId,
-      payload: { crop_id: crop.id, row: r, col: c, sow_date: today },
+      payload: { crop_id: crop.id, row: r, col: c, sow_date },
     }));
   }
 

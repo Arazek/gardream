@@ -228,7 +228,7 @@ export class SpecimenDetailPage implements OnInit {
     const slotId = this.route.snapshot.paramMap.get('slotId');
     const slot = slots.find(s => s.id === slotId);
     if (!plot || !slot) return 'Specimen';
-    const coords = `${slot.row + 1},${slot.col + 1}`;
+    const coords = slot.row != null ? `${slot.row + 1},${(slot.col ?? 0) + 1}` : 'photo';
     const cropName = slot.crop?.name ?? '';
     return `${plot.name} (${coords}) - ${cropName}`;
   });

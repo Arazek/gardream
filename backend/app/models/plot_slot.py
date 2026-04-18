@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import String, Integer, Date, DateTime, ForeignKey, UniqueConstraint, func
+from sqlalchemy import String, Integer, Float, Date, DateTime, ForeignKey, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,8 +23,12 @@ class PlotSlot(Base):
     crop_id: Mapped[str] = mapped_column(
         String, ForeignKey("crops.id", ondelete="RESTRICT"), nullable=False
     )
-    row: Mapped[int] = mapped_column(Integer, nullable=False)
-    col: Mapped[int] = mapped_column(Integer, nullable=False)
+    row: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    col: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    x_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
+    y_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
+    w_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
+    h_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
     sow_date: Mapped[date] = mapped_column(Date, nullable=False)
     watering_days_override: Mapped[list[int] | None] = mapped_column(
         ARRAY(Integer), nullable=True, default=None

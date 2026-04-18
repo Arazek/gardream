@@ -13,6 +13,7 @@ class PlotBase(BaseModel):
     substrate: str | None = Field(None, max_length=100)
     watering_days: list[int] = Field(default_factory=list)
     fertilise_days: list[int] = []
+    photo_url: str | None = None
 
 
 class PlotCreate(PlotBase):
@@ -24,6 +25,7 @@ class PlotUpdate(BaseModel):
     substrate: str | None = Field(None, max_length=100)
     watering_days: list[int] | None = None
     fertilise_days: list[int] | None = None
+    photo_url: str | None = None
 
 
 class PlotResponse(PlotBase):

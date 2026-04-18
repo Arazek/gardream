@@ -30,5 +30,13 @@ export const tasksReducer = createReducer(
       pendingTasks: state.pendingTasks.map(t => idSet.has(t.id) ? { ...t, completed: true } : t),
     };
   }),
+  on(TasksActions.deleteOverdueTasksSuccess, (state, { ids }) => {
+    const idSet = new Set(ids);
+    return {
+      ...state,
+      tasks: state.tasks.filter(t => !idSet.has(t.id)),
+      pendingTasks: state.pendingTasks.filter(t => !idSet.has(t.id)),
+    };
+  }),
   on(TasksActions.setSelectedDate, (state, { date }) => ({ ...state, selectedDate: date })),
 );

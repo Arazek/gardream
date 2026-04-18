@@ -8,7 +8,7 @@ RUN npm install
 FROM base AS development
 COPY . .
 EXPOSE 4200
-CMD ["npx", "ng", "serve", "--host", "0.0.0.0", "--port", "4200", "--poll", "500", "--live-reload", "--hmr"]
+CMD ["npx", "ng", "serve", "--host", "0.0.0.0", "--port", "4200", "--poll", "500", "--live-reload", "--hmr", "--proxy-config", "proxy.conf.json"]
 
 # ---------------------------------------------------------------------------
 FROM base AS builder
