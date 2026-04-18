@@ -14,6 +14,7 @@ class PlotType(str, PyEnum):
     raised_bed = "raised_bed"
     container = "container"
     vertical = "vertical"
+    seedling_tray = "seedling_tray"
 
 
 class Plot(Base):

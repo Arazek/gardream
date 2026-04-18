@@ -1,6 +1,6 @@
 import { Crop } from '../../crops/store/crops.state';
 
-export type PlotType = 'ground_bed' | 'raised_bed' | 'container' | 'vertical';
+export type PlotType = 'ground_bed' | 'raised_bed' | 'container' | 'vertical' | 'seedling_tray';
 
 export interface Plot {
   id: string;
@@ -47,6 +47,7 @@ export interface PlotSlot {
   watering_interval_weeks: number;
   fertilise_days_override: number[] | null;
   fertilise_interval_weeks: number;
+  germination_date: string | null;
 }
 
 export interface PlotSlotCreate {

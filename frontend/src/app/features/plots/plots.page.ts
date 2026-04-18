@@ -16,6 +16,7 @@ const PLOT_TYPE_ICON: Record<PlotType, string> = {
   raised_bed: 'crop_square',
   container: 'local_florist',
   vertical: 'view_week',
+  seedling_tray: 'grass',
 };
 
 const PLOT_TYPE_LABEL: Record<PlotType, string> = {
@@ -23,6 +24,7 @@ const PLOT_TYPE_LABEL: Record<PlotType, string> = {
   raised_bed: 'Raised bed',
   container: 'Container',
   vertical: 'Vertical',
+  seedling_tray: 'Seedling Tray',
 };
 
 const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];

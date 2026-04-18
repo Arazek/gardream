@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.task import Task, TaskType
 from app.models.crop import Crop
-from app.models.plot import Plot
+from app.models.plot import Plot, PlotType
 from app.models.plot_slot import PlotSlot
 
 WINDOW_DAYS = 90
@@ -29,6 +29,21 @@ async def generate_tasks_for_slot(
     task_types: list[str] | None = None,
 ) -> list[Task]:
     """Generate and persist tasks for a slot. Returns created tasks."""
+    # Seedling trays only get a single germination check task
+    if plot.plot_type == PlotType.seedling_tray:
+        sow_date = slot.sow_date if isinstance(slot.sow_date, date) else date.fromisoformat(str(slot.sow_date))
+        germination_day = sow_date + timedelta(days=crop.days_to_germination or 14)
+        task = Task(
+            user_id=user_id,
+            plot_slot_id=slot.id,
+            type=TaskType.check,
+            due_date=germination_day,
+            title=f"Check germination – {crop.name}",
+        )
+        db.add(task)
+        await db.flush()
+        return [task]
+
     if task_types is None:
         task_types = ['water', 'fertilise']
 

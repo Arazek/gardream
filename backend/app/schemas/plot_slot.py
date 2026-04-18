@@ -23,6 +23,7 @@ class PlotSlotUpdate(BaseModel):
     watering_interval_weeks: int | None = None
     fertilise_days_override: list[int] | None = None
     fertilise_interval_weeks: int | None = None
+    germination_date: date | None = None
 
 
 class PlotSlotResponse(BaseModel):
@@ -36,6 +37,7 @@ class PlotSlotResponse(BaseModel):
     watering_interval_weeks: int = 1
     fertilise_days_override: list[int] | None = None
     fertilise_interval_weeks: int = 1
+    germination_date: date | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -44,3 +46,9 @@ class PlotSlotResponse(BaseModel):
 
 class PlotSlotDetailResponse(PlotSlotResponse):
     crop: CropResponse
+
+
+class TransplantRequest(BaseModel):
+    target_plot_id: str
+    target_row: int
+    target_col: int

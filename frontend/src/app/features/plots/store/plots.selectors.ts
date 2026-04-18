@@ -24,11 +24,22 @@ export const selectSelectedPlotSlots = createSelector(
   (state, id) => id ? (state.slotsById[id] ?? []) : [],
 );
 
+export const selectNonSeedlingPlots = createSelector(
+  selectAllPlots,
+  plots => plots.filter(p => p.plot_type !== 'seedling_tray'),
+);
+
 // ─── KPI Selectors ────────────────────────────────────────────────────────────
 
 export const selectAllSlots = createSelector(
   selectPlotsState,
-  state => Object.values(state.slotsById).flat(),
+  selectAllPlots,
+  (state, plots) => {
+    const seedlingIds = new Set(plots.filter(p => p.plot_type === 'seedling_tray').map(p => p.id));
+    return Object.entries(state.slotsById)
+      .filter(([plotId]) => !seedlingIds.has(plotId))
+      .flatMap(([, slots]) => slots);
+  },
 );
 
 export const selectCropsNearHarvest = createSelector(selectAllSlots, slots => {

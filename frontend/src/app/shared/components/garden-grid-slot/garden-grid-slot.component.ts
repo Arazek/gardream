@@ -36,6 +36,11 @@ const LONG_PRESS_MS = 600;
             <p class="garden-grid-slot__latin">{{ crop.latinName }}</p>
           </div>
           <app-progress-bar [value]="crop.progress" />
+          @if (germinationDate !== undefined) {
+            <span class="garden-grid-slot__germination-badge" [class.germinated]="germinationDate">
+              {{ germinationDate ? '🌱' : '🌰' }}
+            </span>
+          }
         </button>
         <button
           type="button"
@@ -67,6 +72,7 @@ const LONG_PRESS_MS = 600;
 export class GardenGridSlotComponent {
   @Input() crop?: GridCropInfo;
   @Input() empty = false;
+  @Input() germinationDate?: string | null;
   @Output() slotClicked = new EventEmitter<void>();
   @Output() slotRemoveRequested = new EventEmitter<void>();
 

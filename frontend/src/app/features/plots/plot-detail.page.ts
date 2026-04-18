@@ -1,17 +1,18 @@
 import { Component, OnInit, inject, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IonContent, AlertController } from '@ionic/angular/standalone';
+import { IonContent, AlertController, ActionSheetController } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { TopAppBarComponent, NavAction, GardenGridSlotComponent, GridCropInfo } from '../../shared';
-import { NotificationService, AppNotification } from '../../core/notifications/notification.service';
+import { NotificationService } from '../../core/notifications/notification.service';
 import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import { BottomSheetService } from '../../shared/services/bottom-sheet.service';
 import { PlotsActions } from './store/plots.actions';
 import { selectSelectedPlot, selectSelectedPlotSlots, selectSlotsLoading } from './store/plots.selectors';
 import { Plot, PlotSlot } from './store/plots.state';
 import { CropPickerComponent } from './crop-picker.component';
+import { SeedlingTransplantModalComponent } from './seedling-transplant-modal/seedling-transplant-modal.component';
 import { Crop } from '../crops/store/crops.state';
 import { ScheduleValue } from '../../shared/components/schedule-section/schedule-section.component';
 
@@ -20,6 +21,7 @@ interface GridCell {
   row: number;
   col: number;
   slotId?: string;
+  germination_date?: string | null;
   crop?: GridCropInfo;
 }
 
@@ -51,6 +53,9 @@ interface GridCell {
           @if (plot.substrate) {
             <span class="plot-info__chip">{{ plot.substrate }}</span>
           }
+          @if (isSeedlingTray()) {
+            <span class="plot-info__chip plot-info__chip--seedling">🌱 Seedling Tray</span>
+          }
         </div>
 
         @if (slotsLoading()) {
@@ -62,6 +67,7 @@ interface GridCell {
                 <app-garden-grid-slot
                   [crop]="cell.crop"
                   [empty]="!cell.crop"
+                  [germinationDate]="isSeedlingTray() ? cell.germination_date : undefined"
                   (slotClicked)="onSlotClick(plot.id, cell)"
                   (slotRemoveRequested)="onRemoveSlot(plot.id, cell)"
                 />
@@ -80,6 +86,7 @@ export class PlotDetailPage implements OnInit {
   private readonly router = inject(Router);
   private readonly sheet = inject(BottomSheetService);
   private readonly alert = inject(AlertController);
+  private readonly actionSheet = inject(ActionSheetController);
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
@@ -93,9 +100,7 @@ export class PlotDetailPage implements OnInit {
   readonly plot = toSignal(this.store.select(selectSelectedPlot), { initialValue: null });
   readonly slots = toSignal(this.store.select(selectSelectedPlotSlots), { initialValue: [] });
   readonly slotsLoading = toSignal(this.store.select(selectSlotsLoading), { initialValue: true });
-
-  constructor() {
-  }
+  readonly isSeedlingTray = computed(() => this.plot()?.plot_type === 'seedling_tray');
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -123,6 +128,7 @@ export class PlotDetailPage implements OnInit {
           row: r,
           col: c,
           slotId: slot?.id,
+          germination_date: slot?.germination_date ?? null,
           crop: slot?.crop
             ? {
                 name: slot.crop.name,
@@ -143,7 +149,16 @@ export class PlotDetailPage implements OnInit {
   }
 
   async onSlotClick(plotId: string, cell: GridCell): Promise<void> {
-    // If the slot is already occupied, navigate to specimen detail
+    if (this.isSeedlingTray()) {
+      if (!cell.crop || !cell.slotId) {
+        // Empty seedling tray cell — pick a crop (no schedule needed for seedling tray)
+        await this.openCropPickerForSeedlingTray(plotId, cell);
+      } else {
+        await this.openSeedlingActions(plotId, cell);
+      }
+      return;
+    }
+
     if (cell.crop) {
       if (cell.slotId) {
         this.router.navigate(['/tabs/plots', plotId, 'slots', cell.slotId, 'specimen']);
@@ -182,6 +197,80 @@ export class PlotDetailPage implements OnInit {
         fertilise_interval_weeks: fertiliseSchedule.intervalWeeks,
       },
     }));
+  }
+
+  private async openCropPickerForSeedlingTray(plotId: string, cell: GridCell): Promise<void> {
+    const result = await this.sheet.open({
+      component: CropPickerComponent,
+      componentProps: { plotId, row: cell.row, col: cell.col, seedlingMode: true },
+      breakpoints: [0, 0.6, 1],
+      initialBreakpoint: 0.9,
+    });
+    if (!result) return;
+    const { crop, row: r, col: c } = result as { crop: Crop; row: number; col: number; wateringSchedule: ScheduleValue; fertiliseSchedule: ScheduleValue };
+    const today = new Date().toISOString().slice(0, 10);
+    this.store.dispatch(PlotsActions.createSlot({
+      plotId,
+      payload: { crop_id: crop.id, row: r, col: c, sow_date: today },
+    }));
+  }
+
+  private async openSeedlingActions(plotId: string, cell: GridCell): Promise<void> {
+    const slot = this.slots().find(s => s.id === cell.slotId);
+    if (!slot) return;
+
+    const isGerminated = !!slot.germination_date;
+    const cropName = slot.crop?.name ?? 'seedling';
+    const daysToTransplant = slot.crop?.days_to_germination ?? 14;
+    const transplantDate = new Date(slot.sow_date);
+    transplantDate.setDate(transplantDate.getDate() + daysToTransplant);
+    const transplantDue = transplantDate.toLocaleDateString();
+
+    const buttons: any[] = [];
+
+    if (!isGerminated) {
+      buttons.push({
+        text: '🌱 Mark as germinated',
+        handler: () => {
+          this.store.dispatch(PlotsActions.markGerminated({ plotId, slotId: slot.id }));
+        },
+      });
+    }
+
+    if (isGerminated) {
+      buttons.push({
+        text: `🏡 Transplant to plot (suggested: ${transplantDue})`,
+        handler: async () => {
+          await this.openTransplantModal(plotId, slot);
+        },
+      });
+    }
+
+    buttons.push({
+      text: `View ${cropName} details`,
+      handler: () => {
+        this.router.navigate(['/tabs/plots', plotId, 'slots', slot.id, 'specimen']);
+      },
+    });
+    buttons.push({ text: 'Cancel', role: 'cancel' });
+
+    const sheet = await this.actionSheet.create({
+      header: cropName,
+      subHeader: isGerminated ? `Germinated on ${slot.germination_date}` : 'Not yet germinated',
+      buttons,
+    });
+    await sheet.present();
+  }
+
+  private async openTransplantModal(plotId: string, slot: PlotSlot): Promise<void> {
+    const result = await this.sheet.open({
+      component: SeedlingTransplantModalComponent,
+      breakpoints: [0, 0.6, 1],
+      initialBreakpoint: 0.9,
+    });
+    if (!result) return;
+    const { targetPlotId, targetRow, targetCol } = result as { targetPlotId: string; targetRow: number; targetCol: number };
+    this.store.dispatch(PlotsActions.transplantSlot({ plotId, slotId: slot.id, targetPlotId, targetRow, targetCol }));
   }
 
   async onRemoveSlot(plotId: string, cell: GridCell): Promise<void> {

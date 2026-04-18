@@ -133,6 +133,7 @@ export class PlotsEffects {
           watering_interval_weeks: payload.watering_interval_weeks ?? 1,
           fertilise_days_override: payload.fertilise_days_override ?? null,
           fertilise_interval_weeks: payload.fertilise_interval_weeks ?? 1,
+          germination_date: null,
           created_at: now,
           updated_at: now,
         };
@@ -201,6 +202,82 @@ export class PlotsEffects {
           catchError(err => of(PlotsActions.deleteSlotFailure({ error: err.message }))),
         )
       )
+    )
+  );
+
+  markGerminated$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(PlotsActions.markGerminated),
+      mergeMap(({ plotId, slotId }) => {
+        const today = new Date().toISOString().slice(0, 10);
+        return from(
+          this.db.updateSlotLocal(slotId, { germination_date: today } as any)
+            .then(() => this.db.addToOutbox({
+              entity_type: 'plot_slot',
+              entity_id: slotId,
+              operation: 'update',
+              payload: JSON.stringify({ plotId, germination_date: today }),
+            }))
+            .then(() => this.db.getSlotsByPlot(plotId))
+            .then(slots => slots.find(s => s.id === slotId)!)
+        ).pipe(
+          map(slot => PlotsActions.markGerminatedSuccess({ plotId, slot })),
+          catchError(err => of(PlotsActions.markGerminatedFailure({ error: err.message }))),
+        );
+      })
+    )
+  );
+
+  transplantSlot$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(PlotsActions.transplantSlot),
+      mergeMap(({ plotId, slotId, targetPlotId, targetRow, targetCol }) => {
+        return from((async () => {
+          const slots = await this.db.getSlotsByPlot(plotId);
+          const sourceSlot = slots.find(s => s.id === slotId);
+          if (!sourceSlot) throw new Error('Source slot not found');
+
+          const now = new Date().toISOString();
+          const newSlot: PlotSlot = {
+            id: `tmp_${uuidv4()}`,
+            plot_id: targetPlotId,
+            crop_id: sourceSlot.crop_id,
+            row: targetRow,
+            col: targetCol,
+            sow_date: sourceSlot.sow_date,
+            watering_days_override: null,
+            watering_interval_weeks: 1,
+            fertilise_days_override: null,
+            fertilise_interval_weeks: 1,
+            germination_date: null,
+            created_at: now,
+            updated_at: now,
+            crop: sourceSlot.crop,
+          };
+
+          await this.db.insertSlot(newSlot);
+          await this.db.deleteSlotLocal(slotId);
+          await this.db.addToOutbox({
+            entity_type: 'plot_slot',
+            entity_id: slotId,
+            operation: 'transplant',
+            payload: JSON.stringify({ plotId, slotId, targetPlotId, targetRow, targetCol, newSlotId: newSlot.id }),
+          });
+
+          const plots = await this.db.getAllPlots();
+          const targetPlot = plots.find(p => p.id === targetPlotId);
+          const crop = await this.db.getCropById(newSlot.crop_id);
+          if (targetPlot && crop) {
+            const tasks = this.taskGen.generate(newSlot, targetPlot, crop, '');
+            await this.db.insertTasksBulk(tasks);
+          }
+
+          return newSlot;
+        })()).pipe(
+          map(newSlot => PlotsActions.transplantSlotSuccess({ sourcePlotId: plotId, slotId, newSlot })),
+          catchError(err => of(PlotsActions.transplantSlotFailure({ error: err.message }))),
+        );
+      })
     )
   );
 

@@ -62,4 +62,27 @@ export const plotsReducer = createReducer(
       ),
     },
   })),
+
+  on(PlotsActions.markGerminatedSuccess, (state, { plotId, slot }) => ({
+    ...state,
+    slotsById: {
+      ...state.slotsById,
+      [plotId]: (state.slotsById[plotId] ?? []).map(s =>
+        s.id === slot.id ? { ...s, germination_date: slot.germination_date } : s
+      ),
+    },
+  })),
+
+  on(PlotsActions.transplantSlotSuccess, (state, { sourcePlotId, slotId, newSlot }) => ({
+    ...state,
+    plots: state.plots.map(p =>
+      p.id === newSlot.plot_id ? { ...p, crop_count: p.crop_count + 1 } :
+      p.id === sourcePlotId ? { ...p, crop_count: Math.max(0, p.crop_count - 1) } : p
+    ),
+    slotsById: {
+      ...state.slotsById,
+      [sourcePlotId]: (state.slotsById[sourcePlotId] ?? []).filter(s => s.id !== slotId),
+      [newSlot.plot_id]: [...(state.slotsById[newSlot.plot_id] ?? []), newSlot],
+    },
+  })),
 );

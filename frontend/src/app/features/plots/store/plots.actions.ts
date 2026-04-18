@@ -41,5 +41,13 @@ export const PlotsActions = createActionGroup({
     'Update Slot Schedule': props<{ plotId: string; slotId: string; watering_days_override: number[] | null; watering_interval_weeks: number; fertilise_days_override: number[] | null; fertilise_interval_weeks: number }>(),
     'Update Slot Schedule Success': props<{ plotId: string; slot: PlotSlot }>(),
     'Update Slot Schedule Failure': props<{ error: string }>(),
+
+    'Mark Germinated': props<{ plotId: string; slotId: string }>(),
+    'Mark Germinated Success': props<{ plotId: string; slot: PlotSlot }>(),
+    'Mark Germinated Failure': props<{ error: string }>(),
+
+    'Transplant Slot': props<{ plotId: string; slotId: string; targetPlotId: string; targetRow: number; targetCol: number }>(),
+    'Transplant Slot Success': props<{ sourcePlotId: string; slotId: string; newSlot: PlotSlot }>(),
+    'Transplant Slot Failure': props<{ error: string }>(),
   },
 });

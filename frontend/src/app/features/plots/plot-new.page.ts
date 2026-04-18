@@ -16,10 +16,11 @@ import { PlotsActions } from './store/plots.actions';
 import { PlotType } from './store/plots.state';
 
 const PLOT_TYPE_OPTIONS: PlotTypeOption[] = [
-  { value: 'ground_bed', label: 'Ground Bed',  icon: 'yard' },
-  { value: 'raised_bed', label: 'Raised Bed',  icon: 'crop_square' },
-  { value: 'container',  label: 'Container',   icon: 'local_florist' },
-  { value: 'vertical',   label: 'Vertical',    icon: 'view_week' },
+  { value: 'ground_bed',    label: 'Ground Bed',    icon: 'yard' },
+  { value: 'raised_bed',    label: 'Raised Bed',    icon: 'crop_square' },
+  { value: 'container',     label: 'Container',     icon: 'local_florist' },
+  { value: 'vertical',      label: 'Vertical',      icon: 'view_week' },
+  { value: 'seedling_tray', label: 'Seedling Tray', icon: 'grass' },
 ];
 
 @Component({

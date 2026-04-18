@@ -36,10 +36,30 @@ export class TaskGeneratorService {
     taskTypes: string[] = ['water', 'fertilise'],
   ): Omit<Task, 'updated_at'>[] {
     const sowDate = slot.sow_date;
-    const windowStart = startDate ?? sowDate;
-    const endDate = addDays(sowDate, WINDOW_DAYS);
     const tasks: Omit<Task, 'updated_at'>[] = [];
     const now = new Date().toISOString();
+
+    // Seedling trays only get a germination check task
+    if (plot.plot_type === 'seedling_tray') {
+      const daysToGermination = (crop as any).days_to_germination ?? 14;
+      const germinationDate = addDays(sowDate, daysToGermination);
+      tasks.push({
+        id: `tmp_${uuidv4()}`,
+        user_id: userId,
+        plot_slot_id: slot.id,
+        type: 'check',
+        title: `Check germination – ${crop.name}`,
+        note: null,
+        due_date: germinationDate,
+        completed: false,
+        completed_at: null,
+        created_at: now,
+      });
+      return tasks;
+    }
+
+    const windowStart = startDate ?? sowDate;
+    const endDate = addDays(sowDate, WINDOW_DAYS);
 
     const makeTask = (type: Task['type'], dueDate: string, title: string | null = null): Omit<Task, 'updated_at'> => ({
       id: `tmp_${uuidv4()}`,

@@ -14,7 +14,7 @@ export interface OutboxEntry {
   id?: number;
   entity_type: 'plot' | 'plot_slot' | 'task' | 'specimen';
   entity_id: string;
-  operation: 'create' | 'update' | 'delete';
+  operation: 'create' | 'update' | 'delete' | 'transplant';
   payload: string; // JSON
   created_at: number; // Unix ms
   status: 'pending' | 'failed';
@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS plot_slots (
   watering_interval_weeks INTEGER NOT NULL DEFAULT 1,
   fertilise_days_override TEXT,
   fertilise_interval_weeks INTEGER NOT NULL DEFAULT 1,
+  germination_date TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   synced_at INTEGER
@@ -130,11 +131,17 @@ export class LocalDbService {
     if (Capacitor.getPlatform() === 'web') {
       await this.sqlite.initWebStore();
     }
+    await this.sqlite.addUpgradeStatement('gardream', [
+      {
+        toVersion: 2,
+        statements: ['ALTER TABLE plot_slots ADD COLUMN germination_date TEXT;'],
+      },
+    ]);
     this.db = await this.sqlite.createConnection(
       'gardream',
       false,
       'no-encryption',
-      1,
+      2,
       false
     );
     await this.db.open();
@@ -279,20 +286,22 @@ export class LocalDbService {
         `INSERT INTO plot_slots (id, plot_id, crop_id, row, col, sow_date,
            watering_days_override, watering_interval_weeks,
            fertilise_days_override, fertilise_interval_weeks,
-           created_at, updated_at, synced_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           germination_date, created_at, updated_at, synced_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(id) DO UPDATE SET
            crop_id=excluded.crop_id, sow_date=excluded.sow_date,
            watering_days_override=excluded.watering_days_override,
            watering_interval_weeks=excluded.watering_interval_weeks,
            fertilise_days_override=excluded.fertilise_days_override,
            fertilise_interval_weeks=excluded.fertilise_interval_weeks,
+           germination_date=excluded.germination_date,
            updated_at=excluded.updated_at, synced_at=excluded.synced_at`,
         [s.id, s.plot_id, s.crop_id, s.row, s.col, s.sow_date,
          s.watering_days_override ? JSON.stringify(s.watering_days_override) : null,
          s.watering_interval_weeks,
          s.fertilise_days_override ? JSON.stringify(s.fertilise_days_override) : null,
          s.fertilise_interval_weeks,
+         s.germination_date ?? null,
          s.created_at, s.updated_at, Date.now()]
       );
     }

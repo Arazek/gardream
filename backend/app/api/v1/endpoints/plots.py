@@ -15,7 +15,7 @@ from app.models.plot_slot import PlotSlot
 from app.models.specimen import Specimen
 from app.models.task import Task
 from app.schemas.plot import PlotCreate, PlotResponse, PlotUpdate
-from app.schemas.plot_slot import PlotSlotCreate, PlotSlotDetailResponse, PlotSlotResponse, PlotSlotUpdate
+from app.schemas.plot_slot import PlotSlotCreate, PlotSlotDetailResponse, PlotSlotResponse, PlotSlotUpdate, TransplantRequest
 from app.schemas.specimen import SpecimenResponse, SpecimenUpdate
 from app.services.task_generator import generate_tasks_for_slot
 from app.api.v1.endpoints.specimens import compute_specimen_stage, populate_specimen_response
@@ -327,6 +327,69 @@ async def update_specimen(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Crop data missing")
 
     return populate_specimen_response(specimen, slot, crop)
+
+
+@router.post("/{plot_id}/slots/{slot_id}/transplant", response_model=PlotSlotResponse, status_code=status.HTTP_201_CREATED)
+async def transplant_slot(
+    plot_id: str,
+    slot_id: str,
+    payload: TransplantRequest,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    """Transplant a germinated seedling to a cell in another plot."""
+    source_plot = await db.get(Plot, plot_id)
+    if not source_plot or source_plot.user_id != user["sub"]:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plot not found")
+
+    source_slot = await db.get(PlotSlot, slot_id)
+    if not source_slot or source_slot.plot_id != plot_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Slot not found")
+
+    target_plot = await db.get(Plot, payload.target_plot_id)
+    if not target_plot or target_plot.user_id != user["sub"]:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target plot not found")
+
+    if payload.target_row >= target_plot.rows or payload.target_col >= target_plot.cols:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Target row/col out of bounds")
+
+    existing = await db.execute(
+        select(PlotSlot).where(
+            PlotSlot.plot_id == payload.target_plot_id,
+            PlotSlot.row == payload.target_row,
+            PlotSlot.col == payload.target_col,
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Target cell already occupied")
+
+    crop = await db.get(Crop, source_slot.crop_id)
+
+    # Detach specimen from source slot before deletion
+    result = await db.execute(select(Specimen).where(Specimen.plot_slot_id == slot_id))
+    specimen = result.scalar_one_or_none()
+
+    new_slot = PlotSlot(
+        plot_id=payload.target_plot_id,
+        crop_id=source_slot.crop_id,
+        row=payload.target_row,
+        col=payload.target_col,
+        sow_date=source_slot.sow_date,
+    )
+    db.add(new_slot)
+    await db.flush()
+
+    if specimen:
+        specimen.plot_slot_id = new_slot.id
+        await db.flush()
+
+    await db.delete(source_slot)
+    await db.flush()
+
+    await generate_tasks_for_slot(db, new_slot, crop, target_plot, user_id=user["sub"])
+    await db.commit()
+    await db.refresh(new_slot)
+    return new_slot
 
 
 @router.post("/{plot_id}/slots/{slot_id}/specimen/photos", response_model=SpecimenResponse)
