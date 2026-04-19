@@ -19,34 +19,62 @@ export interface PhotoRect {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './plot-photo-overlay.component.scss',
   template: `
-    <div
-      #container
-      class="photo-overlay"
-      (pointerdown)="onPointerDown($event)"
-      (pointermove)="onPointerMove($event)"
-      (pointerup)="onPointerUp($event)"
-      (pointercancel)="cancelDraw()"
-    >
-      <img [src]="photoUrl" class="photo-overlay__img" draggable="false" />
+    <div class="photo-overlay-wrapper">
+      <div
+        #container
+        class="photo-overlay"
+        (pointerdown)="onPointerDown($event)"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerUp($event)"
+        (pointercancel)="cancelDraw()"
+      >
+        <img [src]="photoUrl" class="photo-overlay__img" draggable="false" />
 
-      @for (slot of slots; track slot.id) {
-        <div
-          class="photo-slot"
-          [class.photo-slot--occupied]="!!slot.crop"
-          [ngStyle]="slotStyle(slot)"
-          (click)="onSlotClick($event, slot)"
-        >
-          <span class="photo-slot__label">{{ slot.crop?.name ?? '?' }}</span>
-          <button
-            class="photo-slot__remove"
-            aria-label="Remove slot"
-            (click)="onRemoveClick($event, slot)"
-          >×</button>
+        @for (slot of slots; track slot.id) {
+          <div
+            class="photo-slot"
+            [class.photo-slot--occupied]="!!slot.crop"
+            [ngStyle]="slotStyle(slot)"
+            (click)="onSlotClick($event, slot)"
+          >
+            <span class="photo-slot__label">{{ slot.crop?.name ?? '?' }}</span>
+            <button
+              class="photo-slot__remove"
+              aria-label="Remove slot"
+              (click)="onRemoveClick($event, slot)"
+            >×</button>
+          </div>
+        }
+
+        @if (drawing && preview) {
+          <div class="photo-slot photo-slot--preview" [ngStyle]="previewStyle()"></div>
+        }
+      </div>
+
+      @if (unplacedSlots.length > 0) {
+        <div class="photo-unplaced-panel">
+          <span class="photo-unplaced-panel__label">UNPLACED</span>
+          <div class="photo-unplaced-panel__chips">
+            @for (slot of unplacedSlots; track slot.id) {
+              <button
+                type="button"
+                class="photo-unplaced-chip"
+                [class.photo-unplaced-chip--selected]="selectedUnplacedSlot?.id === slot.id"
+                (click)="selectUnplacedSlot(slot)"
+                [attr.aria-label]="'Place ' + (slot.crop?.name ?? 'crop') + ' on photo'"
+                [attr.aria-pressed]="selectedUnplacedSlot?.id === slot.id"
+              >
+                <span class="photo-unplaced-chip__name">{{ slot.crop?.name ?? '?' }}</span>
+                @if (selectedUnplacedSlot?.id === slot.id) {
+                  <span class="photo-unplaced-chip__hint">PLACE</span>
+                }
+              </button>
+            }
+          </div>
+          <span class="photo-unplaced-panel__counter">
+            {{ slots.length }} of {{ slots.length + unplacedSlots.length }} placed
+          </span>
         </div>
-      }
-
-      @if (drawing && preview) {
-        <div class="photo-slot photo-slot--preview" [ngStyle]="previewStyle()"></div>
       }
     </div>
   `,
@@ -56,14 +84,18 @@ export class PlotPhotoOverlayComponent implements OnDestroy {
   @Input() slots: PlotSlot[] = [];
   @Input() isSeedlingTray = false;
 
+  @Input() unplacedSlots: PlotSlot[] = [];
+
   @Output() slotClicked = new EventEmitter<PlotSlot>();
   @Output() slotRemoveRequested = new EventEmitter<PlotSlot>();
   @Output() newRectDrawn = new EventEmitter<PhotoRect>();
+  @Output() slotPlaced = new EventEmitter<{ slot: PlotSlot; rect: PhotoRect }>();
 
   @ViewChild('container', { static: true }) containerRef!: ElementRef<HTMLDivElement>;
 
   private readonly cdr = inject(ChangeDetectorRef);
 
+  selectedUnplacedSlot: PlotSlot | null = null;
   drawing = false;
   preview: PhotoRect | null = null;
 
@@ -123,9 +155,20 @@ export class PlotPhotoOverlayComponent implements OnDestroy {
     const curY = (event.clientY - rect.top) / rect.height * 100;
     const final = this.buildRect(this.startX, this.startY, curX, curY);
     this.cancelDraw();
-    if (final.w_pct >= 5 && final.h_pct >= 5) {
-      this.newRectDrawn.emit(final);
+    if (final.w_pct >= 2 && final.h_pct >= 2) {
+      if (this.selectedUnplacedSlot) {
+        this.slotPlaced.emit({ slot: this.selectedUnplacedSlot, rect: final });
+        this.selectedUnplacedSlot = null;
+        this.cdr.markForCheck();
+      } else {
+        this.newRectDrawn.emit(final);
+      }
     }
+  }
+
+  selectUnplacedSlot(slot: PlotSlot): void {
+    this.selectedUnplacedSlot = this.selectedUnplacedSlot?.id === slot.id ? null : slot;
+    this.cdr.markForCheck();
   }
 
   cancelDraw(): void {
