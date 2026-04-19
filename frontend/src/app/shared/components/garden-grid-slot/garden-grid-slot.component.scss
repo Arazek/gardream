@@ -150,6 +150,26 @@
     pointer-events: none;
   }
 
+  // Photo placement badge
+  &__photo-badge {
+    position: absolute;
+    bottom: var(--space-1);
+    right: var(--space-1);
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: var(--radius-full);
+    background: var(--color-info-container);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+
+    .material-symbols-outlined {
+      font-size: var(--icon-size-sm);
+      color: var(--color-info);
+    }
+  }
+
   // Empty slot button
   &__empty-btn {
     width: 100%;

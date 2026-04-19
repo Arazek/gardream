@@ -41,6 +41,11 @@ const LONG_PRESS_MS = 600;
               {{ germinationDate ? '🌱' : '🌰' }}
             </span>
           }
+          @if (hasPhotoPlacement) {
+            <span class="garden-grid-slot__photo-badge" aria-label="Also placed on plot photo">
+              <span class="material-symbols-outlined">photo_camera</span>
+            </span>
+          }
         </button>
         <button
           type="button"
@@ -73,6 +78,7 @@ export class GardenGridSlotComponent {
   @Input() crop?: GridCropInfo;
   @Input() empty = false;
   @Input() germinationDate?: string | null;
+  @Input() hasPhotoPlacement = false;
   @Output() slotClicked = new EventEmitter<void>();
   @Output() slotRemoveRequested = new EventEmitter<void>();
 
