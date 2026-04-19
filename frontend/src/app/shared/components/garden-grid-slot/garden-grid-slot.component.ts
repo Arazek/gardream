@@ -43,7 +43,7 @@ const LONG_PRESS_MS = 600;
           }
           @if (hasPhotoPlacement) {
             <span class="garden-grid-slot__photo-badge" aria-label="Also placed on plot photo">
-              <span class="material-symbols-outlined">photo_camera</span>
+              <span class="material-symbols-outlined" aria-hidden="true">photo_camera</span>
             </span>
           }
         </button>
