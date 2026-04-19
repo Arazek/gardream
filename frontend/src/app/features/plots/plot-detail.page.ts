@@ -25,7 +25,7 @@ interface GridCell {
   col: number;
   slotId?: string;
   germination_date?: string | null;
-  hasPhotoPlacement?: boolean;
+  hasPhotoPlacement: boolean;
   crop?: GridCropInfo;
 }
 
@@ -89,7 +89,7 @@ interface GridCell {
                     [crop]="cell.crop"
                     [empty]="!cell.crop"
                     [germinationDate]="isSeedlingTray() ? cell.germination_date : undefined"
-                    [hasPhotoPlacement]="cell.hasPhotoPlacement ?? false"
+                    [hasPhotoPlacement]="cell.hasPhotoPlacement"
                     (slotClicked)="onSlotClick(plot.id, cell)"
                     (slotRemoveRequested)="onRemoveSlot(plot.id, cell)"
                   />
@@ -290,7 +290,7 @@ export class PlotDetailPage implements OnInit {
       this.store.dispatch(PlotsActions.updateSlot({
         plotId,
         slotId: slot.id,
-        payload: { x_pct: null, y_pct: null, w_pct: null, h_pct: null } as Partial<PlotSlot>,
+        payload: { x_pct: null, y_pct: null, w_pct: null, h_pct: null },
       }));
       return;
     }
