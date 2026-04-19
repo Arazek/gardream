@@ -159,7 +159,6 @@ export class PlotPhotoOverlayComponent implements OnDestroy {
       if (this.selectedUnplacedSlot) {
         this.slotPlaced.emit({ slot: this.selectedUnplacedSlot, rect: final });
         this.selectedUnplacedSlot = null;
-        this.cdr.markForCheck();
       } else {
         this.newRectDrawn.emit(final);
       }
