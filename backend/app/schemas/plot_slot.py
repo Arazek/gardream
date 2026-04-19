@@ -23,6 +23,10 @@ class PlotSlotCreate(BaseModel):
 class PlotSlotUpdate(BaseModel):
     crop_id: str | None = None
     sow_date: date | None = None
+    x_pct: float | None = None
+    y_pct: float | None = None
+    w_pct: float | None = None
+    h_pct: float | None = None
     watering_days_override: list[int] | None = None
     watering_interval_weeks: int | None = None
     fertilise_days_override: list[int] | None = None
