@@ -7,8 +7,12 @@ from app.schemas.crop import CropResponse
 
 class PlotSlotCreate(BaseModel):
     crop_id: str
-    row: int
-    col: int
+    row: int | None = None
+    col: int | None = None
+    x_pct: float | None = None
+    y_pct: float | None = None
+    w_pct: float | None = None
+    h_pct: float | None = None
     sow_date: date
     watering_days_override: list[int] | None = None
     watering_interval_weeks: int = 1
@@ -30,8 +34,12 @@ class PlotSlotResponse(BaseModel):
     id: str
     plot_id: str
     crop_id: str
-    row: int
-    col: int
+    row: int | None = None
+    col: int | None = None
+    x_pct: float | None = None
+    y_pct: float | None = None
+    w_pct: float | None = None
+    h_pct: float | None = None
     sow_date: date
     watering_days_override: list[int] | None = None
     watering_interval_weeks: int = 1

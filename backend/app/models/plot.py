@@ -38,6 +38,7 @@ class Plot(Base):
     fertilise_days: Mapped[list[int]] = mapped_column(
         ARRAY(Integer), nullable=False, default=list, server_default="{}"
     )
+    photo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

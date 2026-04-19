@@ -122,6 +122,33 @@ async def delete_plot(
     await db.commit()
 
 
+@router.post("/{plot_id}/photo", response_model=PlotResponse)
+async def upload_plot_photo(
+    plot_id: str,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    plot = await db.get(Plot, plot_id)
+    if not plot or plot.user_id != user["sub"]:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plot not found")
+
+    uploads_dir = f"/app/uploads/plots/{plot_id}"
+    os.makedirs(uploads_dir, exist_ok=True)
+
+    ext = os.path.splitext(file.filename or "photo.jpg")[1] or ".jpg"
+    filename = f"photo_{uuid.uuid4()}{ext}"
+    file_path = os.path.join(uploads_dir, filename)
+    contents = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(contents)
+
+    plot.photo_url = f"/uploads/plots/{plot_id}/{filename}"
+    await db.commit()
+    await db.refresh(plot)
+    return plot
+
+
 # ── Plot slots (nested under /plots/{plot_id}/slots) ──────────────────────────
 
 @router.get("/{plot_id}/slots", response_model=list[PlotSlotDetailResponse])
@@ -153,20 +180,19 @@ async def create_slot(
     if not plot or plot.user_id != user["sub"]:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plot not found")
 
-    # Enforce grid bounds
-    if payload.row >= plot.rows or payload.col >= plot.cols:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Row/col out of plot bounds")
-
-    # Enforce unique position
-    existing = await db.execute(
-        select(PlotSlot).where(
-            PlotSlot.plot_id == plot_id,
-            PlotSlot.row == payload.row,
-            PlotSlot.col == payload.col,
+    # Enforce grid bounds and uniqueness only for grid slots (photo slots use pct coords)
+    if payload.row is not None:
+        if payload.row >= plot.rows or payload.col >= plot.cols:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Row/col out of plot bounds")
+        existing = await db.execute(
+            select(PlotSlot).where(
+                PlotSlot.plot_id == plot_id,
+                PlotSlot.row == payload.row,
+                PlotSlot.col == payload.col,
+            )
         )
-    )
-    if existing.scalar_one_or_none():
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Slot already occupied")
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Slot already occupied")
 
     # Load crop for task generation
     crop = await db.get(Crop, payload.crop_id)
