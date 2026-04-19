@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS plots (
   watering_days TEXT NOT NULL DEFAULT '[]',
   fertilise_days TEXT NOT NULL DEFAULT '[]',
   crop_count INTEGER NOT NULL DEFAULT 0,
+  photo_url TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   synced_at INTEGER
@@ -41,8 +42,12 @@ CREATE TABLE IF NOT EXISTS plot_slots (
   id TEXT PRIMARY KEY,
   plot_id TEXT NOT NULL,
   crop_id TEXT NOT NULL,
-  row INTEGER NOT NULL,
-  col INTEGER NOT NULL,
+  row INTEGER,
+  col INTEGER,
+  x_pct REAL,
+  y_pct REAL,
+  w_pct REAL,
+  h_pct REAL,
   sow_date TEXT NOT NULL,
   watering_days_override TEXT,
   watering_interval_weeks INTEGER NOT NULL DEFAULT 1,
@@ -136,12 +141,22 @@ export class LocalDbService {
         toVersion: 2,
         statements: ['ALTER TABLE plot_slots ADD COLUMN germination_date TEXT;'],
       },
+      {
+        toVersion: 3,
+        statements: [
+          'ALTER TABLE plots ADD COLUMN photo_url TEXT;',
+          'ALTER TABLE plot_slots ADD COLUMN x_pct REAL;',
+          'ALTER TABLE plot_slots ADD COLUMN y_pct REAL;',
+          'ALTER TABLE plot_slots ADD COLUMN w_pct REAL;',
+          'ALTER TABLE plot_slots ADD COLUMN h_pct REAL;',
+        ],
+      },
     ]);
     this.db = await this.sqlite.createConnection(
       'gardream',
       false,
       'no-encryption',
-      2,
+      3,
       false
     );
     await this.db.open();
@@ -239,16 +254,17 @@ export class LocalDbService {
   async upsertPlots(plots: Plot[]): Promise<void> {
     for (const p of plots) {
       await this.run(
-        `INSERT INTO plots (id, name, plot_type, rows, cols, substrate, watering_days, fertilise_days, crop_count, created_at, updated_at, synced_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO plots (id, name, plot_type, rows, cols, substrate, watering_days, fertilise_days, crop_count, photo_url, created_at, updated_at, synced_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(id) DO UPDATE SET
            name=excluded.name, plot_type=excluded.plot_type, rows=excluded.rows, cols=excluded.cols,
            substrate=excluded.substrate, watering_days=excluded.watering_days,
            fertilise_days=excluded.fertilise_days, crop_count=excluded.crop_count,
+           photo_url=excluded.photo_url,
            updated_at=excluded.updated_at, synced_at=excluded.synced_at`,
         [p.id, p.name, p.plot_type, p.rows, p.cols, p.substrate ?? null,
          JSON.stringify(p.watering_days), JSON.stringify(p.fertilise_days),
-         p.crop_count, p.created_at, p.updated_at, Date.now()]
+         p.crop_count, p.photo_url ?? null, p.created_at, p.updated_at, Date.now()]
       );
     }
   }
@@ -283,20 +299,23 @@ export class LocalDbService {
   async upsertSlots(slots: PlotSlot[]): Promise<void> {
     for (const s of slots) {
       await this.run(
-        `INSERT INTO plot_slots (id, plot_id, crop_id, row, col, sow_date,
+        `INSERT INTO plot_slots (id, plot_id, crop_id, row, col, x_pct, y_pct, w_pct, h_pct, sow_date,
            watering_days_override, watering_interval_weeks,
            fertilise_days_override, fertilise_interval_weeks,
            germination_date, created_at, updated_at, synced_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(id) DO UPDATE SET
            crop_id=excluded.crop_id, sow_date=excluded.sow_date,
+           x_pct=excluded.x_pct, y_pct=excluded.y_pct, w_pct=excluded.w_pct, h_pct=excluded.h_pct,
            watering_days_override=excluded.watering_days_override,
            watering_interval_weeks=excluded.watering_interval_weeks,
            fertilise_days_override=excluded.fertilise_days_override,
            fertilise_interval_weeks=excluded.fertilise_interval_weeks,
            germination_date=excluded.germination_date,
            updated_at=excluded.updated_at, synced_at=excluded.synced_at`,
-        [s.id, s.plot_id, s.crop_id, s.row, s.col, s.sow_date,
+        [s.id, s.plot_id, s.crop_id, s.row ?? null, s.col ?? null,
+         s.x_pct ?? null, s.y_pct ?? null, s.w_pct ?? null, s.h_pct ?? null,
+         s.sow_date,
          s.watering_days_override ? JSON.stringify(s.watering_days_override) : null,
          s.watering_interval_weeks,
          s.fertilise_days_override ? JSON.stringify(s.fertilise_days_override) : null,
@@ -559,5 +578,15 @@ export class LocalDbService {
       photo_log: JSON.parse(r['photo_log'] as string),
       milestones: JSON.parse(r['milestones'] as string),
     };
+  }
+
+  async getAllSpecimens(): Promise<Specimen[]> {
+    const rows = await this.query<Record<string, unknown>>(`SELECT * FROM specimens`);
+    return rows.map(r => ({
+      ...(r as any),
+      note_entries: JSON.parse(r['note_entries'] as string),
+      photo_log: JSON.parse(r['photo_log'] as string),
+      milestones: JSON.parse(r['milestones'] as string),
+    }));
   }
 }

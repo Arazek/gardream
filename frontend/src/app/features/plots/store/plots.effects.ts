@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { PlotsActions } from './plots.actions';
 import { LocalDbService } from '../../../core/db/local-db.service';
 import { TaskGeneratorService } from '../../../core/task-generator/task-generator.service';
+import { SyncService } from '../../../core/sync/sync.service';
 import type { Plot, PlotSlot } from './plots.state';
 
 @Injectable()
@@ -13,6 +14,7 @@ export class PlotsEffects {
   private actions$ = inject(Actions);
   private db = inject(LocalDbService);
   private taskGen = inject(TaskGeneratorService);
+  private sync = inject(SyncService);
 
   loadPlots$ = createEffect(() =>
     this.actions$.pipe(
@@ -42,18 +44,19 @@ export class PlotsEffects {
           watering_days: payload.watering_days ?? [],
           fertilise_days: payload.fertilise_days ?? [],
           crop_count: 0,
+          photo_url: null,
           created_at: now,
           updated_at: now,
         };
         return from(
-          this.db.upsertPlots([plot]).then(() =>
-            this.db.addToOutbox({
+          this.db.upsertPlots([plot])
+            .then(() => this.db.addToOutbox({
               entity_type: 'plot',
               entity_id: plot.id,
               operation: 'create',
               payload: JSON.stringify(payload),
-            })
-          )
+            }))
+            .then(() => this.sync.push())
         ).pipe(
           map(() => PlotsActions.createPlotSuccess({ plot })),
           catchError(err => of(PlotsActions.createPlotFailure({ error: err.message }))),
@@ -74,6 +77,7 @@ export class PlotsEffects {
               operation: 'update',
               payload: JSON.stringify(payload),
             }))
+            .then(() => this.sync.push())
             .then(() => this.db.getAllPlots())
             .then(plots => plots.find(p => p.id === id)!)
         ).pipe(
@@ -89,14 +93,14 @@ export class PlotsEffects {
       ofType(PlotsActions.deletePlot),
       mergeMap(({ id }) =>
         from(
-          this.db.deletePlotLocal(id).then(() =>
-            this.db.addToOutbox({
+          this.db.deletePlotLocal(id)
+            .then(() => this.db.addToOutbox({
               entity_type: 'plot',
               entity_id: id,
               operation: 'delete',
               payload: JSON.stringify({ id }),
-            })
-          )
+            }))
+            .then(() => this.sync.push())
         ).pipe(
           map(() => PlotsActions.deletePlotSuccess({ id })),
           catchError(err => of(PlotsActions.deletePlotFailure({ error: err.message }))),
@@ -126,8 +130,12 @@ export class PlotsEffects {
           id: `tmp_${uuidv4()}`,
           plot_id: plotId,
           crop_id: payload.crop_id,
-          row: payload.row,
-          col: payload.col,
+          row: payload.row ?? null,
+          col: payload.col ?? null,
+          x_pct: payload.x_pct ?? null,
+          y_pct: payload.y_pct ?? null,
+          w_pct: payload.w_pct ?? null,
+          h_pct: payload.h_pct ?? null,
           sow_date: payload.sow_date,
           watering_days_override: payload.watering_days_override ?? null,
           watering_interval_weeks: payload.watering_interval_weeks ?? 1,
@@ -139,20 +147,23 @@ export class PlotsEffects {
         };
         return from(
           this.db.insertSlot(slot)
-            .then(() => this.db.addToOutbox({
-              entity_type: 'plot_slot',
-              entity_id: slot.id,
-              operation: 'create',
-              payload: JSON.stringify({ plotId, ...payload }),
-            }))
             .then(async () => {
-              const plots = await this.db.getAllPlots();
-              const plot = plots.find(p => p.id === plotId);
+              const plot = (await this.db.getAllPlots()).find(p => p.id === plotId);
               const crop = await this.db.getCropById(payload.crop_id);
+              if (crop) {
+                await this.db.upsertCrops([crop]);
+              }
               if (plot && crop) {
                 const tasks = this.taskGen.generate(slot, plot, crop, '');
                 await this.db.insertTasksBulk(tasks);
               }
+              await this.db.addToOutbox({
+                entity_type: 'plot_slot',
+                entity_id: slot.id,
+                operation: 'create',
+                payload: JSON.stringify({ plotId, ...payload }),
+              });
+              await this.sync.push();
               return crop ?? undefined;
             })
         ).pipe(
@@ -175,6 +186,7 @@ export class PlotsEffects {
               operation: 'update',
               payload: JSON.stringify({ plotId, ...payload }),
             }))
+            .then(() => this.sync.push())
             .then(() => this.db.getSlotsByPlot(plotId))
             .then(slots => slots.find(s => s.id === slotId)!)
         ).pipe(
@@ -197,6 +209,7 @@ export class PlotsEffects {
               operation: 'delete',
               payload: JSON.stringify({ plotId, slotId }),
             }))
+            .then(() => this.sync.push())
         ).pipe(
           map(() => PlotsActions.deleteSlotSuccess({ plotId, slotId })),
           catchError(err => of(PlotsActions.deleteSlotFailure({ error: err.message }))),
@@ -218,6 +231,7 @@ export class PlotsEffects {
               operation: 'update',
               payload: JSON.stringify({ plotId, germination_date: today }),
             }))
+            .then(() => this.sync.push())
             .then(() => this.db.getSlotsByPlot(plotId))
             .then(slots => slots.find(s => s.id === slotId)!)
         ).pipe(

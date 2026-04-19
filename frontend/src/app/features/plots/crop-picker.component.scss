@@ -28,6 +28,36 @@
   padding: var(--space-4);
 }
 
+.crop-picker-sow-date {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+
+  &__label {
+    @include type-label-sm;
+    color: var(--color-on-surface-variant);
+    letter-spacing: 0.08em;
+  }
+
+  &__input {
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-outline-variant);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-container);
+    color: var(--color-on-surface);
+    font-size: 1rem;
+    font-family: inherit;
+    color-scheme: dark;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+  }
+}
+
 .crop-picker-skeleton {
   height: 9rem;
   border-radius: var(--radius-lg);

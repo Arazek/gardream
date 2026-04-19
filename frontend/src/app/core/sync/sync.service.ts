@@ -102,6 +102,14 @@ export class SyncService implements OnDestroy {
           await this.plotsApi.updateSlot(payload.plotId, entry.entity_id, payload).toPromise();
         } else if (entry.operation === 'delete') {
           await this.plotsApi.deleteSlot(payload.plotId, entry.entity_id).toPromise();
+        } else if (entry.operation === 'transplant') {
+          const newSlot = await this.plotsApi.transplantSlot(
+            payload.plotId, entry.entity_id,
+            { target_plot_id: payload.targetPlotId, target_row: payload.targetRow, target_col: payload.targetCol }
+          ).toPromise();
+          if (newSlot && payload.newSlotId?.startsWith('tmp_')) {
+            await this.db.rewriteTmpId(payload.newSlotId, newSlot.id, 'plot_slot');
+          }
         }
         break;
       case 'task':
@@ -126,6 +134,11 @@ export class SyncService implements OnDestroy {
     for (const plot of plots) {
       const slots = await this.plotsApi.getSlots(plot.id).toPromise() ?? [];
       await this.db.upsertSlots(slots);
+      // Also upsert any crops embedded in slots (ensures new crops are cached)
+      const cropsInSlots = slots.filter(s => s.crop).map(s => s.crop!);
+      if (cropsInSlots.length > 0) {
+        await this.db.upsertCrops(cropsInSlots);
+      }
       this.store.dispatch(PlotsActions.loadSlotsSuccess({ plotId: plot.id, slots }));
     }
 
@@ -135,14 +148,11 @@ export class SyncService implements OnDestroy {
     await this.db.upsertTasks(tasks);
     this.store.dispatch(TasksActions.loadTasksSuccess({ tasks }));
 
-    // Crops — only pull if not cached
-    const cached = await this.db.getSyncMeta('crops_version');
-    if (!cached) {
-      const crops = await this.cropsApi.getAll().toPromise() ?? [];
-      await this.db.upsertCrops(crops);
-      await this.db.setSyncMeta('crops_version', '1');
-      this.store.dispatch(CropsActions.loadCropsSuccess({ crops }));
-    }
+    // Always pull crops to capture any new ones added server-side
+    const crops = await this.cropsApi.getAll().toPromise() ?? [];
+    await this.db.upsertCrops(crops);
+    await this.db.setSyncMeta('crops_version', '1');
+    this.store.dispatch(CropsActions.loadCropsSuccess({ crops }));
 
     await this.db.setSyncMeta('last_pull_at', Date.now().toString());
     await this.rescheduleNotifications();

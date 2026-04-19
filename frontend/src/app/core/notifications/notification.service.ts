@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed, effect, runInInjectionContext, Injector } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { selectTomorrowRainExpected, selectTomorrowPrecipitation } from '../../store/weather/weather.selectors';
-import { selectAllPendingTasks, selectOverdueTasks, selectOverdueWaterTasksWithLabels } from '../../features/tasks/store/tasks.selectors';
+import { selectOverdueTasks, selectOverdueWaterTasksWithLabels } from '../../features/tasks/store/tasks.selectors';
 import { selectCropsNearHarvest } from '../../features/plots/store/plots.selectors';
 import { selectInAppAlerts } from '../../store/notifications/notifications.selectors';
 
@@ -98,8 +98,8 @@ export class NotificationService {
       }
     });
 
-    // Watch overdue watering tasks — one notification per crop
-    const waterNotifIds = new Map<string, string>(); // taskId → notifId
+    // Watch overdue watering tasks — one notification per slot (deduplicated by plot_slot_id)
+    const waterNotifIds = new Map<string, string>(); // slotId → notifId
     effect(() => {
       const inAppAlertsEnabled = this.store.selectSignal(selectInAppAlerts)();
       if (!inAppAlertsEnabled) {
@@ -108,18 +108,19 @@ export class NotificationService {
         return;
       }
 
-      const allTasksRaw = this.store.selectSignal(selectAllPendingTasks)();
-      const overdue = this.store.selectSignal(selectOverdueTasks)();
       const waterTasks = this.store.selectSignal(selectOverdueWaterTasksWithLabels)();
-      console.log('[NotifService] all tasks count:', allTasksRaw.length);
-      console.log('[NotifService] overdue tasks:', overdue);
-      console.log('[NotifService] water tasks:', waterTasks);
-      const currentTaskIds = new Set(waterNotifIds.keys());
+      const currentSlotIds = new Set(waterNotifIds.keys());
 
+      // Deduplicate: one notification per slot regardless of how many overdue tasks exist
+      const seenSlots = new Set<string>();
       waterTasks.forEach(({ task, label }) => {
-        if (!waterNotifIds.has(task.id)) {
+        const slotId = task.plot_slot_id!;
+        if (seenSlots.has(slotId)) return;
+        seenSlots.add(slotId);
+
+        if (!waterNotifIds.has(slotId)) {
           const id = this.generateId();
-          waterNotifIds.set(task.id, id);
+          waterNotifIds.set(slotId, id);
           this.add({
             id,
             type: 'water',
@@ -130,12 +131,12 @@ export class NotificationService {
             read: false,
           });
         }
-        currentTaskIds.delete(task.id);
+        currentSlotIds.delete(slotId);
       });
 
-      currentTaskIds.forEach(oldTaskId => {
-        const id = waterNotifIds.get(oldTaskId);
-        if (id) { this.dismiss(id); waterNotifIds.delete(oldTaskId); }
+      currentSlotIds.forEach(oldSlotId => {
+        const id = waterNotifIds.get(oldSlotId);
+        if (id) { this.dismiss(id); waterNotifIds.delete(oldSlotId); }
       });
     });
 

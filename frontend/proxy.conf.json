@@ -1,0 +1,7 @@
+{
+  "/uploads": {
+    "target": "http://gardream-backend-1:8000",
+    "secure": false,
+    "changeOrigin": true
+  }
+}

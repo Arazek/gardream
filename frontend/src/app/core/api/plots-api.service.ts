@@ -46,6 +46,20 @@ export class PlotsApiService {
     return this.http.delete<void>(`${this.url}/${plotId}/slots/${slotId}`);
   }
 
+  transplantSlot(
+    plotId: string,
+    slotId: string,
+    payload: { target_plot_id: string; target_row: number; target_col: number }
+  ): Observable<PlotSlot> {
+    return this.http.post<PlotSlot>(`${this.url}/${plotId}/slots/${slotId}/transplant`, payload);
+  }
+
+  uploadPlotPhoto(plotId: string, file: File): Observable<Plot> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<Plot>(`${this.url}/${plotId}/photo`, form);
+  }
+
   updateSlotSchedule(
     plotId: string,
     slotId: string,

@@ -3,11 +3,13 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, from, map, mergeMap, of, switchMap } from 'rxjs';
 import { TasksActions } from './tasks.actions';
 import { LocalDbService } from '../../../core/db/local-db.service';
+import { SyncService } from '../../../core/sync/sync.service';
 
 @Injectable()
 export class TasksEffects {
   private actions$ = inject(Actions);
   private db = inject(LocalDbService);
+  private sync = inject(SyncService);
 
   loadAllPendingTasks$ = createEffect(() =>
     this.actions$.pipe(
@@ -50,6 +52,7 @@ export class TasksEffects {
               operation: 'update',
               payload: JSON.stringify(payload),
             }))
+            .then(() => this.sync.push())
             .then(() => this.db.getTaskById(id))
         ).pipe(
           map(task => TasksActions.updateTaskSuccess({ task })),
@@ -71,19 +74,31 @@ export class TasksEffects {
     )
   );
 
+  deleteOverdueTasks$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TasksActions.deleteOverdueTasks),
+      mergeMap(() =>
+        from(this.db.deleteOverdueTasks()).pipe(
+          map(ids => TasksActions.deleteOverdueTasksSuccess({ ids })),
+          catchError(err => of(TasksActions.deleteOverdueTasksFailure({ error: err.message }))),
+        )
+      )
+    )
+  );
+
   deleteTask$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TasksActions.deleteTask),
       mergeMap(({ id }) =>
         from(
-          this.db.deleteTaskLocal(id).then(() =>
-            this.db.addToOutbox({
+          this.db.deleteTaskLocal(id)
+            .then(() => this.db.addToOutbox({
               entity_type: 'task',
               entity_id: id,
               operation: 'delete',
               payload: JSON.stringify({ id }),
-            })
-          )
+            }))
+            .then(() => this.sync.push())
         ).pipe(
           map(() => TasksActions.deleteTaskSuccess({ id })),
           catchError(err => of(TasksActions.deleteTaskFailure({ error: err.message }))),

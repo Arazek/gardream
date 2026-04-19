@@ -13,6 +13,7 @@ export interface Plot {
   watering_days: number[];
   fertilise_days: number[];
   crop_count: number;
+  photo_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -37,8 +38,12 @@ export interface PlotSlot {
   id: string;
   plot_id: string;
   crop_id: string;
-  row: number;
-  col: number;
+  row?: number | null;
+  col?: number | null;
+  x_pct?: number | null;
+  y_pct?: number | null;
+  w_pct?: number | null;
+  h_pct?: number | null;
   sow_date: string;
   created_at: string;
   updated_at: string;
@@ -52,16 +57,18 @@ export interface PlotSlot {
 
 export interface PlotSlotCreate {
   crop_id: string;
-  row: number;
-  col: number;
+  row?: number | null;
+  col?: number | null;
+  x_pct?: number | null;
+  y_pct?: number | null;
+  w_pct?: number | null;
+  h_pct?: number | null;
   sow_date: string;
   watering_days_override?: number[] | null;
   watering_interval_weeks?: number;
   fertilise_days_override?: number[] | null;
   fertilise_interval_weeks?: number;
 }
-
-
 
 export interface PlotSlotUpdate {
   crop_id?: string;

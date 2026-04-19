@@ -6,7 +6,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 import { TopAppBarComponent, NavAction, PageContentComponent, PageBodyWrapperComponent } from '../../shared';
 import { NotificationService, AppNotification } from '../../core/notifications/notification.service';
+import { SyncService } from '../../core/sync/sync.service';
 import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
+import { LocalDbService } from '../../core/db/local-db.service';
 import { SpecimensActions } from './store/specimens.actions';
 import { selectSpecimenBySlotId, selectSpecimensLoading, selectSpecimensError } from './store/specimens.selectors';
 import { selectSelectedPlot, selectSelectedPlotSlots } from './store/plots.selectors';
@@ -199,6 +201,8 @@ export class SpecimenDetailPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly injector = inject(Injector);
+  private readonly db = inject(LocalDbService);
+  private readonly sync = inject(SyncService);
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
@@ -228,7 +232,7 @@ export class SpecimenDetailPage implements OnInit {
     const slotId = this.route.snapshot.paramMap.get('slotId');
     const slot = slots.find(s => s.id === slotId);
     if (!plot || !slot) return 'Specimen';
-    const coords = `${slot.row + 1},${slot.col + 1}`;
+    const coords = slot.row != null ? `${slot.row + 1},${(slot.col ?? 0) + 1}` : 'photo';
     const cropName = slot.crop?.name ?? '';
     return `${plot.name} (${coords}) - ${cropName}`;
   });
@@ -250,15 +254,42 @@ export class SpecimenDetailPage implements OnInit {
   }
 
   ngOnInit(): void {
-    const plotId = this.route.snapshot.paramMap.get('id');
-    const slotId = this.route.snapshot.paramMap.get('slotId');
-    if (plotId && slotId) {
-      this.store.dispatch(SpecimensActions.loadSpecimen({ plotId, slotId }));
-      // Ensure plot + slots are in store for title and sow date (needed on direct reload)
-      this.store.dispatch(PlotsActions.loadPlots());
-      this.store.dispatch(PlotsActions.selectPlot({ id: plotId }));
-      this.store.dispatch(PlotsActions.loadSlots({ plotId }));
+    const plotId = this.route.snapshot.paramMap.get('id') ?? '';
+    const slotId = this.route.snapshot.paramMap.get('slotId') ?? '';
+
+    if (!plotId || !slotId) return;
+
+    // If slot ID starts with tmp_, redirect after sync
+    if (slotId.startsWith('tmp_')) {
+      this.handleTempSlot(plotId, slotId);
+      return;
     }
+
+    this.loadSpecimenData(plotId, slotId);
+  }
+
+  private async handleTempSlot(plotId: string, tmpSlotId: string): Promise<void> {
+    try {
+      await this.sync.sync();
+      const slots = await this.db.getSlotsByPlot(plotId);
+      const slot = slots.find(s => s.id.endsWith(tmpSlotId.replace('tmp_', '')));
+      if (slot) {
+        this.router.navigate(['/tabs/plots', plotId, 'slots', slot.id, 'specimen'], {
+          replaceUrl: true,
+        });
+        return;
+      }
+    } catch {
+      // DB not ready or sync failed — fall through to load with tmp_ ID
+    }
+    this.loadSpecimenData(plotId, tmpSlotId);
+  }
+
+  private loadSpecimenData(plotId: string, slotId: string): void {
+    this.store.dispatch(SpecimensActions.loadSpecimen({ plotId, slotId }));
+    this.store.dispatch(PlotsActions.loadPlots());
+    this.store.dispatch(PlotsActions.selectPlot({ id: plotId }));
+    this.store.dispatch(PlotsActions.loadSlots({ plotId }));
   }
 
   onTopBarAction(id: string): void {

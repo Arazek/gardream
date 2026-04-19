@@ -80,6 +80,16 @@ const CATEGORIES: CategoryOption[] = [
         </div>
       } @else {
         <div class="crop-picker-schedule">
+          <div class="crop-picker-sow-date">
+            <label class="crop-picker-sow-date__label">DATE PLANTED</label>
+            <input
+              class="crop-picker-sow-date__input"
+              type="date"
+              [value]="sowDate"
+              [max]="today"
+              (change)="onSowDateChange($event)"
+            />
+          </div>
           <app-schedule-section
             label="WATERING"
             toggleLabel="Use plot default"
@@ -122,6 +132,9 @@ export class CropPickerComponent implements OnInit {
 
   selectedCrop: Crop | null = null;
 
+  readonly today = new Date().toISOString().slice(0, 10);
+  sowDate = this.today;
+
   wateringSchedule: ScheduleValue = { days: null, intervalWeeks: 1 };
   fertiliseSchedule: ScheduleValue = { days: null, intervalWeeks: 1 };
 
@@ -159,6 +172,10 @@ export class CropPickerComponent implements OnInit {
     this.selectedCrop = null;
   }
 
+  onSowDateChange(event: Event): void {
+    this.sowDate = (event.target as HTMLInputElement).value || this.today;
+  }
+
   onWateringChange(v: ScheduleValue): void {
     this.wateringSchedule = v;
   }
@@ -173,6 +190,7 @@ export class CropPickerComponent implements OnInit {
       crop: this.selectedCrop,
       row: this.row,
       col: this.col,
+      sowDate: this.sowDate,
       wateringSchedule: this.wateringSchedule,
       fertiliseSchedule: this.fertiliseSchedule,
     });

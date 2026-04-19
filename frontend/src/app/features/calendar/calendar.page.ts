@@ -11,7 +11,7 @@ import { NotificationService, AppNotification } from '../../core/notifications/n
 import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import { BottomSheetService } from '../../shared/services/bottom-sheet.service';
 import { TasksActions } from '../tasks/store/tasks.actions';
-import { selectTasksWithLabels, selectTasksLoading } from '../tasks/store/tasks.selectors';
+import { selectTasksWithLabels, selectTasksLoading, selectAllPendingTasks } from '../tasks/store/tasks.selectors';
 import { Task, TaskCreate } from '../tasks/store/tasks.state';
 import { TaskCreateComponent } from './task-create.component';
 
@@ -134,9 +134,14 @@ function buildMonthGrid(year: number, month: number): CalDay[] {
                 <app-filter-chip label="Pending" [active]="filter === 'pending'" (toggled)="setFilter('pending')" />
                 <app-filter-chip label="Done"    [active]="filter === 'done'"    (toggled)="setFilter('done')" />
               </div>
-              @if (allTasks().length > 0) {
-                <button class="cal-mark-all-btn" (click)="markAllDone()">Mark all done</button>
-              }
+              <div class="cal-actions-row">
+                @if (allTasks().length > 0) {
+                  <button class="cal-mark-all-btn" (click)="markAllDone()">Mark all done</button>
+                }
+                @if (hasOverdueTasks()) {
+                  <button class="cal-delete-overdue-btn" (click)="deleteOverdue()">Clear overdue</button>
+                }
+              </div>
             </div>
 
             <!-- Selected date label -->
@@ -215,11 +220,17 @@ export class CalendarPage implements OnInit {
   // Signals
   readonly tasksLoading = toSignal(this.store.select(selectTasksLoading), { initialValue: true });
   readonly allTasksStore = toSignal(this.store.select(selectTasksWithLabels), { initialValue: [] });
+  readonly pendingTasksStore = toSignal(this.store.select(selectAllPendingTasks), { initialValue: [] });
 
   // Computed filtered tasks based on selectedDate
   readonly allTasks = computed(() => {
     const tasks = this.allTasksStore();
     return tasks.filter(t => t.due_date === this.selectedDate);
+  });
+
+  readonly hasOverdueTasks = computed(() => {
+    const today = toISO(new Date());
+    return this.pendingTasksStore().some(t => !t.completed && t.due_date < today);
   });
 
   constructor() {
@@ -290,6 +301,10 @@ export class CalendarPage implements OnInit {
     if (ids.length > 0) {
       this.store.dispatch(TasksActions.markTasksCompleted({ ids }));
     }
+  }
+
+  deleteOverdue(): void {
+    this.store.dispatch(TasksActions.deleteOverdueTasks());
   }
 
   async openAddTask(): Promise<void> {
