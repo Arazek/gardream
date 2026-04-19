@@ -36,6 +36,30 @@
   background: var(--color-secondary-container);
   border-radius: var(--radius-full);
   padding: var(--space-1) var(--space-3);
+
+  &--toggle {
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--color-primary);
+    background: var(--color-primary-fixed);
+    transition: background-color var(--duration-quick) var(--ease-standard);
+
+    .material-symbols-outlined {
+      font-size: var(--icon-size-sm);
+    }
+
+    &:hover {
+      background: var(--color-primary-fixed-dim);
+    }
+
+    &:focus-visible {
+      outline: 0.125rem solid var(--color-primary);
+      outline-offset: 0.125rem;
+    }
+  }
 }
 
 .plot-grid-scroll {

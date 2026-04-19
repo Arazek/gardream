@@ -62,8 +62,19 @@ interface GridCell {
           @if (isSeedlingTray()) {
             <span class="plot-info__chip plot-info__chip--seedling">🌱 Seedling Tray</span>
           }
-          @if (isPhotoMode()) {
-            <span class="plot-info__chip">📷 Photo mode</span>
+          @if (hasPhoto()) {
+            <button
+              class="plot-info__chip plot-info__chip--toggle"
+              (click)="showPhotoMode = !showPhotoMode"
+              [attr.aria-pressed]="showPhotoMode"
+              aria-label="Toggle photo mode"
+            >
+              @if (showPhotoMode) {
+                <span class="material-symbols-outlined">grid_on</span> Grid view
+              } @else {
+                <span class="material-symbols-outlined">photo_camera</span> Photo view
+              }
+            </button>
           }
         </div>
 
@@ -116,6 +127,7 @@ export class PlotDetailPage implements OnInit {
   @ViewChild('photoInput') photoInputRef!: ElementRef<HTMLInputElement>;
 
   notificationCentreOpen = false;
+  showPhotoMode = true;
 
   readonly topBarActions = computed<NavAction[]>(() => [
     { id: 'add_photo', icon: 'add_a_photo', label: 'Upload plot photo' },
@@ -128,7 +140,8 @@ export class PlotDetailPage implements OnInit {
   readonly slots = toSignal(this.store.select(selectSelectedPlotSlots), { initialValue: [] });
   readonly slotsLoading = toSignal(this.store.select(selectSlotsLoading), { initialValue: true });
   readonly isSeedlingTray = computed(() => this.plot()?.plot_type === 'seedling_tray');
-  readonly isPhotoMode = computed(() => !!this.plot()?.photo_url);
+  readonly hasPhoto = computed(() => !!this.plot()?.photo_url);
+  readonly isPhotoMode = computed(() => this.hasPhoto() && this.showPhotoMode);
   readonly uploadsBase = environment.uploadsUrl;
   readonly photoSlots = computed(() => this.slots().filter(s => s.x_pct != null));
   readonly unplacedSlots = computed(() =>
