@@ -25,6 +25,7 @@ interface GridCell {
   col: number;
   slotId?: string;
   germination_date?: string | null;
+  hasPhotoPlacement?: boolean;
   crop?: GridCropInfo;
 }
 
@@ -70,10 +71,12 @@ interface GridCell {
           <app-plot-photo-overlay
             [photoUrl]="uploadsBase + plot.photo_url!"
             [slots]="photoSlots()"
+            [unplacedSlots]="unplacedSlots()"
             [isSeedlingTray]="isSeedlingTray()"
             (slotClicked)="onPhotoSlotClick(plot.id, $event)"
             (slotRemoveRequested)="onRemovePhotoSlot(plot.id, $event)"
             (newRectDrawn)="onNewPhotoRect(plot.id, $event)"
+            (slotPlaced)="onSlotPlacedOnPhoto(plot.id, $event)"
           />
         } @else {
           @if (slotsLoading()) {
@@ -86,6 +89,7 @@ interface GridCell {
                     [crop]="cell.crop"
                     [empty]="!cell.crop"
                     [germinationDate]="isSeedlingTray() ? cell.germination_date : undefined"
+                    [hasPhotoPlacement]="cell.hasPhotoPlacement ?? false"
                     (slotClicked)="onSlotClick(plot.id, cell)"
                     (slotRemoveRequested)="onRemoveSlot(plot.id, cell)"
                   />
@@ -127,6 +131,9 @@ export class PlotDetailPage implements OnInit {
   readonly isPhotoMode = computed(() => !!this.plot()?.photo_url);
   readonly uploadsBase = environment.uploadsUrl;
   readonly photoSlots = computed(() => this.slots().filter(s => s.x_pct != null));
+  readonly unplacedSlots = computed(() =>
+    this.slots().filter(s => s.row != null && s.x_pct == null)
+  );
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -167,6 +174,7 @@ export class PlotDetailPage implements OnInit {
           col: c,
           slotId: slot?.id,
           germination_date: slot?.germination_date ?? null,
+          hasPhotoPlacement: slot ? slot.x_pct != null : false,
           crop: slot?.crop
             ? {
                 name: slot.crop.name,
@@ -276,6 +284,18 @@ export class PlotDetailPage implements OnInit {
 
   async onRemovePhotoSlot(plotId: string, slot: PlotSlot): Promise<void> {
     if (!slot.id) return;
+
+    if (slot.row != null) {
+      // Slot also exists in the grid — only clear photo coords, don't delete
+      this.store.dispatch(PlotsActions.updateSlot({
+        plotId,
+        slotId: slot.id,
+        payload: { x_pct: null, y_pct: null, w_pct: null, h_pct: null } as Partial<PlotSlot>,
+      }));
+      return;
+    }
+
+    // Photo-only slot — confirm then delete
     const cropName = slot.crop?.name ?? 'this slot';
     const alertEl = await this.alert.create({
       header: 'Remove slot?',
@@ -292,6 +312,19 @@ export class PlotDetailPage implements OnInit {
       ],
     });
     await alertEl.present();
+  }
+
+  onSlotPlacedOnPhoto(plotId: string, event: { slot: PlotSlot; rect: PhotoRect }): void {
+    this.store.dispatch(PlotsActions.updateSlot({
+      plotId,
+      slotId: event.slot.id,
+      payload: {
+        x_pct: event.rect.x_pct,
+        y_pct: event.rect.y_pct,
+        w_pct: event.rect.w_pct,
+        h_pct: event.rect.h_pct,
+      },
+    }));
   }
 
   private async openCropPickerForSeedlingTray(plotId: string, cell: GridCell): Promise<void> {
