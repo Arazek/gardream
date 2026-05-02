@@ -37,15 +37,15 @@
         "pkce.code.challenge.method": "S256"
       },
       "redirectUris": [
-        "https://localhost/*",
-        "https://localhost:4443/*",
+        "http://localhost/*",
         "http://localhost:4200/*",
-        "capacitor://localhost/*"
+        "capacitor://localhost/*",
+        "https://localhost/*"
       ],
       "webOrigins": [
-        "https://localhost",
-        "https://localhost:4443",
-        "http://localhost:4200"
+        "http://localhost",
+        "http://localhost:4200",
+        "https://localhost"
       ],
       "defaultClientScopes": [
         "web-origins",

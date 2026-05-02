@@ -1,6 +1,6 @@
 @use 'theme/mixins' as *;
 
-// ─── Two-column desktop layout ────────────────────────────────────────────────
+// ─── Mobile: natural flow, page scrolls ───────────────────────────────────────
 .cal-layout {
   display: flex;
   flex-direction: column;
@@ -9,7 +9,6 @@
 .cal-layout__tasks {
   display: flex;
   flex-direction: column;
-  min-height: 0;
 }
 
 .cal-tasks-header {
@@ -18,11 +17,11 @@
 }
 
 .cal-tasks-body {
-  flex: 1;
-  overflow-y: auto;
+  min-height: 6rem;
 }
 
 @media (min-width: 64rem) {
+  // ─── Desktop: fixed two-column, tasks scroll ──────────────────────────────
   .cal-layout {
     display: grid;
     grid-template-columns: minmax(20rem, 26rem) 1fr;
@@ -45,13 +44,15 @@
   .cal-layout__tasks {
     height: 100%;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   .cal-tasks-body {
     overflow-y: auto;
-    padding-bottom: var(--space-6);
     flex: 1;
     min-height: 0;
+    padding-bottom: var(--space-6);
   }
 
   // On desktop no bottom nav padding needed

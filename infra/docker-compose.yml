@@ -61,7 +61,7 @@ services:
     image: quay.io/keycloak/keycloak:26.0
     container_name: keycloak
     restart: unless-stopped
-    command: start
+    command: start-dev --import-realm
     environment:
       # Database connection (KC_DB_* are Keycloak's own env var names)
       KC_DB: postgres
@@ -74,12 +74,13 @@ services:
       # Proxy settings (Traefik terminates TLS)
       KC_PROXY_HEADERS: xforwarded
       KC_HTTP_ENABLED: "true"
-      KC_HOSTNAME: https://${GATEWAY_HOSTNAME}/keycloak
+      KC_HOSTNAME: ${KC_HOSTNAME_URL:-http://${GATEWAY_HOSTNAME}/keycloak}
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_RELATIVE_PATH: /keycloak
     volumes:
       - keycloak_data:/opt/keycloak/data
       - ./keycloak/themes:/opt/keycloak/themes:ro
+      - ./keycloak/realm-config.json:/opt/keycloak/data/import/realm-config.json:ro
     networks:
       - proxy-network
     depends_on:

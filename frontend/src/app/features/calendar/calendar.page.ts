@@ -81,7 +81,7 @@ function buildMonthGrid(year: number, month: number): CalDay[] {
       (dismiss)="notificationService.dismiss($event)"
     />
 
-    <app-page-content class="calendar-content" [scrollY]="false">
+    <app-page-content class="calendar-content">
       <div class="cal-layout">
 
         <!-- LEFT: calendar picker -->
@@ -311,7 +311,7 @@ export class CalendarPage implements OnInit {
     const result = await this.sheet.open({
       component: TaskCreateComponent,
       componentProps: { initialDate: this.selectedDate },
-      breakpoints: [0, 0.75, 1],
+      breakpoints: [0, 0.75, 0.9, 1],
       initialBreakpoint: 0.9,
     });
     if (!result) return;

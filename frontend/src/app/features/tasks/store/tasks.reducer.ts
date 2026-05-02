@@ -17,7 +17,9 @@ export const tasksReducer = createReducer(
     ...state, tasks: [...state.tasks, task],
   })),
   on(TasksActions.updateTaskSuccess, (state, { task }) => ({
-    ...state, tasks: state.tasks.map(t => t.id === task.id ? task : t),
+    ...state,
+    tasks: state.tasks.map(t => t.id === task.id ? task : t),
+    pendingTasks: state.pendingTasks.map(t => t.id === task.id ? task : t),
   })),
   on(TasksActions.deleteTaskSuccess, (state, { id }) => ({
     ...state, tasks: state.tasks.filter(t => t.id !== id),

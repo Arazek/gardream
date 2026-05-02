@@ -3,6 +3,7 @@ import { Store } from '@ngrx/store';
 import { Subscription, interval } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { App } from '@capacitor/app';
+import Keycloak from 'keycloak-js';
 
 import { LocalDbService, OutboxEntry } from '../db/local-db.service';
 import { NetworkService } from './network.service';
@@ -25,6 +26,7 @@ export class SyncService implements OnDestroy {
   private readonly db = inject(LocalDbService);
   private readonly network = inject(NetworkService);
   private readonly store = inject(Store);
+  private readonly keycloak = inject(Keycloak);
   private readonly plotsApi = inject(PlotsApiService);
   private readonly tasksApi = inject(TasksApiService);
   private readonly cropsApi = inject(CropsApiService);
@@ -57,27 +59,43 @@ export class SyncService implements OnDestroy {
 
   // ── Push: drain outbox ──────────────────────────────────────────────────
 
-  async push(): Promise<void> {
-    const pending = await this.db.getPendingOutbox();
-    for (const entry of pending) {
+  /** Push pending outbox entries and return a map of rewritten tmp_ IDs to real IDs. */
+  async push(): Promise<Record<string, string>> {
+    const rewritten: Record<string, string> = {};
+    let pending = await this.db.getPendingOutbox();
+    let i = 0;
+    while (i < pending.length) {
+      const entry = pending[i];
       try {
-        await this.pushEntry(entry);
+        const newId = await this.pushEntry(entry);
+        if (newId && entry.entity_id.startsWith('tmp_')) {
+          rewritten[entry.entity_id] = newId;
+        }
         await this.db.markOutboxSynced(entry.id!);
+        i++;
       } catch (err: any) {
         const status = err?.status ?? 0;
         if (status === 409) {
           await this.db.markOutboxFailed(entry.id!, err?.error?.detail ?? 'Conflict');
           _syncHasError.set(true);
+          i++;
         } else {
           // Network error — stop and retry later
           break;
         }
       }
+      // Re-fetch if a tmp ID was rewritten (subsequent entries may have updated entity_id)
+      if (pending[i - 1]?.entity_id?.startsWith('tmp_')) {
+        pending = await this.db.getPendingOutbox();
+        i = 0;
+      }
     }
     await this.updatePendingCount();
+    return rewritten;
   }
 
-  private async pushEntry(entry: OutboxEntry): Promise<void> {
+  /** Returns the real server ID if the entry had a tmp_ ID that was rewritten. */
+  private async pushEntry(entry: OutboxEntry): Promise<string | undefined> {
     const payload = JSON.parse(entry.payload);
     switch (entry.entity_type) {
       case 'plot':
@@ -113,13 +131,40 @@ export class SyncService implements OnDestroy {
         }
         break;
       case 'task':
-        if (entry.operation === 'update') {
-          await this.tasksApi.update(entry.entity_id, payload).toPromise();
+        if (entry.operation === 'create') {
+          const task = await this.tasksApi.create(payload).toPromise();
+          if (task && entry.entity_id.startsWith('tmp_')) {
+            await this.db.rewriteTmpId(entry.entity_id, task.id, 'task');
+            return task.id;
+          }
+        } else if (entry.operation === 'update') {
+          // If task still has a tmp_ ID, it was never created on the server.
+          // Build a TaskCreate payload from the local DB record and create first.
+          if (entry.entity_id.startsWith('tmp_')) {
+            const localTask = await this.db.getTaskById(entry.entity_id);
+            if (localTask) {
+              const createPayload: import('../../features/tasks/store/tasks.state').TaskCreate = {
+                type: localTask.type, due_date: localTask.due_date,
+                title: localTask.title ?? undefined,
+                note: localTask.note ?? undefined,
+                plot_slot_id: localTask.plot_slot_id ?? undefined,
+              };
+              const serverTask = await this.tasksApi.create(createPayload).toPromise();
+              if (serverTask) {
+                await this.db.rewriteTmpId(entry.entity_id, serverTask.id, 'task');
+                await this.tasksApi.update(serverTask.id, payload).toPromise();
+                return serverTask.id;
+              }
+            }
+          } else {
+            await this.tasksApi.update(entry.entity_id, payload).toPromise();
+          }
         } else if (entry.operation === 'delete') {
           await this.tasksApi.delete(entry.entity_id).toPromise();
         }
         break;
     }
+    return undefined;
   }
 
   // ── Pull: overwrite local with server state ─────────────────────────────
@@ -160,6 +205,10 @@ export class SyncService implements OnDestroy {
 
   async sync(): Promise<void> {
     if (_syncIsSyncing()) return;
+
+    // Skip sync when not authenticated (avoids 403 errors on login page)
+    if (!this.keycloak.authenticated) return;
+
     _syncIsSyncing.set(true);
     try {
       await this.push();

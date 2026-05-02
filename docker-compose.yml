@@ -28,9 +28,6 @@ services:
       KEYCLOAK_REALM: ${KEYCLOAK_REALM}
       BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-    depends_on:
-      postgres:
-        condition: service_healthy
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/uploads`))"
@@ -58,3 +55,10 @@ volumes:
   postgres_data:
   pgadmin_data:
   traefik_acme:
+
+networks:
+  proxy:
+    external: true
+    name: proxy-network
+  internal:
+    driver: bridge

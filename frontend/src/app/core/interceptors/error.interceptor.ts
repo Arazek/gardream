@@ -10,16 +10,18 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       console.log('[errorInterceptor] status:', error.status, '| url:', req.url);
 
-      // Handle 401 Unauthorized (token expired or invalid)
-      if (error.status === 401) {
-        console.log('[errorInterceptor] 401 Unauthorized — token expired/invalid');
+      // Handle 401/403 Unauthorized (token expired/invalid or missing)
+      if (error.status === 401 || error.status === 403) {
+        console.log(`[errorInterceptor] ${error.status} — not authenticated`);
 
-        // Clear the expired token from storage
+        // Clear any stale auth state
         localStorage.removeItem('auth_token');
 
-        // Redirect to login
-        console.log('[errorInterceptor] redirecting to /login');
-        router.navigate(['/login']);
+        // Only redirect to login if not already there (avoid redirect loops)
+        if (!router.url.startsWith('/login')) {
+          console.log('[errorInterceptor] redirecting to /login');
+          router.navigate(['/login']);
+        }
 
         throw error;
       }
