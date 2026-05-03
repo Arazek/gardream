@@ -27,6 +27,7 @@ share the same compose structure with environment-level overrides.
 | DB Admin       | pgAdmin 4                           | latest   |
 | Reverse Proxy  | Traefik                             | v3       |
 | Containerization | Docker + Docker Compose           | latest   |
+| Object Storage | Garage (S3-compatible)              | v1.0.x   |
 | Component Docs  | Storybook                         | v8       |
 
 ---
@@ -42,6 +43,7 @@ https://gateway.localhost/keycloak         → keycloak  (Keycloak server)
 https://gateway.localhost/pgadmin          → pgadmin   (pgAdmin 4)
 https://gateway.localhost/traefik/dashboard/ → traefik (Traefik dashboard — dev only)
 https://gateway.localhost/webhook          → webhook   (CI/CD deploy trigger)
+http://garage:3900                         → garage    (S3 API — container-to-container only)
 ```
 
 TLS:
@@ -142,13 +144,13 @@ gardream/
 │   ├── requirements.txt
 │   └── Dockerfile
 │
-├── infra/                           # Infrastructure stack (Traefik, Postgres, Keycloak, pgAdmin, Webhook)
+├── infra/                           # Infrastructure stack (Traefik, Postgres, Keycloak, pgAdmin, Garage, Webhook)
 │   ├── docker-compose.yml           # Infra services — start once, run persistently
 │   ├── traefik/
 │   │   ├── traefik.yml              # Static config (entrypoints :80/:443, Docker provider)
 │   │   └── certs/                   # Self-signed certs (gitignored)
 │   ├── keycloak/
-│   │   └── realm-config.json        # Realm "gardream" — imported on first Keycloak start
+│   │   └── realm-config.json        # Realm "gardream" — imported on first Keycload start
 │   ├── postgres/
 │   │   ├── Dockerfile               # TimescaleDB + PostGIS image
 │   │   └── init.sh                  # Creates keycloak_db + enables extensions on first start
@@ -317,6 +319,8 @@ DELETE /api/v1/tasks/{id}        → protected, delete task
 GET  /api/v1/weather             → protected, get weather data
 GET  /api/v1/notification-settings → protected, get notification settings
 PUT  /api/v1/notification-settings → protected, update notification settings
+GET  /api/v1/files/{key}         → protected, download file from Garage
+GET  /api/v1/files/{key}/presigned → protected, get presigned S3 URL for file
 WS   /api/v1/ws/{channel}        → protected WebSocket
 ```
 
@@ -571,13 +575,14 @@ Two compose files — start infra once, restart app as needed.
 
 ### `infra/docker-compose.yml` — infrastructure (persistent)
 
-| Service  | Image                          | URL                                   | Notes                                    |
-|----------|--------------------------------|---------------------------------------|------------------------------------------|
-| traefik  | traefik:v3.6                   | https://gateway.localhost/traefik/dashboard/ | Ports 80/443, Docker label autodiscovery |
-| postgres | timescale/timescaledb + PostGIS| —                                     | TimescaleDB + PostGIS, two databases     |
-| keycloak | quay.io/keycloak/keycloak:26.0 | https://gateway.localhost/keycloak    | Realm `gardream` imported on first start |
-| pgadmin  | dpage/pgadmin4                 | https://gateway.localhost/pgadmin     | OAuth2 SSO via Keycloak                  |
-| webhook  | custom (Python)                | https://gateway.localhost/webhook     | CI/CD deploy trigger on push to main     |
+| Service      | Image                          | URL                                   | Notes                                    |
+|--------------|--------------------------------|---------------------------------------|------------------------------------------|
+| traefik      | traefik:v3.6                   | https://gateway.localhost/traefik/dashboard/ | Ports 80/443, Docker label autodiscovery |
+| postgres     | timescale/timescaledb + PostGIS| —                                     | TimescaleDB + PostGIS, two databases     |
+| keycloak     | quay.io/keycloak/keycloak:26.0 | https://gateway.localhost/keycloak    | Realm `gardream` imported on first start |
+| pgadmin      | dpage/pgadmin4                 | https://gateway.localhost/pgadmin     | OAuth2 SSO via Keycloak                  |
+| garage       | dxflrs/garage:v2.3.0            | http://garage:3900 (internal only)    | S3-compatible object storage (user photos); auto-creates bucket + key on first start via `--single-node --default-bucket` |
+| webhook      | custom (Python)                | https://gateway.localhost/webhook     | CI/CD deploy trigger on push to main     |
 
 ### `docker-compose.local.yml` — app services (dev)
 
@@ -586,6 +591,21 @@ Two compose files — start infra once, restart app as needed.
 | backend  | ./backend         | FastAPI, hot-reload, joins `proxy-network`    |
 | frontend | ./frontend        | `ng serve` on :4200, joins `proxy-network`    |
 | storybook| ./frontend        | `npm run storybook`, profile `storybook`      |
+
+### File Storage
+
+User-uploaded photos (plot photos and specimen photo logs) are stored in **Garage**, an S3-compatible object store running as an infra service. The backend uploads files to Garage via `aioboto3` and serves them through an auth-protected download endpoint:
+
+- `POST /api/v1/plots/{id}/photo` — upload a plot photo (saves to Garage, stores S3 key in `plot.photo_url`)
+- `POST /api/v1/plots/{id}/slots/{sid}/specimen/photos` — upload specimen photo (saves to Garage, stores download URL in `photo_log`)
+- `GET /api/v1/files/{key}` — download a file from Garage (auth required, Content-Type inferred from extension)
+
+The frontend constructs download URLs by concatenating `environment.uploadsUrl` (`/api/v1/files/`) with the S3 key stored in the backend response.
+
+**First-time setup:**
+1. Set `GARAGE_ACCESS_KEY` and `GARAGE_SECRET_KEY` in `.env` (or leave blank for auto-generated random credentials)
+2. Start Garage: `docker compose -f infra/docker-compose.yml up -d garage`
+3. Garage auto-creates the bucket `gardream-uploads` and the default access key on first start
 
 All services communicate via the `proxy-network` Docker bridge network. Infra creates it; app services join it as external.
 

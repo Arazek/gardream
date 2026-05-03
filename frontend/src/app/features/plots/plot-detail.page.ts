@@ -4,7 +4,7 @@ import { IonContent, AlertController, ActionSheetController } from '@ionic/angul
 import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
 
-import { TopAppBarComponent, NavAction, GardenGridSlotComponent, GridCropInfo } from '../../shared';
+import { TopAppBarComponent, NavAction, GardenGridSlotComponent, GridCropInfo, ToastService } from '../../shared';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { NotificationCentreComponent } from '../home/components/notification-centre/notification-centre.component';
 import { BottomSheetService } from '../../shared/services/bottom-sheet.service';
@@ -146,6 +146,7 @@ export class PlotDetailPage implements OnInit {
   private readonly router = inject(Router);
   private readonly sheet = inject(BottomSheetService);
   private readonly alert = inject(AlertController);
+  private readonly toast = inject(ToastService);
   private readonly actionSheet = inject(ActionSheetController);
   private readonly plotsApi = inject(PlotsApiService);
   private readonly localDb = inject(LocalDbService);
@@ -198,14 +199,27 @@ export class PlotDetailPage implements OnInit {
   }
 
   onPhotoFileSelected(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    const plotId = this.plot()?.id;
-    if (!file || !plotId) return;
-    this.plotsApi.uploadPlotPhoto(plotId, file).subscribe(updatedPlot => {
-      this.localDb.updatePlotLocal(plotId, { photo_url: updatedPlot.photo_url });
-      this.store.dispatch(PlotsActions.updatePlotSuccess({ plot: updatedPlot }));
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) { input.value = ''; return; }
+
+    const plotId = this.plot()?.id ?? this.route.snapshot.paramMap.get('id');
+    if (!plotId) { input.value = ''; return; }
+
+    if (plotId.startsWith('tmp_')) {
+      this.toast.warning('Sync the plot first before adding a photo.');
+      input.value = '';
+      return;
+    }
+
+    this.plotsApi.uploadPlotPhoto(plotId, file).subscribe({
+      next: updatedPlot => {
+        this.localDb.updatePlotLocal(plotId, { photo_url: updatedPlot.photo_url });
+        this.store.dispatch(PlotsActions.updatePlotSuccess({ plot: updatedPlot }));
+      },
+      error: () => this.toast.error('Failed to upload photo.'),
     });
-    (event.target as HTMLInputElement).value = '';
+    input.value = '';
   }
 
   buildGrid(plot: Plot, slots: PlotSlot[]): GridCell[] {

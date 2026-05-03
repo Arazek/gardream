@@ -72,6 +72,14 @@ class Settings(BaseSettings):
     EVENING_REMINDER_HOUR: int = 19
     EVENING_REMINDER_MINUTE: int = 0
 
+    # Garage / S3-compatible object storage
+    GARAGE_ENDPOINT: str = "http://garage:3900"
+    GARAGE_REGION: str = "garage"
+    GARAGE_BUCKET: str = "gardream-uploads"
+    GARAGE_ACCESS_KEY: str = ""
+    GARAGE_SECRET_KEY: str = ""
+    GARAGE_PUBLIC_URL: str = ""  # optional public-facing URL for presigned URLs
+
     # Logging
     LOG_LEVEL: str = "info"
 

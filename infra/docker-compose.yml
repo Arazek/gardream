@@ -138,6 +138,33 @@ services:
       - "traefik.http.middlewares.pgadmin-ratelimit.ratelimit.period=1m"
 
   # ===========================================================================
+  # Garage - S3-Compatible Object Storage (user photos & files)
+  # Uses --single-node --default-bucket to auto-create bucket + access key
+  # on first start. Set GARAGE_ACCESS_KEY/GARAGE_SECRET_KEY in .env to
+  # control the credentials (generated randomly if omitted).
+  # ===========================================================================
+  garage:
+    image: dxflrs/garage:v2.3.0
+    container_name: garage
+    restart: unless-stopped
+    environment:
+      GARAGE_DEFAULT_ACCESS_KEY: ${GARAGE_ACCESS_KEY}
+      GARAGE_DEFAULT_SECRET_KEY: ${GARAGE_SECRET_KEY}
+      GARAGE_DEFAULT_BUCKET: ${GARAGE_BUCKET:-gardream-uploads}
+    command: ["/garage", "server", "--single-node", "--default-bucket"]
+    volumes:
+      - garage_data:/var/lib/garage
+      - ./garage/config.toml:/etc/garage.toml:ro
+    networks:
+      - proxy-network
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # ===========================================================================
   # Webhook - Automated Deployments
   # ===========================================================================
   webhook:
@@ -169,6 +196,8 @@ volumes:
   keycloak_data:
     driver: local
   pgadmin_data:
+    driver: local
+  garage_data:
     driver: local
   traefik_certs:
     driver: local

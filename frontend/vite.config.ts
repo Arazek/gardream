@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     maxHttpHeaderSize: 65536,
     proxy: {
-      '/uploads': {
+      '/api/v1/files': {
         target: 'http://gardream-backend-1:8000',
         changeOrigin: true,
       },

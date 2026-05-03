@@ -29,11 +29,13 @@ Photo slots use percentage-based coordinates (`x_pct`, `y_pct`, `w_pct`, `h_pct`
 | File | Change |
 |------|--------|
 | `backend/app/models/plot.py` | Added `photo_url: str \| None` column |
-| `backend/app/models/plot_slot.py` | Made `row`/`col` nullable; added `x_pct`, `y_pct`, `w_pct`, `h_pct` float columns |
+
 | `backend/alembic/versions/e5f6a7b8c9d0_add_photo_plot_support.py` | Migration: adds new columns, relaxes row/col nullability |
 | `backend/app/schemas/plot.py` | Added `photo_url` to `PlotBase`, `PlotUpdate`, `PlotResponse` |
-| `backend/app/schemas/plot_slot.py` | Made `row`/`col` optional in `PlotSlotCreate`/`PlotSlotResponse`; added pct fields |
+
 | `backend/app/api/v1/endpoints/plots.py` | New `POST /{plot_id}/photo` upload endpoint; grid-bounds validation skipped for photo slots (`row is None`) |
+
+> **Note (May 2026):** Photo storage was migrated from local filesystem to Garage (S3-compatible object store). See `docs/ARCHITECTURE.md` → File Storage for details. The upload endpoints now save to Garage and the backend serves files via `GET /api/v1/files/{key}` instead of the old `StaticFiles` mount at `/uploads/`.
 
 ### Frontend
 

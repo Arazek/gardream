@@ -67,12 +67,29 @@ Added `ngOnDestroy` / `ionViewWillLeave` cleanup across all 9 route pages (home,
 
 ---
 
+### Garage S3-Compatible Object Storage
+
+User-uploaded photos moved from the backend container's local filesystem to Garage (self-hosted S3-compatible storage).
+
+**Why:** The previous approach saved files to `/app/uploads/` inside the backend container — files would be lost on container recreate, couldn't scale to multiple instances, and had no access control on the `StaticFiles` mount.
+
+**What changed:**
+- `infra/docker-compose.yml` — new `garage` service (`dxflrs/garage:v2.3.0`, `--single-node --default-bucket` for auto-configuration)
+- `backend/app/services/storage.py` — async S3 client wrapper using `aioboto3` (upload, download, presigned URL, delete)
+- `backend/app/api/v1/endpoints/files.py` — `GET /api/v1/files/{key}` auth-protected download endpoint; `GET /api/v1/files/{key}/presigned` for presigned URLs
+- `backend/app/api/v1/endpoints/plots.py` — both photo upload endpoints now write to Garage instead of local disk
+- `backend/app/main.py` — removed `StaticFiles` mount (no longer serving local uploads)
+- Frontend `environment.ts` / `environment.prod.ts` — `uploadsUrl` changed from `''` to `'/api/v1/files/'`
+- Frontend proxy configs — removed `/uploads` proxy rules
+- `scripts/migrate-uploads-to-garage.py` — one-time migration tool
+
 ## Architecture Notes
 
 - **Frontend:** Angular 19 standalone components, NgRx signals store, Ionic 8, `ChangeDetectionStrategy.OnPush` + `computed()` signals for reactive UI updates.
 - **Backend:** FastAPI + SQLAlchemy async + Alembic migrations, PostgreSQL.
 - **Auth:** Keycloak with `check-sso` + silent iframe. Raw `Keycloak` from `keycloak-js` injected directly (no deprecated wrapper).
 - **Task generation:** 90-day rolling window, tasks regenerated on schedule change. Completed past tasks are never modified.
+- **File storage:** Garage (S3-compatible) — photos uploaded via backend, served via auth-protected download endpoint.
 
 ---
 

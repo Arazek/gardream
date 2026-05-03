@@ -1,12 +1,13 @@
 import uuid
 import logging
-import os
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
+from app.services.storage import upload_bytes
 
 from app.core.dependencies import get_db, get_current_user
 from app.models.crop import Crop
@@ -133,17 +134,13 @@ async def upload_plot_photo(
     if not plot or plot.user_id != user["sub"]:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plot not found")
 
-    uploads_dir = f"/app/uploads/plots/{plot_id}"
-    os.makedirs(uploads_dir, exist_ok=True)
-
-    ext = os.path.splitext(file.filename or "photo.jpg")[1] or ".jpg"
+    ext = f".{file.filename.rsplit('.', 1)[-1]}" if file.filename and "." in file.filename else ".jpg"
     filename = f"photo_{uuid.uuid4()}{ext}"
-    file_path = os.path.join(uploads_dir, filename)
+    key = f"plots/{plot_id}/{filename}"
     contents = await file.read()
-    with open(file_path, "wb") as f:
-        f.write(contents)
+    await upload_bytes(key, contents, content_type=file.content_type)
 
-    plot.photo_url = f"/uploads/plots/{plot_id}/{filename}"
+    plot.photo_url = key
     await db.commit()
     await db.refresh(plot)
     return plot
@@ -444,19 +441,14 @@ async def upload_photo(
     if not specimen:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Specimen not found")
 
-    # Create uploads directory if it doesn't exist
-    uploads_dir = f"/app/uploads/specimens/{specimen.id}"
-    os.makedirs(uploads_dir, exist_ok=True)
-
-    # Save file
-    filename = file.filename or "photo.jpg"
-    file_path = os.path.join(uploads_dir, filename)
+    ext = f".{file.filename.rsplit('.', 1)[-1]}" if file.filename and "." in file.filename else ".jpg"
+    filename = f"photo_{uuid.uuid4()}{ext}"
+    key = f"specimens/{specimen.id}/{filename}"
     contents = await file.read()
-    with open(file_path, "wb") as f:
-        f.write(contents)
+    await upload_bytes(key, contents, content_type=file.content_type)
 
     # Add to photo_log
-    photo_url = f"/uploads/specimens/{specimen.id}/{filename}"
+    photo_url = f"/api/v1/files/{key}"
     photo_date = date.fromisoformat(taken_at) if taken_at else date.today()
     new_photo = {
         "url": photo_url,

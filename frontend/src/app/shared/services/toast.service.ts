@@ -20,7 +20,6 @@ export class ToastService {
       duration,
       color: VARIANT_COLOR[variant],
       position: 'bottom',
-      positionAnchor: 'footer',
     });
     await toast.present();
   }

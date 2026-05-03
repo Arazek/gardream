@@ -68,13 +68,14 @@ cmd_infra_start() {
   require_tool docker
   $DOCKER info &>/dev/null || error "Docker daemon is not running. Start it with: sudo systemctl start docker"
   [ ! -f infra/traefik/certs/local.crt ] && cmd_certs
-  info "Starting infra services (Traefik, Postgres, Keycloak, pgAdmin, Webhook)..."
+  info "Starting infra services (Traefik, Postgres, Keycloak, pgAdmin, Garage, Webhook)..."
   $DOCKER compose ${COMPOSE_INFRA} --env-file .env up -d "$@"
   success "Infra started. Keycloak may take ~30s to be ready."
   info "  https://gateway.localhost/keycloak           — Keycloak"
   info "  https://gateway.localhost/pgadmin            — pgAdmin"
   info "  https://gateway.localhost/traefik/dashboard/ — Traefik dashboard (admin / changeme_dashboard)"
   info "  https://gateway.localhost/webhook            — Webhook server"
+  info "Garage is running. Bucket and keys auto-created on first start (--single-node --default-bucket)."
 }
 
 cmd_infra_stop() {
@@ -426,8 +427,8 @@ cmd_help() {
   echo "Usage: ./run.sh <command> [args]"
   echo ""
   echo "Commands:"
-  echo "  setup:dev             Bootstrap full dev environment (infra + realm + migrations + dev user)"
-  echo "  infra:start           Start infra services (Traefik, Postgres, Keycloak, pgAdmin, Webhook)"
+  echo "  setup:dev             Bootstrap full dev environment (infra + Garage + realm + migrations + dev user)"
+  echo "  infra:start           Start infra services (Traefik, Postgres, Keycloak, pgAdmin, Garage, Webhook)"
   echo "  infra:stop            Stop infra services"
   echo "  infra:logs [service]  Tail infra logs (all services or specific)"
   echo "  dev                   Start app services (backend + frontend, hot reload)"
