@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, inject, computed, signal, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonContent, AlertController, ActionSheetController } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
@@ -17,6 +17,7 @@ import { Crop } from '../crops/store/crops.state';
 import { ScheduleValue } from '../../shared/components/schedule-section/schedule-section.component';
 import { PlotPhotoOverlayComponent, PhotoRect } from './plot-photo-overlay.component';
 import { PlotsApiService } from '../../core/api/plots-api.service';
+import { LocalDbService } from '../../core/db/local-db.service';
 import { environment } from '../../../environments/environment';
 
 interface GridCell {
@@ -65,11 +66,11 @@ interface GridCell {
           @if (hasPhoto()) {
             <button
               class="plot-info__chip plot-info__chip--toggle"
-              (click)="showPhotoMode = !showPhotoMode"
-              [attr.aria-pressed]="showPhotoMode"
+              (click)="showPhotoMode.set(!showPhotoMode())"
+              [attr.aria-pressed]="showPhotoMode()"
               aria-label="Toggle photo mode"
             >
-              @if (showPhotoMode) {
+              @if (showPhotoMode()) {
                 <span class="material-symbols-outlined">grid_on</span> Grid view
               } @else {
                 <span class="material-symbols-outlined">photo_camera</span> Photo view
@@ -107,6 +108,31 @@ interface GridCell {
                 }
               </div>
             </div>
+            @if (unplacedGridSlots().length > 0) {
+              <div class="photo-unplaced-panel">
+                <span class="photo-unplaced-panel__label">UNPLACED</span>
+                <div class="photo-unplaced-panel__chips">
+                  @for (slot of unplacedGridSlots(); track slot.id) {
+                    <button
+                      type="button"
+                      class="photo-unplaced-chip"
+                      [class.photo-unplaced-chip--selected]="selectedUnplacedGridSlot()?.id === slot.id"
+                      (click)="selectedUnplacedGridSlot.set(selectedUnplacedGridSlot()?.id === slot.id ? null : slot)"
+                      [attr.aria-label]="'Place ' + (slot.crop?.name ?? 'crop') + ' on grid'"
+                      [attr.aria-pressed]="selectedUnplacedGridSlot()?.id === slot.id"
+                    >
+                      <span class="photo-unplaced-chip__name">{{ slot.crop?.name ?? '?' }}</span>
+                      @if (selectedUnplacedGridSlot()?.id === slot.id) {
+                        <span class="photo-unplaced-chip__hint">TAP CELL</span>
+                      }
+                    </button>
+                  }
+                </div>
+                <span class="photo-unplaced-panel__counter">
+                  {{ slots().length - unplacedGridSlots().length }} of {{ slots().length }} placed
+                </span>
+              </div>
+            }
           }
         }
       }
@@ -122,12 +148,13 @@ export class PlotDetailPage implements OnInit {
   private readonly alert = inject(AlertController);
   private readonly actionSheet = inject(ActionSheetController);
   private readonly plotsApi = inject(PlotsApiService);
+  private readonly localDb = inject(LocalDbService);
   readonly notificationService = inject(NotificationService);
 
   @ViewChild('photoInput') photoInputRef!: ElementRef<HTMLInputElement>;
 
   notificationCentreOpen = false;
-  showPhotoMode = true;
+  showPhotoMode = signal(true);
 
   readonly topBarActions = computed<NavAction[]>(() => [
     { id: 'add_photo', icon: 'add_a_photo', label: 'Upload plot photo' },
@@ -141,12 +168,16 @@ export class PlotDetailPage implements OnInit {
   readonly slotsLoading = toSignal(this.store.select(selectSlotsLoading), { initialValue: true });
   readonly isSeedlingTray = computed(() => this.plot()?.plot_type === 'seedling_tray');
   readonly hasPhoto = computed(() => !!this.plot()?.photo_url);
-  readonly isPhotoMode = computed(() => this.hasPhoto() && this.showPhotoMode);
+  readonly isPhotoMode = computed(() => this.hasPhoto() && this.showPhotoMode());
   readonly uploadsBase = environment.uploadsUrl;
   readonly photoSlots = computed(() => this.slots().filter(s => s.x_pct != null));
   readonly unplacedSlots = computed(() =>
     this.slots().filter(s => s.row != null && s.x_pct == null)
   );
+  readonly unplacedGridSlots = computed(() =>
+    this.slots().filter(s => s.row == null && s.x_pct != null)
+  );
+  selectedUnplacedGridSlot = signal<PlotSlot | null>(null);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -171,6 +202,7 @@ export class PlotDetailPage implements OnInit {
     const plotId = this.plot()?.id;
     if (!file || !plotId) return;
     this.plotsApi.uploadPlotPhoto(plotId, file).subscribe(updatedPlot => {
+      this.localDb.updatePlotLocal(plotId, { photo_url: updatedPlot.photo_url });
       this.store.dispatch(PlotsActions.updatePlotSuccess({ plot: updatedPlot }));
     });
     (event.target as HTMLInputElement).value = '';
@@ -208,6 +240,17 @@ export class PlotDetailPage implements OnInit {
   }
 
   async onSlotClick(plotId: string, cell: GridCell): Promise<void> {
+    const pending = this.selectedUnplacedGridSlot();
+    if (pending && !cell.crop) {
+      this.store.dispatch(PlotsActions.updateSlot({
+        plotId,
+        slotId: pending.id,
+        payload: { row: cell.row, col: cell.col },
+      }));
+      this.selectedUnplacedGridSlot.set(null);
+      return;
+    }
+
     if (this.isSeedlingTray()) {
       if (!cell.crop || !cell.slotId) {
         await this.openCropPickerForSeedlingTray(plotId, cell);

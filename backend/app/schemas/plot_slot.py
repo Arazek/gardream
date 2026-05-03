@@ -22,6 +22,8 @@ class PlotSlotCreate(BaseModel):
 
 class PlotSlotUpdate(BaseModel):
     crop_id: str | None = None
+    row: int | None = None
+    col: int | None = None
     sow_date: date | None = None
     x_pct: float | None = None
     y_pct: float | None = None

@@ -164,10 +164,18 @@ export class PlotsEffects {
                 payload: JSON.stringify({ plotId, ...payload }),
               });
               await this.sync.push();
-              return crop ?? undefined;
+              // Reload from SQLite after sync so we have the real server ID (rewriteTmpId already ran)
+              const freshSlots = await this.db.getSlotsByPlot(plotId);
+              const realSlot = freshSlots.find(s =>
+                !s.id.startsWith('tmp_') && (
+                  (slot.row != null && s.row === slot.row && s.col === slot.col) ||
+                  (slot.x_pct != null && s.x_pct === slot.x_pct && s.y_pct === slot.y_pct)
+                )
+              ) ?? slot;
+              return { realSlot, crop: crop ?? undefined };
             })
         ).pipe(
-          map((crop) => PlotsActions.createSlotSuccess({ plotId, slot: { ...slot, crop: crop ?? undefined } })),
+          map(({ realSlot, crop }) => PlotsActions.createSlotSuccess({ plotId, slot: { ...realSlot, crop } })),
           catchError(err => of(PlotsActions.createSlotFailure({ error: err.message }))),
         );
       })

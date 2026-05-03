@@ -1,0 +1,73 @@
+<h2>Where should unplaced crops appear in photo mode?</h2>
+<p class="subtitle">Crops that exist in the grid but haven't been placed on the photo yet need to be shown somewhere so the user can drag/tap them onto the photo.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;border-radius:8px;padding:12px;font-family:monospace;font-size:12px;color:#eee;">
+        <div style="background:#2a2a4e;border-radius:6px;height:160px;display:flex;align-items:center;justify-content:center;color:#aaa;margin-bottom:8px;position:relative;">
+          <span>📷 Plot photo</span>
+          <div style="position:absolute;top:8px;right:8px;background:rgba(76,175,80,0.85);border-radius:4px;padding:2px 6px;font-size:10px;">🥬 Lettuce</div>
+          <div style="position:absolute;bottom:20px;left:20px;background:rgba(76,175,80,0.85);border-radius:4px;padding:2px 6px;font-size:10px;">🍅 Tomato</div>
+        </div>
+        <div style="background:#252540;border-radius:6px;padding:8px;">
+          <div style="font-size:10px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Unplaced (2)</div>
+          <div style="display:flex;gap:6px;">
+            <div style="background:#3a3a60;border-radius:4px;padding:4px 8px;font-size:11px;border:1px dashed #666;cursor:pointer;">🌿 Basil</div>
+            <div style="background:#3a3a60;border-radius:4px;padding:4px 8px;font-size:11px;border:1px dashed #666;cursor:pointer;">🥕 Carrot</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Bottom strip</h3>
+      <p>A compact strip below the photo lists unplaced crops. Tap a chip to select it, then draw a rect on the photo to place it.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;border-radius:8px;padding:12px;font-family:monospace;font-size:12px;color:#eee;">
+        <div style="display:flex;gap:8px;">
+          <div style="background:#2a2a4e;border-radius:6px;flex:1;height:168px;display:flex;align-items:center;justify-content:center;color:#aaa;position:relative;">
+            <span>📷 Photo</span>
+            <div style="position:absolute;top:8px;right:8px;background:rgba(76,175,80,0.85);border-radius:4px;padding:2px 6px;font-size:10px;">🥬 Lettuce</div>
+          </div>
+          <div style="background:#252540;border-radius:6px;width:80px;padding:8px;display:flex;flex-direction:column;gap:6px;">
+            <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1px;">Unplaced</div>
+            <div style="background:#3a3a60;border-radius:4px;padding:4px;font-size:10px;text-align:center;border:1px dashed #666;">🌿 Basil</div>
+            <div style="background:#3a3a60;border-radius:4px;padding:4px;font-size:10px;text-align:center;border:1px dashed #666;">🥕 Carrot</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Side panel</h3>
+      <p>A narrow sidebar to the right of the photo. Tap a crop to select it (it highlights), then draw a rect on the photo.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;border-radius:8px;padding:12px;font-family:monospace;font-size:12px;color:#eee;">
+        <div style="background:#2a2a4e;border-radius:6px;height:168px;display:flex;align-items:center;justify-content:center;color:#aaa;position:relative;">
+          <span>📷 Plot photo</span>
+          <div style="position:absolute;top:8px;right:8px;background:rgba(76,175,80,0.85);border-radius:4px;padding:2px 6px;font-size:10px;">🥬 Lettuce</div>
+          <div style="position:absolute;bottom:8px;left:8px;background:rgba(30,30,60,0.9);border-radius:6px;padding:4px 8px;display:flex;gap:6px;align-items:center;">
+            <span style="font-size:9px;color:#aaa;">Place:</span>
+            <div style="background:#3a3a60;border-radius:4px;padding:3px 7px;font-size:10px;border:1px dashed #888;">🌿 Basil</div>
+            <div style="background:#3a3a60;border-radius:4px;padding:3px 7px;font-size:10px;border:1px dashed #888;">🥕 Carrot</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Floating overlay bar</h3>
+      <p>A translucent pill/bar overlaid at the bottom of the photo itself. Stays out of the way and keeps the photo full-width.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">In all options: tapping a crop chip selects it (highlighted border), then drawing a rect on the photo places it there. Drawing without a selection opens the crop picker as usual.</p>

@@ -100,3 +100,47 @@ The action sheet for a germinated slot shows the **suggested transplant date** (
 - **Postgres enum limitation**: `ALTER TYPE ... ADD VALUE` cannot run inside a transaction. The migration uses `op.execute(COMMIT)` / `op.execute(BEGIN)` around it so Alembic can still stamp the version inside a transaction afterwards.
 - **Specimen transfer**: the transplant endpoint reassigns the `Specimen.plot_slot_id` FK to the new slot *before* deleting the source slot to avoid a cascade delete wiping the specimen.
 - **KPI exclusion**: seedling tray slots are excluded from all dashboard KPIs so seeds in germination don't count as active plants or skew harvest timelines.
+
+---
+
+## Bug fix: specimen 404 after slot creation (tmp_ ID leak)
+
+### Problem
+
+After creating a new slot, navigating to the specimen detail page returned a 404 because the API was called with the optimistic `tmp_<uuid>` ID instead of the real server ID.
+
+**Root cause** — in `plots.effects.ts`, the `createSlot$` effect captured the `slot` object (with `tmp_` ID) in closure scope before calling `sync.push()`:
+
+```typescript
+const slot: PlotSlot = { id: `tmp_${uuidv4()}`, ... };
+// ...
+await this.sync.push(); // SQLite is rewritten to real ID here
+return crop ?? undefined;
+// ...
+map((crop) => PlotsActions.createSlotSuccess({ plotId, slot: { ...slot, crop } }))
+// ↑ still dispatches the tmp_ slot — store never gets the real ID
+```
+
+`sync.push()` calls `rewriteTmpId` internally, which updates SQLite with the real server UUID, but the NgRx store was dispatched the old captured `slot` object with the `tmp_` ID. Every subsequent selector returned `tmp_xxx`, so the API call in `specimen-detail.page.ts` used that ID and got a 404.
+
+### Fix
+
+After `sync.push()` completes, the effect now reloads the slot from SQLite (which already holds the real server ID) and dispatches `createSlotSuccess` with the real slot:
+
+```typescript
+await this.sync.push();
+const freshSlots = await this.db.getSlotsByPlot(plotId);
+const realSlot = freshSlots.find(s =>
+  !s.id.startsWith('tmp_') && (
+    (slot.row != null && s.row === slot.row && s.col === slot.col) ||
+    (slot.x_pct != null && s.x_pct === slot.x_pct && s.y_pct === slot.y_pct)
+  )
+) ?? slot; // fallback to tmp_ if push failed (offline)
+return { realSlot, crop: crop ?? undefined };
+// ...
+map(({ realSlot, crop }) => PlotsActions.createSlotSuccess({ plotId, slot: { ...realSlot, crop } }))
+```
+
+The slot is matched by grid position (row/col) or photo position (x_pct/y_pct) since those don't change during the ID rewrite. If the push failed (offline), `realSlot` falls back to the `tmp_` slot so the UI still shows the optimistic state.
+
+**File:** `frontend/src/app/features/plots/store/plots.effects.ts` — `createSlot$` effect

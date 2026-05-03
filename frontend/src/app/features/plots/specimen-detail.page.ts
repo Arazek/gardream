@@ -270,17 +270,30 @@ export class SpecimenDetailPage implements OnInit {
 
   private async handleTempSlot(plotId: string, tmpSlotId: string): Promise<void> {
     try {
+      // The store still has the tmp_ slot even if SQLite was already rewritten by push()
+      const storeSlots = this.slots();
+      const tmpSlot = storeSlots.find(s => s.id === tmpSlotId);
+
       await this.sync.sync();
-      const slots = await this.db.getSlotsByPlot(plotId);
-      const slot = slots.find(s => s.id.endsWith(tmpSlotId.replace('tmp_', '')));
-      if (slot) {
-        this.router.navigate(['/tabs/plots', plotId, 'slots', slot.id, 'specimen'], {
+
+      const slotsAfterSync = await this.db.getSlotsByPlot(plotId);
+      const realSlot = tmpSlot
+        ? slotsAfterSync.find(s =>
+            !s.id.startsWith('tmp_') && (
+              (tmpSlot.row != null && s.row === tmpSlot.row && s.col === tmpSlot.col) ||
+              (tmpSlot.x_pct != null && s.x_pct === tmpSlot.x_pct && s.y_pct === tmpSlot.y_pct)
+            )
+          )
+        : undefined;
+
+      if (realSlot) {
+        this.router.navigate(['/tabs/plots', plotId, 'slots', realSlot.id, 'specimen'], {
           replaceUrl: true,
         });
         return;
       }
     } catch {
-      // DB not ready or sync failed — fall through to load with tmp_ ID
+      // Sync failed — fall through and show error
     }
     this.loadSpecimenData(plotId, tmpSlotId);
   }

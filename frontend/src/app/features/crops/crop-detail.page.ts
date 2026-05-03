@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, effect } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 import { Store } from '@ngrx/store';
@@ -103,6 +103,7 @@ export class CropDetailPage implements OnInit {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly location = inject(Location);
   readonly notificationService = inject(NotificationService);
 
   notificationCentreOpen = false;
@@ -143,7 +144,7 @@ export class CropDetailPage implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/tabs/library']);
+    this.location.back();
   }
 
   goToSettings(): void {

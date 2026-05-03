@@ -72,6 +72,8 @@ export interface PlotSlotCreate {
 
 export interface PlotSlotUpdate {
   crop_id?: string;
+  row?: number | null;
+  col?: number | null;
   sow_date?: string;
   x_pct?: number | null;
   y_pct?: number | null;
