@@ -55,6 +55,7 @@ interface GridCell {
     <ion-content class="plot-detail-content">
 
       @if (plot(); as plot) {
+        <div class="plot-page-layout">
         <div class="plot-info">
           <span class="plot-info__chip">{{ plot.rows }}×{{ plot.cols }} grid</span>
           @if (plot.substrate) {
@@ -79,62 +80,81 @@ interface GridCell {
           }
         </div>
 
-        @if (isPhotoMode()) {
-          <app-plot-photo-overlay
-            [photoUrl]="uploadsBase + plot.photo_url!"
-            [slots]="photoSlots()"
-            [unplacedSlots]="unplacedSlots()"
-            [isSeedlingTray]="isSeedlingTray()"
-            (slotClicked)="onPhotoSlotClick(plot.id, $event)"
-            (slotRemoveRequested)="onRemovePhotoSlot(plot.id, $event)"
-            (newRectDrawn)="onNewPhotoRect(plot.id, $event)"
-            (slotPlaced)="onSlotPlacedOnPhoto(plot.id, $event)"
-          />
-        } @else {
-          @if (slotsLoading()) {
-            <div class="plot-grid-skeleton">Loading grid…</div>
-          } @else {
-            <div class="plot-grid-scroll">
-              <div class="plot-grid" [style.--grid-cols]="plot.cols">
-                @for (cell of buildGrid(plot, slots()); track cell.key) {
-                  <app-garden-grid-slot
-                    [crop]="cell.crop"
-                    [empty]="!cell.crop"
-                    [germinationDate]="isSeedlingTray() ? cell.germination_date : undefined"
-                    [hasPhotoPlacement]="cell.hasPhotoPlacement"
-                    (slotClicked)="onSlotClick(plot.id, cell)"
-                    (slotRemoveRequested)="onRemoveSlot(plot.id, cell)"
-                  />
-                }
-              </div>
-            </div>
-            @if (unplacedGridSlots().length > 0) {
-              <div class="photo-unplaced-panel">
-                <span class="photo-unplaced-panel__label">UNPLACED</span>
-                <div class="photo-unplaced-panel__chips">
-                  @for (slot of unplacedGridSlots(); track slot.id) {
-                    <button
-                      type="button"
-                      class="photo-unplaced-chip"
-                      [class.photo-unplaced-chip--selected]="selectedUnplacedGridSlot()?.id === slot.id"
-                      (click)="selectedUnplacedGridSlot.set(selectedUnplacedGridSlot()?.id === slot.id ? null : slot)"
-                      [attr.aria-label]="'Place ' + (slot.crop?.name ?? 'crop') + ' on grid'"
-                      [attr.aria-pressed]="selectedUnplacedGridSlot()?.id === slot.id"
-                    >
-                      <span class="photo-unplaced-chip__name">{{ slot.crop?.name ?? '?' }}</span>
-                      @if (selectedUnplacedGridSlot()?.id === slot.id) {
-                        <span class="photo-unplaced-chip__hint">TAP CELL</span>
-                      }
-                    </button>
-                  }
+        <div class="plot-content-wrapper">
+          @if ((isPhotoMode() ? unplacedSlots() : unplacedGridSlots()).length > 0) {
+            <div class="unplaced-strip">
+              <div class="unplaced-strip__container">
+                <span class="unplaced-strip__label">UNPLACED</span>
+                <div class="unplaced-strip__scroll">
+                  <div class="unplaced-strip__chips">
+                    @for (slot of (isPhotoMode() ? unplacedSlots() : unplacedGridSlots()); track slot.id) {
+                      <button
+                        type="button"
+                        class="unplaced-chip"
+                        [class.unplaced-chip--selected]="isPhotoMode() ? (selectedUnplacedPhotoSlot()?.id === slot.id) : (selectedUnplacedGridSlot()?.id === slot.id)"
+                        (click)="isPhotoMode() ? selectPhotoUnplaced(slot) : selectedUnplacedGridSlot.set(selectedUnplacedGridSlot()?.id === slot.id ? null : slot)"
+                        [attr.aria-label]="'Place ' + (slot.crop?.name ?? 'crop') + (isPhotoMode() ? ' on photo' : ' on grid')"
+                        [attr.aria-pressed]="isPhotoMode() ? (selectedUnplacedPhotoSlot()?.id === slot.id) : (selectedUnplacedGridSlot()?.id === slot.id)"
+                      >
+                        <span class="unplaced-chip__name">{{ slot.crop?.name ?? '?' }}</span>
+                        @if (isPhotoMode() && selectedUnplacedPhotoSlot()?.id === slot.id) {
+                          <span class="unplaced-chip__hint">DRAW RECT</span>
+                        }
+                        @if (!isPhotoMode() && selectedUnplacedGridSlot()?.id === slot.id) {
+                          <span class="unplaced-chip__hint">TAP CELL</span>
+                        }
+                      </button>
+                    }
+                  </div>
                 </div>
-                <span class="photo-unplaced-panel__counter">
-                  {{ slots().length - unplacedGridSlots().length }} of {{ slots().length }} placed
+                <span class="unplaced-strip__counter">
+                  @if (isPhotoMode()) {
+                    {{ photoSlots().length }} of {{ photoSlots().length + unplacedSlots().length }} placed
+                  } @else {
+                    {{ slots().length - unplacedGridSlots().length }} of {{ slots().length }} placed
+                  }
                 </span>
               </div>
-            }
+            </div>
           }
-        }
+
+          @if (isPhotoMode()) {
+            <div class="plot-view">
+              <app-plot-photo-overlay
+                [photoUrl]="uploadsBase + plot.photo_url!"
+                [slots]="photoSlots()"
+                [unplacedSlots]="unplacedSlots()"
+                [isSeedlingTray]="isSeedlingTray()"
+                (slotClicked)="onPhotoSlotClick(plot.id, $event)"
+                (slotRemoveRequested)="onRemovePhotoSlot(plot.id, $event)"
+                (newRectDrawn)="onNewPhotoRect(plot.id, $event)"
+                (slotPlaced)="onSlotPlacedOnPhoto(plot.id, $event)"
+              />
+            </div>
+          } @else {
+            <div class="plot-view">
+              @if (slotsLoading()) {
+                <div class="plot-grid-skeleton">Loading grid…</div>
+              } @else {
+                <div class="plot-grid-scroll">
+                  <div class="plot-grid" [style.--grid-cols]="plot.cols">
+                    @for (cell of buildGrid(plot, slots()); track cell.key) {
+                      <app-garden-grid-slot
+                        [crop]="cell.crop"
+                        [empty]="!cell.crop"
+                        [germinationDate]="isSeedlingTray() ? cell.germination_date : undefined"
+                        [hasPhotoPlacement]="cell.hasPhotoPlacement"
+                        (slotClicked)="onSlotClick(plot.id, cell)"
+                        (slotRemoveRequested)="onRemoveSlot(plot.id, cell)"
+                      />
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+        </div>
       }
 
     </ion-content>
@@ -153,9 +173,11 @@ export class PlotDetailPage implements OnInit {
   readonly notificationService = inject(NotificationService);
 
   @ViewChild('photoInput') photoInputRef!: ElementRef<HTMLInputElement>;
+  @ViewChild(PlotPhotoOverlayComponent) photoOverlay?: PlotPhotoOverlayComponent;
 
   notificationCentreOpen = false;
   showPhotoMode = signal(true);
+  selectedUnplacedPhotoSlot = signal<PlotSlot | null>(null);
 
   readonly topBarActions = computed<NavAction[]>(() => [
     { id: 'add_photo', icon: 'add_a_photo', label: 'Upload plot photo' },
@@ -185,6 +207,14 @@ export class PlotDetailPage implements OnInit {
     if (id) {
       this.store.dispatch(PlotsActions.selectPlot({ id }));
       this.store.dispatch(PlotsActions.loadSlots({ plotId: id }));
+    }
+  }
+
+  selectPhotoUnplaced(slot: PlotSlot): void {
+    const isSame = this.selectedUnplacedPhotoSlot()?.id === slot.id;
+    this.selectedUnplacedPhotoSlot.set(isSame ? null : slot);
+    if (this.photoOverlay) {
+      this.photoOverlay.selectedUnplacedSlot = isSame ? null : slot;
     }
   }
 
@@ -385,6 +415,7 @@ export class PlotDetailPage implements OnInit {
   }
 
   onSlotPlacedOnPhoto(plotId: string, event: { slot: PlotSlot; rect: PhotoRect }): void {
+    this.selectedUnplacedPhotoSlot.set(null);
     this.store.dispatch(PlotsActions.updateSlot({
       plotId,
       slotId: event.slot.id,

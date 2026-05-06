@@ -51,31 +51,6 @@ export interface PhotoRect {
         }
       </div>
 
-      @if (unplacedSlots.length > 0) {
-        <div class="photo-unplaced-panel">
-          <span class="photo-unplaced-panel__label">UNPLACED</span>
-          <div class="photo-unplaced-panel__chips">
-            @for (slot of unplacedSlots; track slot.id) {
-              <button
-                type="button"
-                class="photo-unplaced-chip"
-                [class.photo-unplaced-chip--selected]="selectedUnplacedSlot?.id === slot.id"
-                (click)="selectUnplacedSlot(slot)"
-                [attr.aria-label]="'Place ' + (slot.crop?.name ?? 'crop') + ' on photo'"
-                [attr.aria-pressed]="selectedUnplacedSlot?.id === slot.id"
-              >
-                <span class="photo-unplaced-chip__name">{{ slot.crop?.name ?? '?' }}</span>
-                @if (selectedUnplacedSlot?.id === slot.id) {
-                  <span class="photo-unplaced-chip__hint">PLACE</span>
-                }
-              </button>
-            }
-          </div>
-          <span class="photo-unplaced-panel__counter">
-            {{ slots.length }} of {{ slots.length + unplacedSlots.length }} placed
-          </span>
-        </div>
-      }
     </div>
   `,
 })
