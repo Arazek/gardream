@@ -410,6 +410,25 @@ cmd_setup_dev() {
 }
 
 # ---------------------------------------------------------------------------
+# Test: Playwright e2e
+# ---------------------------------------------------------------------------
+cmd_test_e2e() {
+  require_tool node
+  info "Running Playwright e2e tests..."
+  cd frontend
+  npx playwright test "$@"
+  cd ..
+}
+
+cmd_test_e2e_ui() {
+  require_tool node
+  info "Starting Playwright UI mode..."
+  cd frontend
+  npx playwright test --ui "$@"
+  cd ..
+}
+
+# ---------------------------------------------------------------------------
 # Shell into a service
 # ---------------------------------------------------------------------------
 cmd_shell() {
@@ -444,6 +463,8 @@ cmd_help() {
   echo "  db:reset              Drop + recreate app DB (dev only, destructive)"
   echo "  frontend:sync         Build Angular + run Capacitor sync"
   echo "  storybook             Start Storybook component explorer (http://localhost:6006)"
+  echo "  test:e2e [args]       Run Playwright e2e tests (pass --grep, --project, file, etc.)"
+  echo "  test:e2e:ui           Open Playwright UI test runner"
   echo "  keycloak:user [u] [p] Create a dev user in the gardream realm (default: testuser/testpass123)"
   echo "  keycloak:import       Import realm from realm-config.json (first-time setup, destructive)"
   echo "  keycloak:export       Export Keycloak realm config to infra/keycloak/"
@@ -475,6 +496,8 @@ case "$CMD" in
   db:reset)         cmd_db_reset ;;
   frontend:sync)    cmd_frontend_sync ;;
   storybook)        cmd_storybook ;;
+  test:e2e)         cmd_test_e2e "$@" ;;
+  test:e2e:ui)      cmd_test_e2e_ui "$@" ;;
   keycloak:user)    cmd_keycloak_user "$@" ;;
   keycloak:import)  cmd_keycloak_import ;;
   keycloak:export)  cmd_keycloak_export ;;
