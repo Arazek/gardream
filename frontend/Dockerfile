@@ -13,10 +13,10 @@ CMD ["npx", "ng", "serve", "--host", "0.0.0.0", "--port", "4200", "--poll", "500
 # ---------------------------------------------------------------------------
 FROM base AS builder
 COPY . .
-RUN npm run build -- --configuration production
+RUN npx ng build --project pwa-template --configuration production
 
 # ---------------------------------------------------------------------------
 FROM nginx:alpine AS production
-COPY --from=builder /app/www /usr/share/nginx/html
+COPY --from=builder /app/www/browser /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
