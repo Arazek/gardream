@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.pwa.template',
-  appName: 'PWA Template',
+  appId: process.env.APP_ID || 'com.gardream.app',
+  appName: process.env.APP_NAME || 'Gardream',
   webDir: 'www',
   server: {
     androidScheme: 'https',

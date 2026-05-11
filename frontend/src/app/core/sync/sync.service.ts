@@ -103,6 +103,7 @@ export class SyncService implements OnDestroy {
           const plot = await this.plotsApi.create(payload).toPromise();
           if (plot && entry.entity_id.startsWith('tmp_')) {
             await this.db.rewriteTmpId(entry.entity_id, plot.id, 'plot');
+            return plot.id;
           }
         } else if (entry.operation === 'update') {
           await this.plotsApi.update(entry.entity_id, payload).toPromise();
@@ -112,17 +113,26 @@ export class SyncService implements OnDestroy {
         break;
       case 'plot_slot':
         if (entry.operation === 'create') {
-          const slot = await this.plotsApi.createSlot(payload.plotId, payload).toPromise();
+          const slotRow = await this.db.getSlotById(entry.entity_id);
+          const realPlotId = slotRow?.plot_id ?? payload.plotId;
+          const slot = await this.plotsApi.createSlot(realPlotId, payload).toPromise();
           if (slot && entry.entity_id.startsWith('tmp_')) {
             await this.db.rewriteTmpId(entry.entity_id, slot.id, 'plot_slot');
+            return slot.id;
           }
         } else if (entry.operation === 'update') {
-          await this.plotsApi.updateSlot(payload.plotId, entry.entity_id, payload).toPromise();
+          const slotRow = await this.db.getSlotById(entry.entity_id);
+          const realPlotId = slotRow?.plot_id ?? payload.plotId;
+          await this.plotsApi.updateSlot(realPlotId, entry.entity_id, payload).toPromise();
         } else if (entry.operation === 'delete') {
-          await this.plotsApi.deleteSlot(payload.plotId, entry.entity_id).toPromise();
+          const slotRow = await this.db.getSlotById(entry.entity_id);
+          const realPlotId = slotRow?.plot_id ?? payload.plotId;
+          await this.plotsApi.deleteSlot(realPlotId, entry.entity_id).toPromise();
         } else if (entry.operation === 'transplant') {
+          const slotRow = await this.db.getSlotById(entry.entity_id);
+          const realPlotId = slotRow?.plot_id ?? payload.plotId;
           const newSlot = await this.plotsApi.transplantSlot(
-            payload.plotId, entry.entity_id,
+            realPlotId, entry.entity_id,
             { target_plot_id: payload.targetPlotId, target_row: payload.targetRow, target_col: payload.targetCol }
           ).toPromise();
           if (newSlot && payload.newSlotId?.startsWith('tmp_')) {

@@ -57,8 +57,16 @@ export class PlotsEffects {
               payload: JSON.stringify(payload),
             }))
             .then(() => this.sync.push())
+            .then(async (rewritten): Promise<Plot> => {
+              const realId = rewritten[plot.id];
+              if (realId) {
+                const plots = await this.db.getAllPlots();
+                return plots.find(p => p.id === realId) ?? plot;
+              }
+              return plot;
+            })
         ).pipe(
-          map(() => PlotsActions.createPlotSuccess({ plot })),
+          map(updatedPlot => PlotsActions.createPlotSuccess({ plot: updatedPlot })),
           catchError(err => of(PlotsActions.createPlotFailure({ error: err.message }))),
         );
       })

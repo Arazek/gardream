@@ -1,8 +1,4 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
----
+# AGENTS.md — Gardream
 
 ## Stack
 
@@ -13,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Files**: Garage S3 (self-hosted, `aioboto3` backend client)
 - **Infra**: All Docker. Traefik reverse proxy. Multi-env compose: base + local/prod overrides
 - **Paths**: `@app/*` → `src/app/*`, `@env/*` → `src/environments/*`
+- **Realm**: `gardream` (not `pwa` as some docs say — `.env.example`, `config.py`, conftest all confirm)
 
 ## Dev setup
 
@@ -22,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-All via `./run.sh` from project root. Infra must be running for most commands.
+All via `./run.sh`. Requires infra running unless noted.
 
 | Command | What |
 |---|---|
@@ -36,41 +33,11 @@ All via `./run.sh` from project root. Infra must be running for most commands.
 | `db:reset` | Drop+recreate app_db (destructive, asks confirmation) |
 | `db:setup` | Idempotent user/db/extension creation |
 | `frontend:sync` | Angular build + Capacitor sync |
-| `android:init` | Initialize Android platform (one-time: `npx cap add android` + keystore) |
-| `android:sync` | Build web assets + sync to Android project |
-| `android:build` | Build debug APK |
-| `android:build:release` | Build signed release AAB |
-| `android:run` | Build + deploy to connected device/emulator |
-| `android:open` | Open Android project in Android Studio |
 | `storybook` | Storybook at localhost:6006 |
-| `keycloak:user [u] [p] [email]` | Dev user (default testuser/testpass123) |
+| `keycloak:user [u] [p]` | Dev user (default testuser/testpass123) |
 | `keycloak:export` | Export realm to `infra/keycloak/realm-config.json` |
-| `keycloak:import` | Import realm from `infra/keycloak/realm-config.json` (destructive) |
 | `shell [svc]` | Bash in container (default backend) |
 | `certs` | Regenerate self-signed TLS |
-
-### Frontend (inside `frontend/`)
-
-```bash
-npm test                                          # All unit tests (Karma+Jasmine)
-npm run test -- --include='**/my-file.spec.ts'   # Single test file
-npm run lint                                      # ESLint
-npm run e2e                                       # Playwright e2e (headless)
-npm run e2e:ui                                    # Playwright with UI
-npm run e2e:report                                # View last e2e report
-npm run storybook                                 # Storybook (localhost:6006)
-npm run build-storybook                           # Static build
-```
-
-### Backend (inside `backend/` or via `./run.sh shell backend`)
-
-```bash
-pytest                                            # All tests (requires live Docker stack)
-pytest -xvs tests/test_example.py::test_create_example  # Single test
-pytest --cov                                      # Coverage report
-black .                                           # Format
-ruff check .                                      # Lint
-```
 
 ## Services
 
@@ -83,8 +50,6 @@ All behind Traefik. Local: `https://localhost:4443` (type `thisisunsafe` in Chro
 | Keycloak admin | `https://gateway.localhost/keycloak` |
 | pgAdmin | `https://gateway.localhost/pgadmin` |
 | Traefik dashboard | `https://gateway.localhost/traefik/dashboard/` |
-
-Test user (created by `setup:dev`): `testuser` / `testpass123`
 
 ## Frontend conventions
 
@@ -111,8 +76,8 @@ Test user (created by `setup:dev`): `testuser` / `testpass123`
 ## Testing
 
 - **Backend**: `pytest` (from `backend/` or via container). Requires live Docker stack — uses real Keycloak token. `httpx` with `verify=False` (self-signed cert). Fixtures in `conftest.py` create test plot/crop. `pytest` not in `requirements.txt` — install manually or run in dev container
-- **Frontend unit**: `npm test` (Karma+Jasmine). Co-locate `.spec.ts` with components.
-- **Frontend e2e**: `npm run e2e` (Playwright, `e2e/`). Chromium desktop + Pixel 5 mobile.
+- **Frontend unit**: `npm test` (Karma+Jasmine)
+- **Frontend e2e**: `npm run e2e` (Playwright, `e2e/`). Chromium desktop + Pixel 5 mobile
 
 ## Gotchas
 
@@ -130,11 +95,9 @@ Test user (created by `setup:dev`): `testuser` / `testpass123`
 - **Black** (88) + **Ruff** for Python. Type hints everywhere
 - **SCSS + BEM**: max 2 nesting levels. No `px` — only `rem` or CSS var tokens
 - **Stories** only for `shared/components/`, co-located, always `tags: ['autodocs']`
-- **Convention violations require user confirmation.** Flag them, ask for double confirmation before overriding
-- No silent refactoring outside scope
+- No silent refactoring outside scope — flag convention violations, ask double confirmation before overriding
 
 ## Adding code
 
 **Backend endpoint**: Model → Schema → Endpoint → register in `api/v1/router.py` → `db:revision "msg"` + `db:migrate`
-
 **Frontend feature**: Folder `features/<name>/` with `pages/`, `components/`, `services/`, `store/` → routes file → register in `store/index.ts` → add lazy route to `app.routes.ts`

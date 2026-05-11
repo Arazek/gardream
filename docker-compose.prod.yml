@@ -1,0 +1,22 @@
+# =============================================================================
+# Production overrides for docker-compose.yml.
+# Assumes the infra stack (traefik, postgres, keycloak) is already running.
+# =============================================================================
+
+services:
+
+  backend:
+    env_file:
+      - .env
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  frontend:
+    env_file:
+      - .env
+    deploy:
+      resources:
+        limits:
+          memory: 256M

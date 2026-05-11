@@ -242,6 +242,10 @@ export class LocalDbService {
     if (entityType === 'plot') {
       await this.run(`UPDATE plot_slots SET plot_id = ? WHERE plot_id = ?`, [realId, tmpId]);
       await this.run(`UPDATE tasks SET plot_slot_id = ? WHERE plot_slot_id = ?`, [realId, tmpId]);
+      await this.run(
+        `UPDATE outbox SET payload = REPLACE(payload, ?, ?) WHERE entity_type IN ('plot_slot', 'task')`,
+        [`"plotId":"${tmpId}"`, `"plotId":"${realId}"`]
+      );
     }
     if (entityType === 'plot_slot') {
       await this.run(`UPDATE tasks SET plot_slot_id = ? WHERE plot_slot_id = ?`, [realId, tmpId]);
@@ -328,6 +332,19 @@ export class LocalDbService {
 
   async insertSlot(slot: PlotSlot): Promise<void> {
     await this.upsertSlots([slot]);
+  }
+
+  async getSlotById(slotId: string): Promise<PlotSlot | null> {
+    const rows = await this.query<Record<string, unknown>>(
+      `SELECT * FROM plot_slots WHERE id = ? LIMIT 1`, [slotId]
+    );
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return {
+      ...(r as any),
+      watering_days_override: r['watering_days_override'] ? JSON.parse(r['watering_days_override'] as string) : null,
+      fertilise_days_override: r['fertilise_days_override'] ? JSON.parse(r['fertilise_days_override'] as string) : null,
+    };
   }
 
   async getSlotsByPlot(plotId: string): Promise<PlotSlot[]> {

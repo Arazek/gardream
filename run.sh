@@ -2,7 +2,7 @@
 set -euo pipefail
 
 COMPOSE_BASE="-f docker-compose.yml"
-COMPOSE_LOCAL="-f docker-compose.local.yml"
+COMPOSE_LOCAL="${COMPOSE_BASE} -f docker-compose.local.yml"
 COMPOSE_PROD="${COMPOSE_BASE} -f docker-compose.prod.yml"
 COMPOSE_INFRA="-f infra/docker-compose.yml"
 
@@ -257,6 +257,233 @@ cmd_frontend_sync() {
 }
 
 # ---------------------------------------------------------------------------
+# Android: initialize platform
+# ---------------------------------------------------------------------------
+cmd_android_init() {
+  require_env
+  require_tool node
+
+  cd frontend
+
+  if [ -d android ]; then
+    warn "Android platform already exists. To reinitialize, delete frontend/android/ and re-run."
+    cd ..
+    return
+  fi
+
+  info "Adding Android platform..."
+  APP_ID="${APP_ID:-com.gardream.app}" APP_NAME="${APP_NAME:-Gardream}" npx cap add android
+
+  if command -v keytool &>/dev/null; then
+    local keystore="${ANDROID_KEYSTORE_PATH/#\~/$HOME}"
+    if [ ! -f "$keystore" ]; then
+      info "Generating release keystore..."
+      mkdir -p "$(dirname "$keystore")"
+      keytool -genkey -v \
+        -keystore "$keystore" \
+        -alias "${ANDROID_KEY_ALIAS:-gardream}" \
+        -keyalg RSA -keysize 2048 -validity 10000 \
+        -storepass "${ANDROID_KEYSTORE_PASSWORD:-changeme}" \
+        -keypass "${ANDROID_KEY_PASSWORD:-changeme}" \
+        -dname "CN=${APP_NAME:-Gardream}, OU=Dev, O=Gardream, L=Unknown, S=Unknown, C=US"
+    fi
+
+    cat > android/key.properties <<PROPS
+storeFile=${keystore}
+storePassword=${ANDROID_KEYSTORE_PASSWORD:-changeme}
+keyAlias=${ANDROID_KEY_ALIAS:-gardream}
+keyPassword=${ANDROID_KEY_PASSWORD:-changeme}
+PROPS
+
+    cat > android/app/signing.gradle <<'GRADLE'
+def keystorePropertiesFile = rootProject.file("key.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    signingConfigs {
+        release {
+            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+            storePassword keystoreProperties['storePassword']
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+}
+GRADLE
+
+    if ! grep -q "signing.gradle" android/app/build.gradle; then
+      sed -i "1i apply from: 'signing.gradle'" android/app/build.gradle
+    fi
+  else
+    warn "keytool not found — skipping keystore generation. Install a JDK and re-run android:init for release builds."
+  fi
+
+  cd ..
+  success "Android platform initialized."
+  info "  Debug APK:   ./run.sh android:build"
+  info "  Release AAB: ./run.sh android:build:release"
+  info "  Run on device: ./run.sh android:run"
+}
+
+# ---------------------------------------------------------------------------
+# Android: build web assets and sync to native project
+# ---------------------------------------------------------------------------
+cmd_android_sync() {
+  require_env
+  require_tool node
+
+  if [ ! -d frontend/android ]; then
+    error "Android platform not initialized. Run './run.sh android:init' first."
+  fi
+
+  info "Building Angular app and syncing to Android..."
+  cd frontend
+  APP_ID="${APP_ID:-com.gardream.app}" APP_NAME="${APP_NAME:-Gardream}" npm run build
+  APP_ID="${APP_ID:-com.gardream.app}" APP_NAME="${APP_NAME:-Gardream}" npx cap sync android
+  cd ..
+  success "Android sync complete."
+}
+
+# ---------------------------------------------------------------------------
+# Android: build debug APK
+# ---------------------------------------------------------------------------
+cmd_android_build() {
+  require_env
+  require_tool node
+
+  if [ ! -d frontend/android ]; then
+    error "Android platform not initialized. Run './run.sh android:init' first."
+  fi
+
+  info "Building debug APK..."
+  cd frontend
+  APP_ID="${APP_ID:-com.gardream.app}" APP_NAME="${APP_NAME:-Gardream}" npm run build
+  APP_ID="${APP_ID:-com.gardream.app}" APP_NAME="${APP_NAME:-Gardream}" npx cap sync android
+
+  cd android
+  ./gradlew assembleDebug
+  cd ../..
+
+  local apk=$(find frontend/android/app/build/outputs/apk/debug -name "*.apk" 2>/dev/null | head -1)
+  if [ -n "$apk" ]; then
+    success "Debug APK built: ${apk}"
+  else
+    error "Build failed — no APK found."
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Android: build release AAB
+# ---------------------------------------------------------------------------
+cmd_android_build_release() {
+  require_env
+  require_tool node
+
+  if [ ! -d frontend/android ]; then
+    error "Android platform not initialized. Run './run.sh android:init' first."
+  fi
+
+  local keystore="${ANDROID_KEYSTORE_PATH/#\~/$HOME}"
+  if [ ! -f "$keystore" ]; then
+    error "Keystore not found at ${keystore}. Run './run.sh android:init' first."
+  fi
+
+  if [ ! -f frontend/android/key.properties ]; then
+    info "Creating key.properties..."
+    cat > frontend/android/key.properties <<PROPS
+storeFile=${keystore}
+storePassword=${ANDROID_KEYSTORE_PASSWORD:-changeme}
+keyAlias=${ANDROID_KEY_ALIAS:-gardream}
+keyPassword=${ANDROID_KEY_PASSWORD:-changeme}
+PROPS
+  fi
+
+  if ! grep -q "signing.gradle" frontend/android/app/build.gradle 2>/dev/null; then
+    info "Adding signing config..."
+    cat > frontend/android/app/signing.gradle <<'GRADLE'
+def keystorePropertiesFile = rootProject.file("key.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    signingConfigs {
+        release {
+            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+            storePassword keystoreProperties['storePassword']
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+}
+GRADLE
+    sed -i "1i apply from: 'signing.gradle'" frontend/android/app/build.gradle
+  fi
+
+  info "Building release AAB..."
+  cd frontend
+  APP_ID="${APP_ID:-com.gardream.app}" APP_NAME="${APP_NAME:-Gardream}" npm run build
+  APP_ID="${APP_ID:-com.gardream.app}" APP_NAME="${APP_NAME:-Gardream}" npx cap sync android
+
+  cd android
+  ./gradlew bundleRelease
+  cd ../..
+
+  local aab=$(find frontend/android/app/build/outputs/bundle/release -name "*.aab" 2>/dev/null | head -1)
+  if [ -n "$aab" ]; then
+    success "Release AAB built: ${aab}"
+  else
+    error "Build failed — no AAB found."
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Android: build and run on connected device/emulator
+# ---------------------------------------------------------------------------
+cmd_android_run() {
+  require_env
+  require_tool node
+
+  if [ ! -d frontend/android ]; then
+    error "Android platform not initialized. Run './run.sh android:init' first."
+  fi
+
+  info "Building and deploying to Android device..."
+  cd frontend
+  APP_ID="${APP_ID:-com.gardream.app}" APP_NAME="${APP_NAME:-Gardream}" npm run build
+  APP_ID="${APP_ID:-com.gardream.app}" APP_NAME="${APP_NAME:-Gardream}" npx cap run android
+  cd ..
+}
+
+# ---------------------------------------------------------------------------
+# Android: open in Android Studio
+# ---------------------------------------------------------------------------
+cmd_android_open() {
+  if [ ! -d frontend/android ]; then
+    error "Android platform not initialized. Run './run.sh android:init' first."
+  fi
+
+  info "Opening Android project in Android Studio..."
+  cd frontend
+  npx cap open android
+  cd ..
+}
+
+# ---------------------------------------------------------------------------
 # Storybook
 # ---------------------------------------------------------------------------
 cmd_storybook() {
@@ -462,6 +689,12 @@ cmd_help() {
   echo "  db:revision <msg>     Create new Alembic autogenerate revision"
   echo "  db:reset              Drop + recreate app DB (dev only, destructive)"
   echo "  frontend:sync         Build Angular + run Capacitor sync"
+  echo "  android:init          Initialize Android platform (one-time: npx cap add android + keystore)"
+  echo "  android:sync          Build web assets + sync to Android project"
+  echo "  android:build         Build debug APK"
+  echo "  android:build:release Build signed release AAB"
+  echo "  android:run           Build + deploy to connected device/emulator"
+  echo "  android:open          Open Android project in Android Studio"
   echo "  storybook             Start Storybook component explorer (http://localhost:6006)"
   echo "  test:e2e [args]       Run Playwright e2e tests (pass --grep, --project, file, etc.)"
   echo "  test:e2e:ui           Open Playwright UI test runner"
@@ -494,8 +727,14 @@ case "$CMD" in
   db:migrate)       cmd_db_migrate ;;
   db:revision)      cmd_db_revision "$@" ;;
   db:reset)         cmd_db_reset ;;
-  frontend:sync)    cmd_frontend_sync ;;
-  storybook)        cmd_storybook ;;
+  frontend:sync)       cmd_frontend_sync ;;
+  android:init)         cmd_android_init ;;
+  android:sync)         cmd_android_sync ;;
+  android:build)        cmd_android_build ;;
+  android:build:release) cmd_android_build_release ;;
+  android:run)          cmd_android_run ;;
+  android:open)         cmd_android_open ;;
+  storybook)            cmd_storybook ;;
   test:e2e)         cmd_test_e2e "$@" ;;
   test:e2e:ui)      cmd_test_e2e_ui "$@" ;;
   keycloak:user)    cmd_keycloak_user "$@" ;;

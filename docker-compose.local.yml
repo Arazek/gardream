@@ -1,5 +1,5 @@
 # =============================================================================
-# Local dev override — backend + frontend only
+# Local dev overrides for docker-compose.yml — backend + frontend + storybook.
 # Assumes the infra stack (traefik, postgres, keycloak) is already running
 # via infra/docker-compose.yml and has created the proxy-network network.
 # =============================================================================
@@ -8,8 +8,6 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
       target: development
     ports:
       - "8000:8000"
@@ -17,8 +15,6 @@ services:
       - .env
     volumes:
       - ./backend:/app
-    networks:
-      - proxy-network
     labels:
       - "traefik.enable=true"
       # HTTP routing
@@ -33,8 +29,6 @@ services:
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
       target: development
     environment:
       NODE_OPTIONS: "--max-http-header-size=65536"
@@ -43,8 +37,6 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    networks:
-      - proxy-network
     labels:
       - "traefik.enable=true"
       # HTTP routing
@@ -69,10 +61,6 @@ services:
     ports:
       - "6006:6006"
     networks:
-      - proxy-network
+      - proxy
     profiles:
       - storybook
-
-networks:
-  proxy-network:
-    external: true
