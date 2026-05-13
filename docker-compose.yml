@@ -16,7 +16,6 @@ services:
     restart: unless-stopped
     networks:
       - proxy
-      - internal
     environment:
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
@@ -60,5 +59,3 @@ networks:
   proxy:
     external: true
     name: proxy-network
-  internal:
-    driver: bridge
