@@ -5,6 +5,7 @@ COMPOSE_BASE="-f docker-compose.yml"
 COMPOSE_LOCAL="${COMPOSE_BASE} -f docker-compose.local.yml"
 COMPOSE_PROD="${COMPOSE_BASE} -f docker-compose.prod.yml"
 COMPOSE_INFRA="-f infra/docker-compose.yml"
+COMPOSE_INFRA_PROD="${COMPOSE_INFRA} -f infra/docker-compose.prod.yml"
 
 # Colors
 RED='\033[0;31m'
@@ -25,6 +26,16 @@ require_env() {
   set -a
   # shellcheck source=.env
   source .env
+  set +a
+}
+
+require_env_prod() {
+  if [ ! -f .env.prod ]; then
+    error ".env.prod file not found. Run './scripts/production-setup.sh' first to generate it."
+  fi
+  set -a
+  # shellcheck source=.env.prod
+  source .env.prod
   set +a
 }
 
@@ -113,6 +124,50 @@ cmd_prod() {
   info "Starting services in prod mode..."
   $DOCKER compose ${COMPOSE_PROD} up -d --build "$@"
   success "Services started. Run './run.sh logs' to follow output."
+}
+
+# ---------------------------------------------------------------------------
+# Prod: setup — first-time production bootstrap
+# ---------------------------------------------------------------------------
+cmd_prod_setup() {
+  require_env_prod
+  require_tool docker
+  $DOCKER info &>/dev/null || error "Docker daemon is not running. Start it with: sudo systemctl start docker"
+
+  info "Starting infra services in production mode..."
+  $DOCKER compose ${COMPOSE_INFRA_PROD} --env-file .env.prod up -d "$@"
+  success "Infra started. Waiting for services to be healthy..."
+
+  info "Running database migrations..."
+  $DOCKER compose ${COMPOSE_PROD} run --rm backend alembic upgrade head
+  success "Migrations applied."
+
+  info "Importing Keycloak realm..."
+  warn "This will reset Keycloak to the state in realm-config.json. Proceed? (yes/N)"
+  read -r confirm
+  if [ "$confirm" = "yes" ]; then
+    $DOCKER compose ${COMPOSE_INFRA_PROD} --env-file .env.prod stop keycloak
+    $DOCKER volume rm gardream-keycloak_data 2>/dev/null || true
+    $DOCKER compose ${COMPOSE_INFRA_PROD} --env-file .env.prod up -d keycloak
+    success "Keycloak restarted with realm import."
+  else
+    info "Skipping Keycloak realm import."
+  fi
+
+  success "Production setup complete."
+  info "  https://${DOMAIN}/           — App"
+  info "  https://${DOMAIN}/api/v1/docs — API docs"
+  info "  https://${GATEWAY_HOSTNAME}/keycloak   — Keycloak admin"
+}
+
+# ---------------------------------------------------------------------------
+# DB: migrate (production)
+# ---------------------------------------------------------------------------
+cmd_prod_db_migrate() {
+  require_env_prod
+  info "Running Alembic migrations (production)..."
+  $DOCKER compose ${COMPOSE_PROD} run --rm backend alembic upgrade head
+  success "Migrations applied."
 }
 
 # ---------------------------------------------------------------------------
@@ -679,6 +734,8 @@ cmd_help() {
   echo "  infra:logs [service]  Tail infra logs (all services or specific)"
   echo "  dev                   Start app services (backend + frontend, hot reload)"
   echo "  prod                  Start all services (production mode, detached)"
+  echo "  prod:setup            Full production bootstrap (infra + db + keycloak)"
+  echo "  prod:db:migrate       Run Alembic migrations in production"
   echo "  stop                  Stop app services"
   echo "  restart               Stop + dev"
   echo "  logs [service]        Tail logs (all services or specific)"
@@ -718,6 +775,8 @@ case "$CMD" in
   infra:logs)       cmd_infra_logs "$@" ;;
   dev)              cmd_dev "$@" ;;
   prod)             cmd_prod "$@" ;;
+  prod:setup)       cmd_prod_setup "$@" ;;
+  prod:db:migrate)  cmd_prod_db_migrate ;;
   stop)             cmd_stop "$@" ;;
   restart)          cmd_restart ;;
   logs)             cmd_logs "$@" ;;
