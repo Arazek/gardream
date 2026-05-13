@@ -488,3 +488,63 @@ TRAEFIKEOF
 
   success "infra/traefik/traefik.prod.yml written."
 }
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+main() {
+  check_prereqs
+
+  # Ask all questions
+  ask_questions
+
+  # Show summary and confirm
+  show_summary
+
+  echo ""
+  read -r -p "$(echo -e "${BOLD}Write these files? [Y/n]${NC}: ")" confirm
+  if [ -n "$confirm" ] && [ "${confirm,,}" != "y" ] && [ "${confirm,,}" != "yes" ]; then
+    info "Aborted. No files were written."
+    exit 0
+  fi
+
+  # Back up .env.prod if it already exists
+  if [ -f .env.prod ]; then
+    cp .env.prod .env.prod.bak
+    info "Backed up existing .env.prod → .env.prod.bak"
+  fi
+
+  # Generate files
+  write_env_prod
+  write_infra_prod_compose
+  write_traefik_prod_config
+
+  # Print next steps
+  echo ""
+  echo -e "${BOLD}══════════════════════════════════════════════════════════${NC}"
+  echo -e "${BOLD}  Setup Complete — Next Steps${NC}"
+  echo -e "${BOLD}══════════════════════════════════════════════════════════${NC}"
+  echo ""
+  echo "  1. Review .env.prod and infra/traefik/traefik.prod.yml"
+  echo "  2. Ensure your domain (${DOMAIN}) points to this server's public IP"
+  echo "  3. Ensure ports 80 and 443 are open in your firewall"
+  echo "  4. Run the production bootstrap:"
+  echo ""
+  echo -e "     ${BOLD}./run.sh prod:setup${NC}"
+  echo ""
+  echo "  This will:"
+  echo "    • Start all infra services (postgres, keycloak, traefik, etc.)"
+  echo "    • Run database migrations"
+  echo "    • Import the Keycloak realm"
+  echo ""
+  echo "  5. After bootstrap, start the app:"
+  echo ""
+  echo -e "     ${BOLD}./run.sh prod${NC}"
+  echo ""
+  echo "  Your app will be live at: ${BOLD}https://${DOMAIN}/${NC}"
+  echo ""
+
+  success "All files generated. Review them before running prod:setup."
+}
+
+main
