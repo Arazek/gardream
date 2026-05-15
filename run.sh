@@ -101,6 +101,33 @@ cmd_infra_logs() {
 }
 
 # ---------------------------------------------------------------------------
+# Infra: production variants (uses .env.prod + infra prod overrides)
+# ---------------------------------------------------------------------------
+cmd_infra_start_prod() {
+  require_env_prod
+  require_tool docker
+  $DOCKER info &>/dev/null || error "Docker daemon is not running. Start it with: sudo systemctl start docker"
+  info "Starting infra services in production mode..."
+  $DOCKER compose ${COMPOSE_INFRA_PROD} --env-file .env.prod up -d "$@"
+  success "Infra started. Keycloak may take ~30s to be ready."
+  info "  https://${GATEWAY_HOSTNAME}/keycloak           — Keycloak"
+  info "  https://${GATEWAY_HOSTNAME}/pgadmin            — pgAdmin"
+  info "  https://${GATEWAY_HOSTNAME}/traefik/dashboard/ — Traefik dashboard"
+}
+
+cmd_infra_stop_prod() {
+  require_env_prod
+  info "Stopping infra services..."
+  $DOCKER compose ${COMPOSE_INFRA_PROD} --env-file .env.prod down "$@"
+}
+
+cmd_infra_logs_prod() {
+  local svc="${1:-}"
+  require_env_prod
+  $DOCKER compose ${COMPOSE_INFRA_PROD} --env-file .env.prod logs -f ${svc}
+}
+
+# ---------------------------------------------------------------------------
 # Dev
 # ---------------------------------------------------------------------------
 cmd_dev() {
@@ -118,11 +145,11 @@ cmd_dev() {
 # Prod
 # ---------------------------------------------------------------------------
 cmd_prod() {
-  require_env
+  require_env_prod
   require_tool docker
   $DOCKER info &>/dev/null || error "Docker daemon is not running. Start it with: sudo systemctl start docker"
-  info "Starting services in prod mode..."
-  $DOCKER compose ${COMPOSE_PROD} up -d --build "$@"
+  info "Starting app services in production mode..."
+  $DOCKER compose ${COMPOSE_PROD} --env-file .env.prod up -d --build "$@"
   success "Services started. Run './run.sh logs' to follow output."
 }
 
@@ -732,6 +759,9 @@ cmd_help() {
   echo "  infra:start           Start infra services (Traefik, Postgres, Keycloak, pgAdmin, Garage, Webhook)"
   echo "  infra:stop            Stop infra services"
   echo "  infra:logs [service]  Tail infra logs (all services or specific)"
+  echo "  infra:start:prod      Start infra in production mode (uses .env.prod)"
+  echo "  infra:stop:prod       Stop production infra services"
+  echo "  infra:logs:prod [svc] Tail production infra logs"
   echo "  dev                   Start app services (backend + frontend, hot reload)"
   echo "  prod                  Start all services (production mode, detached)"
   echo "  prod:setup            Full production bootstrap (infra + db + keycloak)"
@@ -773,6 +803,9 @@ case "$CMD" in
   infra:start)      cmd_infra_start "$@" ;;
   infra:stop)       cmd_infra_stop "$@" ;;
   infra:logs)       cmd_infra_logs "$@" ;;
+  infra:start:prod) cmd_infra_start_prod "$@" ;;
+  infra:stop:prod)  cmd_infra_stop_prod "$@" ;;
+  infra:logs:prod)  cmd_infra_logs_prod "$@" ;;
   dev)              cmd_dev "$@" ;;
   prod)             cmd_prod "$@" ;;
   prod:setup)       cmd_prod_setup "$@" ;;
