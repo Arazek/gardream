@@ -161,6 +161,19 @@ cmd_prod_setup() {
   require_tool docker
   $DOCKER info &>/dev/null || error "Docker daemon is not running. Start it with: sudo systemctl start docker"
 
+  # Keycloak realm import — ask upfront so we can clear the volume before
+  # starting anything, avoiding a later stop/restart cycle.
+  info "Import Keycloak realm from realm-config.json?"
+  warn "This will RESET Keycloak to the realm-config.json state — all existing Keycloak data will be lost. Proceed? (yes/N)"
+  read -r confirm
+  if [ "$confirm" = "yes" ] || [ "$confirm" = "y" ]; then
+    $DOCKER compose ${COMPOSE_INFRA_PROD} --env-file .env.prod down keycloak 2>/dev/null || true
+    $DOCKER volume rm gardream-keycloak_data 2>/dev/null || true
+    info "Keycloak volume cleared. Realm will be imported on first start."
+  else
+    info "Skipping Keycloak realm import (existing data will be kept)."
+  fi
+
   info "Starting infra services in production mode..."
   $DOCKER compose ${COMPOSE_INFRA_PROD} --env-file .env.prod up -d "$@"
   success "Infra started. Waiting for services to be healthy..."
@@ -168,18 +181,6 @@ cmd_prod_setup() {
   info "Running database migrations..."
   $DOCKER compose ${COMPOSE_PROD} run --rm backend alembic upgrade head
   success "Migrations applied."
-
-  info "Importing Keycloak realm..."
-  warn "This will reset Keycloak to the state in realm-config.json. Proceed? (yes/N)"
-  read -r confirm
-  if [ "$confirm" = "yes" ]; then
-    $DOCKER compose ${COMPOSE_INFRA_PROD} --env-file .env.prod stop keycloak
-    $DOCKER volume rm gardream-keycloak_data 2>/dev/null || true
-    $DOCKER compose ${COMPOSE_INFRA_PROD} --env-file .env.prod up -d keycloak
-    success "Keycloak restarted with realm import."
-  else
-    info "Skipping Keycloak realm import."
-  fi
 
   success "Production setup complete."
   info "  https://${DOMAIN}/           — App"
