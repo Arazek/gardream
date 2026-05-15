@@ -378,6 +378,11 @@ cmd_android_init() {
     return
   fi
 
+  # Capacitor requires www/index.html to exist before `cap add android`.
+  # Build the Angular app first to generate the web assets directory.
+  info "Building web assets..."
+  npm run build
+
   info "Adding Android platform..."
   APP_ID="${APP_ID:-com.gardream.app}" APP_NAME="${APP_NAME:-Gardream}" npx cap add android
 
