@@ -107,10 +107,13 @@ cmd_infra_start_prod() {
   require_env_prod
   require_tool docker
   $DOCKER info &>/dev/null || error "Docker daemon is not running. Start it with: sudo systemctl start docker"
-  # Tear down any running infra containers (local dev or previous prod) to
-  # avoid container_name conflicts between the two Compose projects.
+  # Force-remove any infra containers by name (dev and prod compose files
+  # may create different Docker Compose projects even though container_name
+  # values are identical, so compose down doesn't always clean up).
   info "Stopping any existing infra containers..."
-  $DOCKER compose ${COMPOSE_INFRA} --env-file .env down 2>/dev/null || true
+  for c in traefik postgres keycloak pgadmin garage webhook; do
+    $DOCKER rm -f "$c" 2>/dev/null || true
+  done
   info "Starting infra services in production mode..."
   $DOCKER compose ${COMPOSE_INFRA_PROD} --env-file .env.prod up -d "$@"
   success "Infra started. Keycloak may take ~30s to be ready."
@@ -178,10 +181,13 @@ cmd_prod_setup() {
     info "Skipping Keycloak realm import (existing data will be kept)."
   fi
 
-  # Tear down any running infra containers (local dev or previous prod) to
-  # avoid container_name conflicts between the two Compose projects.
+  # Force-remove any infra containers by name (dev and prod compose files
+  # may create different Docker Compose projects even though container_name
+  # values are identical, so compose down doesn't always clean up).
   info "Stopping any existing infra containers..."
-  $DOCKER compose ${COMPOSE_INFRA} --env-file .env down 2>/dev/null || true
+  for c in traefik postgres keycloak pgadmin garage webhook; do
+    $DOCKER rm -f "$c" 2>/dev/null || true
+  done
 
   info "Starting infra services in production mode..."
   $DOCKER compose ${COMPOSE_INFRA_PROD} --env-file .env.prod up -d "$@"
