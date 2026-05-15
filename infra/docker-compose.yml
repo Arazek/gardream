@@ -45,7 +45,7 @@ services:
       KEYCLOAK_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
       KEYCLOAK_DB: ${KEYCLOAK_DB}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     networks:
       - proxy-network
     healthcheck:
