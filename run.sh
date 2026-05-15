@@ -168,23 +168,32 @@ cmd_prod_setup() {
   require_tool docker
   $DOCKER info &>/dev/null || error "Docker daemon is not running. Start it with: sudo systemctl start docker"
 
-  # Keycloak realm import — ask upfront so we can clear the volume before
-  # starting anything, avoiding a later stop/restart cycle.
-  info "Import Keycloak realm from realm-config.json?"
-  warn "This will RESET Keycloak to the realm-config.json state — all existing Keycloak data will be lost. Proceed? (yes/N)"
-  read -r confirm
+  # First-time bootstrap — offer to clear all infra data volumes so we
+  # start from a clean slate (avoids PG version mismatch, stale Keycloak
+  # data, etc.). If the user declines, existing volumes are left untouched.
+  echo ""
+  echo -e "${YELLOW}══════════════════════════════════════════════════════════${NC}"
+  echo -e "${YELLOW}  First-time production bootstrap${NC}"
+  echo -e "${YELLOW}══════════════════════════════════════════════════════════${NC}"
+  echo ""
+  warn "This will DELETE all existing infra data (Postgres, Keycloak, pgAdmin, Garage)."
+  warn "Choose 'no' if you have production data you want to preserve."
+  echo ""
+  read -r -p "$(echo -e "Clear all infra data and start fresh? [y/N]: ")" confirm
   if [ "$confirm" = "yes" ] || [ "$confirm" = "y" ]; then
-    $DOCKER compose ${COMPOSE_INFRA_PROD} --env-file .env.prod down keycloak 2>/dev/null || true
-    $DOCKER volume rm gardream-keycloak_data 2>/dev/null || true
-    info "Keycloak volume cleared. Realm will be imported on first start."
+    info "Clearing infra data volumes..."
+    for vol in postgres_data keycloak_data pgadmin_data garage_data traefik_certs; do
+      $DOCKER volume rm "infra_${vol}" 2>/dev/null || true
+      $DOCKER volume rm "gardream_${vol}" 2>/dev/null || true
+    done
+    info "All infra volumes cleared."
   else
-    info "Skipping Keycloak realm import (existing data will be kept)."
+    info "Keeping existing data volumes."
   fi
 
   # Force-remove any infra containers by name (dev and prod compose files
   # may create different Docker Compose projects even though container_name
   # values are identical, so compose down doesn't always clean up).
-  info "Stopping any existing infra containers..."
   for c in traefik postgres keycloak pgadmin garage webhook; do
     $DOCKER rm -f "$c" 2>/dev/null || true
   done
