@@ -32,8 +32,7 @@ certificatesResolvers:
     acme:
       email: ${ACME_EMAIL}
       storage: /etc/traefik/certs/acme.json
-      httpChallenge:
-        entryPoint: web
+      tlsChallenge: {}
 
 log:
   level: INFO
