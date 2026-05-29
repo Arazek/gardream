@@ -41,6 +41,7 @@ backend/.env.override
 infra/.env
 infra/traefik/certs/local.crt
 infra/traefik/certs/local.key
+infra/keycloak/realm-config.prod.json
 
 # =============================================================================
 # IDE & OS

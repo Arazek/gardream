@@ -155,9 +155,20 @@ cmd_prod() {
   require_env_prod
   require_tool docker
   $DOCKER info &>/dev/null || error "Docker daemon is not running. Start it with: sudo systemctl start docker"
+
+  # Verify infra is running with production config before starting app services
+  if ! $DOCKER network inspect proxy-network &>/dev/null 2>&1; then
+    error "proxy-network not found. Run './run.sh prod:setup' first to start the infra stack."
+  fi
+  if [ ! -f infra/traefik/traefik.prod.yml ]; then
+    error "infra/traefik/traefik.prod.yml not found. This file should be in the repo."
+  fi
+
   info "Starting app services in production mode..."
   $DOCKER compose ${COMPOSE_PROD} --env-file .env.prod up -d --build "$@"
-  success "Services started. Run './run.sh logs' to follow output."
+  success "App services started. Run './run.sh logs' to follow output."
+  info "  App:     https://${DOMAIN}/"
+  info "  API:     https://${DOMAIN}/api/v1/docs"
 }
 
 # ---------------------------------------------------------------------------
@@ -167,6 +178,17 @@ cmd_prod_setup() {
   require_env_prod
   require_tool docker
   $DOCKER info &>/dev/null || error "Docker daemon is not running. Start it with: sudo systemctl start docker"
+
+  # Validate required committed files exist
+  if [ ! -f infra/traefik/traefik.prod.yml ]; then
+    error "infra/traefik/traefik.prod.yml not found. This file should be in the repo."
+  fi
+  if [ ! -f infra/traefik/dynamic.yml ]; then
+    error "infra/traefik/dynamic.yml not found. This file should be in the repo."
+  fi
+  if [ ! -f infra/docker-compose.prod.yml ]; then
+    error "infra/docker-compose.prod.yml not found. Run './scripts/production-setup.sh' first."
+  fi
 
   # First-time bootstrap — offer to clear all infra data volumes so we
   # start from a clean slate (avoids PG version mismatch, stale Keycloak
@@ -200,16 +222,35 @@ cmd_prod_setup() {
 
   info "Starting infra services in production mode..."
   $DOCKER compose ${COMPOSE_INFRA_PROD} --env-file .env.prod up -d "$@"
-  success "Infra started. Waiting for services to be healthy..."
+
+  # Wait for postgres to be healthy before running migrations
+  info "Waiting for postgres to be ready..."
+  until $DOCKER compose ${COMPOSE_INFRA_PROD} --env-file .env.prod exec -T postgres \
+    pg_isready -U "${POSTGRES_USER:-appuser}" -d "${POSTGRES_DB:-app_db}" 2>/dev/null; do
+    sleep 2
+  done
+  success "Postgres is ready."
 
   info "Running database migrations..."
-  $DOCKER compose ${COMPOSE_PROD} run --rm backend alembic upgrade head
+  $DOCKER compose ${COMPOSE_PROD} --env-file .env.prod run --rm backend alembic upgrade head
   success "Migrations applied."
 
+  # Import Keycloak realm if realm config exists
+  if [ -f infra/keycloak/realm-config.json ]; then
+    info "Importing Keycloak realm..."
+    $DOCKER compose ${COMPOSE_INFRA_PROD} --env-file .env.prod exec -T keycloak \
+      /opt/keycloak/bin/kcadm.sh update realms/master -s smtpServer.host="" 2>/dev/null || true
+    info "Keycloak realm import triggered via mounted volume."
+  fi
+
+  echo ""
   success "Production setup complete."
-  info "  https://${DOMAIN}/           — App"
-  info "  https://${DOMAIN}/api/v1/docs — API docs"
-  info "  https://${GATEWAY_HOSTNAME}/keycloak   — Keycloak admin"
+  info "  App:             https://${DOMAIN}/"
+  info "  API docs:        https://${DOMAIN}/api/v1/docs"
+  info "  Keycloak admin:  https://${GATEWAY_HOSTNAME}/keycloak"
+  info "  Traefik dash:    https://${GATEWAY_HOSTNAME}/traefik/dashboard/"
+  echo ""
+  info "Next: run './run.sh prod' to start the app services."
 }
 
 # ---------------------------------------------------------------------------

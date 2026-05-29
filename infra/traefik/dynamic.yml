@@ -1,0 +1,28 @@
+# =============================================================================
+# Traefik dynamic configuration — middlewares shared across all routers.
+# Mounted at /etc/traefik/dynamic.yml in production.
+# =============================================================================
+
+http:
+  middlewares:
+    security-headers:
+      headers:
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 63072000
+        customFrameOptionsValue: "SAMEORIGIN"
+
+    rate-limit-api:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1m
+
+    rate-limit-general:
+      rateLimit:
+        average: 300
+        burst: 100
+        period: 1m

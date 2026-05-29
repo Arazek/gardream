@@ -101,3 +101,53 @@ All behind Traefik. Local: `https://localhost:4443` (type `thisisunsafe` in Chro
 
 **Backend endpoint**: Model → Schema → Endpoint → register in `api/v1/router.py` → `db:revision "msg"` + `db:migrate`
 **Frontend feature**: Folder `features/<name>/` with `pages/`, `components/`, `services/`, `store/` → routes file → register in `store/index.ts` → add lazy route to `app.routes.ts`
+
+---
+
+## Project Context
+
+**Gardream** is a mobile-first PWA for hobbyist/urban gardeners to plan garden plots, track crops, auto-generate gardening tasks, and manage specimens. "Plan your garden visually, and always know what to do next."
+
+### Stack
+
+| Layer | Tech |
+|---|---|
+| Frontend | Angular 19 standalone + Ionic 8 + NgRx 19 + SCSS/BEM |
+| Native | Capacitor 6 (Android build working) |
+| Backend | FastAPI (Python 3.12, async) + SQLAlchemy 2.x + Alembic |
+| Auth | Keycloak 26 (OIDC PKCE, Google/Facebook OAuth) |
+| DB | PostgreSQL 17 + TimescaleDB + PostGIS |
+| Files | Garage S3 (self-hosted) |
+| Infra | Docker + Traefik v3 (all services at `gateway.localhost`) |
+
+### Features Delivered
+
+- **Home dashboard** — crop stages widget, weather widget, notification centre
+- **Plot planner** — create plots, assign crops with per-crop watering/fertilisation schedule overrides, manage specimens with photo logs & milestones
+- **Task engine** — auto-generates tasks from crop schedules, task calendar view with create/update/delete
+- **Crop encyclopedia** — browse crops with detail pages
+- **Offline-first sync** — local SQLite → outbox → server push/pull with temp ID rewriting
+- **Auth** — Keycloak PKCE with silent SSO, Google/Facebook login, token refresh
+- **Theme system** — light/dark + 4 accent colours (clay, moss, dune, slate)
+- **Notifications** — rain alerts that suppress watering, local push notifications
+- **Production setup** — interactive wizard script that generates `.env.prod`, prod compose overrides
+
+### Routes
+
+```
+/tabs/home      → Home dashboard
+/tabs/calendar  → Task calendar
+/tabs/library   → Crop library (+ /:id detail)
+/tabs/plots     → Plot list (+ /new, /:id detail, /:id/slots/:slotId/specimen)
+/tabs/profile   → User profile
+/tabs/settings  → Theme picker, accent colour, sign out
+```
+
+### Architecture
+
+- **Monorepo**: `frontend/` `backend/` `infra/` `docs/` `scripts/`
+- **Frontend**: Feature-first — each feature has `pages/`, `components/`, `services/`, `store/`, and a `routes.ts` file
+- **Backend**: Clean architecture — thin endpoints → services (business logic) → models (ORM) → schemas (Pydantic), plus `core/` for cross-cutting concerns
+- **Data model core loop**: Create Plot → Assign Crop (Specimen) → Generate Tasks → Execute Tasks
+- **NgRx store** for shared server data; **Angular signals** for transient UI state (sync status, theme)
+- **API versioning**: all routes under `/api/v1/`
