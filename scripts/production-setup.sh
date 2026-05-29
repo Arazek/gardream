@@ -334,6 +334,57 @@ show_summary() {
 }
 
 # ---------------------------------------------------------------------------
+# Credentials — shown in plain text AFTER files are written
+# ---------------------------------------------------------------------------
+show_credentials() {
+  echo ""
+  echo -e "${BOLD}══════════════════════════════════════════════════════════${NC}"
+  echo -e "${BOLD}  🔑 Generated Credentials — SAVE THESE${NC}"
+  echo -e "${BOLD}══════════════════════════════════════════════════════════${NC}"
+  echo ""
+  echo -e "  ${RED}Copy these now. They will NOT be shown again.${NC}"
+  echo ""
+
+  print_cred() {
+    printf "  %-28s ${BOLD}%s${NC}\n" "$1:" "$2"
+  }
+
+  echo -e "  ${BOLD}── Database ─────────────────────────────────────────────${NC}"
+  print_cred "POSTGRES_PASSWORD"       "$POSTGRES_PASSWORD"
+  echo ""
+
+  echo -e "  ${BOLD}── Keycloak ────────────────────────────────────────────${NC}"
+  print_cred "KEYCLOAK_ADMIN_PASSWORD" "$KEYCLOAK_ADMIN_PASSWORD"
+  print_cred "KEYCLOAK_DB_PASSWORD"    "$KEYCLOAK_DB_PASSWORD"
+  echo ""
+
+  echo -e "  ${BOLD}── Backend ─────────────────────────────────────────────${NC}"
+  print_cred "SECRET_KEY"              "$SECRET_KEY"
+  echo ""
+
+  if [ "$SMTP_ENABLED" = "true" ] && [ -n "${SMTP_PASSWORD:-}" ]; then
+    echo -e "  ${BOLD}── Email ───────────────────────────────────────────────${NC}"
+    print_cred "SMTP_PASSWORD"           "$SMTP_PASSWORD"
+    echo ""
+  fi
+
+  echo -e "  ${BOLD}── Infra Extras ────────────────────────────────────────${NC}"
+  print_cred "PGADMIN_DEFAULT_PASSWORD"    "$PGADMIN_DEFAULT_PASSWORD"
+  print_cred "PGADMIN_OAUTH_CLIENT_SECRET" "$PGADMIN_OAUTH_CLIENT_SECRET"
+  print_cred "GARAGE_ACCESS_KEY"           "$GARAGE_ACCESS_KEY"
+  print_cred "GARAGE_SECRET_KEY"           "$GARAGE_SECRET_KEY"
+  print_cred "WEBHOOK_SECRET"              "$WEBHOOK_SECRET"
+
+  if [ -n "${TRAEFIK_DASHBOARD_AUTH:-}" ]; then
+    print_cred "TRAEFIK_DASHBOARD_AUTH"    "$TRAEFIK_DASHBOARD_AUTH"
+  fi
+  echo ""
+
+  echo -e "  ${YELLOW}These are also saved in .env.prod (gitignored).${NC}"
+  echo -e "  ${YELLOW}Run this script again to see them (values are re-used).${NC}"
+}
+
+# ---------------------------------------------------------------------------
 # File generators
 # ---------------------------------------------------------------------------
 write_env_prod() {
@@ -526,6 +577,9 @@ main() {
   write_env_prod
   write_infra_prod_compose
   write_realm_prod_config
+
+  # Show credentials in plain text so the user can save them
+  show_credentials
 
   # Print next steps
   echo ""
