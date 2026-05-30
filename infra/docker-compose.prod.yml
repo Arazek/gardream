@@ -14,6 +14,8 @@ services:
     volumes:
       - ./traefik/traefik.prod.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+    labels:
+      - "traefik.http.routers.traefik-dashboard.tls.certresolver=letsencrypt"
 
   keycloak:
     command: start --import-realm
@@ -22,3 +24,13 @@ services:
       KC_HOSTNAME_STRICT: "false"
     volumes:
       - ./keycloak/realm-config.prod.json:/opt/keycloak/data/import/realm-config.json:ro
+    labels:
+      - "traefik.http.routers.keycloak.tls.certresolver=letsencrypt"
+
+  pgadmin:
+    labels:
+      - "traefik.http.routers.pgadmin.tls.certresolver=letsencrypt"
+
+  webhook:
+    labels:
+      - "traefik.http.routers.webhook.tls.certresolver=letsencrypt"
