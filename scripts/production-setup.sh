@@ -502,6 +502,14 @@ COMPOSEEOF
   success "infra/docker-compose.prod.yml written."
 }
 
+write_traefik_prod_config() {
+  info "Setting ACME email in infra/traefik/traefik.prod.yml..."
+
+  sed -i "s/ACME_EMAIL_PLACEHOLDER/${ACME_EMAIL}/" infra/traefik/traefik.prod.yml
+
+  success "infra/traefik/traefik.prod.yml updated with ${ACME_EMAIL}."
+}
+
 write_realm_prod_config() {
   info "Generating infra/keycloak/realm-config.prod.json with production redirect URIs..."
 
@@ -576,6 +584,7 @@ main() {
   # Generate files
   write_env_prod
   write_infra_prod_compose
+  write_traefik_prod_config
   write_realm_prod_config
 
   # Show credentials in plain text so the user can save them

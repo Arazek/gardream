@@ -1,7 +1,7 @@
 # =============================================================================
-# Traefik dynamic configuration — security headers + rate limiting middlewares.
-# The HTTP→HTTPS redirect is NOT here — it's set per-router via entrypoint
-# in traefik.prod.yml after Let's Encrypt certs are obtained.
+# Traefik dynamic configuration — middlewares + catch-all HTTP→HTTPS redirect.
+# The redirect uses a router with priority 1 so Traefik's built-in ACME
+# challenge routers (higher priority) bypass it for /.well-known/acme-challenge/*.
 # =============================================================================
 
 http:
@@ -16,6 +16,11 @@ http:
         stsSeconds: 63072000
         customFrameOptionsValue: "SAMEORIGIN"
 
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
     rate-limit-api:
       rateLimit:
         average: 100
@@ -27,3 +32,19 @@ http:
         average: 300
         burst: 100
         period: 1m
+
+  routers:
+    http-catchall:
+      rule: "PathPrefix(`/`)"
+      entryPoints:
+        - web
+      middlewares:
+        - redirect-to-https
+      service: noop
+      priority: 1
+
+  services:
+    noop:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:9"

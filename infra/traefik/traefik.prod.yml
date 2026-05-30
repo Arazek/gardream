@@ -1,6 +1,7 @@
 # =============================================================================
-# Traefik production configuration — Let's Encrypt TLS + HTTP→HTTPS redirect.
-# ACME email is passed via the traefik container environment (ACME_EMAIL).
+# Traefik production configuration — Let's Encrypt via HTTP-01 challenge.
+# ACME_EMAIL_PLACEHOLDER is replaced by scripts/production-setup.sh at runtime
+# because Traefik static config does NOT support env var substitution.
 # Mounted over traefik.yml by infra/docker-compose.prod.yml.
 # =============================================================================
 
@@ -30,9 +31,10 @@ providers:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: ${ACME_EMAIL}
+      email: ACME_EMAIL_PLACEHOLDER
       storage: /etc/traefik/certs/acme.json
-      tlsChallenge: {}
+      httpChallenge:
+        entryPoint: web
 
 log:
   level: INFO

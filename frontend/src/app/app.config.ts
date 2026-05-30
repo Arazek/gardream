@@ -34,7 +34,6 @@ export const appConfig: ApplicationConfig = {
       config: environment.keycloak,
       initOptions: {
         onLoad: 'check-sso',
-        checkLoginIframe: false,
         pkceMethod: 'S256',
       },
     }),
